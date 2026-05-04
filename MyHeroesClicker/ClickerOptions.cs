@@ -1,0 +1,30 @@
+﻿namespace MyHeroesClicker;
+
+public sealed class ClickerOptions
+{
+  public string BaseUrl { get; set; } = "https://myheroes.ru/";
+
+  public bool Headless { get; set; }
+
+  public int MinDelayMs { get; set; } = 100;
+
+  public int MaxDelayMs { get; set; } = 250;
+
+  public int DefaultTimeoutMs { get; set; } = 10000;
+
+  public int HpRecoveryDelayMultiplier { get; set; } = 20;
+
+  public double MinAttackHealthPercent { get; set; } = 0.25;
+
+  public double MaxAttackHealthPercent { get; set; } = 0.30;
+
+  public string UserDataDir { get; set; } = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "MyHeroesClicker",
+    "chrome-profile");
+
+  public string AuthStatePath { get; set; } = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "MyHeroesClicker",
+    "auth-state.json");
+}
