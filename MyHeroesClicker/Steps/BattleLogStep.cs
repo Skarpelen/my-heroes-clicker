@@ -8,6 +8,11 @@ public sealed class BattleLogStep : IScenarioStep
 {
   public ScenarioStepKind Kind => ScenarioStepKind.BattleLog;
 
+  public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
+  {
+    return context.Guard.IsBattleLogPageAsync(context.Page);
+  }
+
   public async Task<StepResult> ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     var page = context.Page;

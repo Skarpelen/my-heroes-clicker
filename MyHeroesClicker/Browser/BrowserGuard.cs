@@ -16,13 +16,36 @@ public sealed class BrowserGuard
     _failureDumpService = failureDumpService;
   }
 
+  public async Task<bool> IsBattlePageAsync(IPage page)
+  {
+    if (!IsExpectedPage(page, "/batle1"))
+    {
+      return false;
+    }
+
+    return await BattlePageLocators.AttackButton(page).CountAsync() > 0;
+  }
+
+  public async Task<bool> IsBattleLogPageAsync(IPage page)
+  {
+    if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
+        || uri.Scheme != "https"
+        || uri.Host != "myheroes.ru"
+        || !uri.AbsolutePath.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase))
+    {
+      return false;
+    }
+
+    return await BattlePageLocators.ReturnToBattleButton(page).CountAsync() > 0;
+  }
+
   public async Task ExpectBattlePageAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     var page = context.Page;
 
-    if (!IsExpectedPage(page, "/batle1"))
+    if (!await IsBattlePageAsync(page))
     {
-      await StopWithErrorAsync(context, $"Ожидалась страница https://myheroes.ru/batle1, но текущий URL: {page.Url}", cancellationToken);
+      await StopWithErrorAsync(context, $"Ожидалась страница https://myheroes.ru/batle1, но текущий URL: {context.Page.Url}", cancellationToken);
     }
 
     var attackButton = BattlePageLocators.AttackButton(page);
@@ -37,12 +60,9 @@ public sealed class BrowserGuard
   {
     var page = context.Page;
 
-    if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
-        || uri.Scheme != "https"
-        || uri.Host != "myheroes.ru"
-        || !uri.AbsolutePath.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase))
+    if (!await IsBattleLogPageAsync(page))
     {
-      await StopWithErrorAsync(context, $"Ожидалась страница логов, но текущий URL: {page.Url}", cancellationToken);
+      await StopWithErrorAsync(context, $"Ожидалась страница логов, но текущий URL: {context.Page.Url}", cancellationToken);
     }
 
     var returnButton = BattlePageLocators.ReturnToBattleButton(page);

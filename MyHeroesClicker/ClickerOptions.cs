@@ -18,6 +18,10 @@ public sealed class ClickerOptions
 
   public double MaxAttackHealthPercent { get; set; } = 0.30;
 
+  public int MaxStepRetryCount { get; set; } = 10;
+
+  public int RetryDelayMs { get; set; } = 1000;
+
   public string UserDataDir { get; set; } = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "MyHeroesClicker",

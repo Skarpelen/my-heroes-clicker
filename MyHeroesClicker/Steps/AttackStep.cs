@@ -15,6 +15,11 @@ public sealed class AttackStep : IScenarioStep
 
   public ScenarioStepKind Kind => ScenarioStepKind.Attack;
 
+  public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
+  {
+    return context.Guard.IsBattlePageAsync(context.Page);
+  }
+
   public async Task<StepResult> ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     var page = context.Page;

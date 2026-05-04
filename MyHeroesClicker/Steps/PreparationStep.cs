@@ -8,6 +8,11 @@ public sealed class PreparationStep : IScenarioStep
 {
   public ScenarioStepKind Kind => ScenarioStepKind.Preparation;
 
+  public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
+  {
+    return Task.FromResult(true);
+  }
+
   public async Task<StepResult> ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     var page = context.Page;
