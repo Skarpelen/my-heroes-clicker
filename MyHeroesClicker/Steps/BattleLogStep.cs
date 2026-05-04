@@ -6,7 +6,7 @@ namespace MyHeroesClicker.Steps;
 
 public sealed class BattleLogStep : IScenarioStep
 {
-  public ScenarioStepKind Kind => ScenarioStepKind.BattleLog;
+  public ScenarioStepType Type => ScenarioStepType.BattleLog;
 
   public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
@@ -28,7 +28,7 @@ public sealed class BattleLogStep : IScenarioStep
 
       await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-      return new StepResult(ScenarioStepKind.Attack);
+      return new StepResult(ScenarioStepType.Attack);
     }
 
     await context.Guard.ExpectBattleLogPageAsync(context, cancellationToken);
@@ -46,9 +46,9 @@ public sealed class BattleLogStep : IScenarioStep
 
     if (context.CompletedIterations >= context.TargetIterations)
     {
-      return new StepResult(ScenarioStepKind.Stop);
+      return new StepResult(ScenarioStepType.Stop);
     }
 
-    return new StepResult(ScenarioStepKind.Attack);
+    return new StepResult(ScenarioStepType.Attack);
   }
 }

@@ -1,9 +1,10 @@
 ﻿using Microsoft.Playwright;
 using MyHeroesClicker.Browser;
+using MyHeroesClicker.Confs;
 using MyHeroesClicker.Core;
 using MyHeroesClicker.Diagnostics;
+using MyHeroesClicker.Scenarios;
 using MyHeroesClicker.Services;
-using MyHeroesClicker.Steps;
 
 namespace MyHeroesClicker;
 
@@ -17,6 +18,7 @@ internal class Program
     var maxHealth = ReadPositiveInt("Максимальное здоровье персонажа?", 3802, logger);
 
     var options = new ClickerOptions();
+    var config = ClickerConfigLoader.Load(options, logger);
 
     using var cancellationTokenSource = new CancellationTokenSource();
     Console.CancelKeyPress += (_, eventArgs) =>
@@ -34,21 +36,9 @@ internal class Program
     var pageInteractor = new PageInteractor();
     var humanDelay = new HumanDelayService(options);
     var resourcesReader = new BattleResourcesReader();
-    var blockerHandler = new BattleBlockerHandler(resourcesReader);
 
     using var playwright = await Playwright.CreateAsync();
     await using var browserSession = await BrowserSession.StartAsync(playwright, options);
-
-    await browserSession.Page.GotoAsync(options.BaseUrl, new()
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded
-    });
-
-    logger.Log("Если требуется авторизация, выполните ее в открытом Chrome.");
-    logger.Log("После успешного входа и загрузки главной страницы нажмите Enter в консоли.");
-    Console.ReadLine();
-
-    await browserSession.SaveAuthStateAsync();
 
     var context = new ScenarioContext(
       browserSession.Page,
@@ -61,19 +51,27 @@ internal class Program
       iterations,
       maxHealth);
 
-    var runner = new ScenarioRunner([
-      new PreparationStep(),
-      new AttackStep(blockerHandler),
-      new BattleLogStep()
-    ]);
-
-    var initialStep = ScenarioStepKind.Preparation;
+    IScenario authenticationScenario = new AuthenticationScenario(config, browserSession.SaveAuthStateAsync);
+    IScenario preparationScenario = new FarmPreparationScenario();
+    IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario);
+    var shouldRunPreparation = true;
 
     try
     {
       while (!cancellationTokenSource.Token.IsCancellationRequested)
       {
-        await runner.RunAsync(context, cancellationTokenSource.Token, initialStep);
+        logger.Log($"Выполняется сценарий: {authenticationScenario.Name}");
+        await authenticationScenario.ExecuteAsync(context, cancellationTokenSource.Token);
+
+        if (shouldRunPreparation)
+        {
+          logger.Log($"Выполняется сценарий: {preparationScenario.Name}");
+          await preparationScenario.ExecuteAsync(context, cancellationTokenSource.Token);
+          shouldRunPreparation = false;
+        }
+
+        logger.Log($"Выполняется сценарий: {farmBattleScenario.Name}");
+        await farmBattleScenario.ExecuteAsync(context, cancellationTokenSource.Token);
 
         if (pauseService.IsPauseRequested)
         {
@@ -89,7 +87,7 @@ internal class Program
             WaitUntil = WaitUntilState.DOMContentLoaded
           });
 
-          initialStep = ScenarioStepKind.Preparation;
+          shouldRunPreparation = true;
 
           continue;
         }
@@ -99,7 +97,7 @@ internal class Program
         var nextIterations = ReadPositiveInt("Сколько дополнительных атак выполнить?", 500, logger);
 
         context.ResetIterations(nextIterations);
-        initialStep = ScenarioStepKind.Preparation;
+        shouldRunPreparation = true;
       }
     }
     catch (OperationCanceledException)

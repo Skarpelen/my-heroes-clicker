@@ -13,7 +13,7 @@ public sealed class AttackStep : IScenarioStep
     _blockerHandler = blockerHandler;
   }
 
-  public ScenarioStepKind Kind => ScenarioStepKind.Attack;
+  public ScenarioStepType Type => ScenarioStepType.Attack;
 
   public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
@@ -43,7 +43,7 @@ public sealed class AttackStep : IScenarioStep
 
     if (IsBattleLogPage(page))
     {
-      return new StepResult(ScenarioStepKind.BattleLog);
+      return new StepResult(ScenarioStepType.BattleLog);
     }
 
     blockerResult = await _blockerHandler.TryHandleAsync(context, cancellationToken);

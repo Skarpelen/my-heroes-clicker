@@ -18,6 +18,11 @@ public sealed class BrowserGuard
 
   public async Task<bool> IsBattlePageAsync(IPage page)
   {
+    if (await IsLoginPageAsync(page))
+    {
+      return false;
+    }
+
     if (!IsExpectedPage(page, "/batle1"))
     {
       return false;
@@ -28,6 +33,11 @@ public sealed class BrowserGuard
 
   public async Task<bool> IsBattleLogPageAsync(IPage page)
   {
+    if (await IsLoginPageAsync(page))
+    {
+      return false;
+    }
+
     if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
         || uri.Scheme != "https"
         || uri.Host != "myheroes.ru"
@@ -37,6 +47,19 @@ public sealed class BrowserGuard
     }
 
     return await BattlePageLocators.ReturnToBattleButton(page).CountAsync() > 0;
+  }
+
+  public async Task<bool> IsLoginPageAsync(IPage page)
+  {
+    if (!IsExpectedPage(page, "/"))
+    {
+      return false;
+    }
+
+    return await LoginPageLocators.LoginForm(page).CountAsync() > 0
+           && await LoginPageLocators.LoginInput(page).CountAsync() > 0
+           && await LoginPageLocators.PasswordInput(page).CountAsync() > 0
+           && await LoginPageLocators.SubmitButton(page).CountAsync() > 0;
   }
 
   public async Task ExpectBattlePageAsync(ScenarioContext context, CancellationToken cancellationToken)
@@ -115,6 +138,11 @@ public sealed class BrowserGuard
       string message,
       CancellationToken cancellationToken)
   {
+    if (await IsLoginPageAsync(context.Page))
+    {
+      throw new AuthenticationRequiredException("Сессия не авторизована.");
+    }
+
     await _failureDumpService.SaveAsync(context.Page, message, cancellationToken);
     await _alertService.PlayAsync(cancellationToken);
 

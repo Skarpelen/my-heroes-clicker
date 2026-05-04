@@ -1,8 +1,8 @@
 ﻿namespace MyHeroesClicker.Core;
 
-public enum ScenarioStepKind
+public enum ScenarioStepType
 {
-  Preparation,
+  EnterBattle,
   Attack,
   BattleLog,
   Stop

@@ -2,7 +2,7 @@
 
 public interface IScenarioStep
 {
-  ScenarioStepKind Kind { get; }
+  ScenarioStepType Type { get; }
 
   Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken);
 

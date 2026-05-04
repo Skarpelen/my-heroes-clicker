@@ -2,10 +2,10 @@
 
 public sealed class StepResult
 {
-  public StepResult(ScenarioStepKind nextStep)
+  public StepResult(ScenarioStepType nextStep)
   {
     NextStep = nextStep;
   }
 
-  public ScenarioStepKind NextStep { get; }
+  public ScenarioStepType NextStep { get; }
 }

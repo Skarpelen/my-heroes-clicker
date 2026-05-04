@@ -4,9 +4,9 @@ using MyHeroesClicker.Core;
 
 namespace MyHeroesClicker.Steps;
 
-public sealed class PreparationStep : IScenarioStep
+public sealed class EnterBattleStep : IScenarioStep
 {
-  public ScenarioStepKind Kind => ScenarioStepKind.Preparation;
+  public ScenarioStepType Type => ScenarioStepType.EnterBattle;
 
   public Task<bool> CanHandleAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
@@ -24,6 +24,11 @@ public sealed class PreparationStep : IScenarioStep
 
     await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
+    if (await context.Guard.IsLoginPageAsync(page))
+    {
+      throw new AuthenticationRequiredException("Для входа в бой требуется авторизация.");
+    }
+
     var battleLinks = BattlePageLocators.BattleLinks(page);
     var startButton = await battleLinks.CountAsync() > 0
       ? battleLinks.First
@@ -37,6 +42,6 @@ public sealed class PreparationStep : IScenarioStep
 
     await context.Guard.ExpectBattlePageAsync(context, cancellationToken);
 
-    return new StepResult(ScenarioStepKind.Attack);
+    return new StepResult(ScenarioStepType.Attack);
   }
 }
