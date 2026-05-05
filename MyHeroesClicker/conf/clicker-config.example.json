@@ -1,6 +1,72 @@
-{
+﻿{
   "Login": {
     "UserName": "character-name",
     "Password": "password"
+  },
+  "Equipment": {
+    "FarmStyle": {
+      "Slots": {
+        "1": {
+          "ExpectedImageSrc": "/img/items/2/item_1_178.png"
+        },
+        "2": {
+          "ExpectedImageSrc": "/img/items/item_2.png",
+          "ShouldBeEmpty": true
+        },
+        "3": {
+          "ExpectedImageSrc": "/img/items/2/item_1_180.png"
+        },
+        "4": {
+          "ExpectedImageSrc": "/img/items/2/item_1_181.png"
+        },
+        "5": {
+          "ExpectedImageSrc": "/img/items/2/item_1_182.png"
+        },
+        "6": {
+          "ExpectedImageSrc": "/img/items/1/item_1_6.png"
+        },
+        "7": {
+          "ExpectedImageSrc": "/img/items/2/item_1_184.png"
+        },
+        "8": {
+          "ExpectedImageSrc": "/img/items/item_8.png",
+          "ShouldBeEmpty": true
+        }
+      }
+    },
+    "CombatStyle": {
+      "Slots": {
+        "1": {
+          "ExpectedImageSrc": "/img/items/2/item_1_178.png"
+        },
+        "2": {
+          "ExpectedImageSrc": "/img/items/2/item_1_179.png"
+        },
+        "3": {
+          "ExpectedImageSrc": "/img/items/2/item_1_180.png"
+        },
+        "4": {
+          "ExpectedImageSrc": "/img/items/2/item_1_181.png"
+        },
+        "5": {
+          "ExpectedImageSrc": "/img/items/2/item_1_182.png"
+        },
+        "6": {
+          "ExpectedImageSrc": "/img/items/2/item_1_183.png"
+        },
+        "7": {
+          "ExpectedImageSrc": "/img/items/2/item_1_184.png"
+        },
+        "8": {
+          "ExpectedImageSrc": "/img/items/2/item_1_185.png"
+        }
+      }
+    }
+  },
+  "Techniques": {
+    "FarmDisabledTechniqueNames": [
+      "technique-name-to-disable"
+    ],
+    "EnableAllForCombat": true
   }
 }

@@ -1,9 +1,6 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
 using MyHeroesClicker.Confs;
-using MyHeroesClicker.Core;
-using MyHeroesClicker.Diagnostics;
-using MyHeroesClicker.Scenarios;
+using MyHeroesClicker.Runtime;
 using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker;
@@ -31,47 +28,22 @@ internal class Program
     pauseService.StartListening(logger, cancellationTokenSource.Token);
 
     var alertService = new ConsoleBeepAlertService(logger);
-    var failureDumpService = new FailureDumpService();
-    var guard = new BrowserGuard(alertService, failureDumpService);
-    var pageInteractor = new PageInteractor();
-    var humanDelay = new HumanDelayService(options);
-    var resourcesReader = new BattleResourcesReader();
 
-    using var playwright = await Playwright.CreateAsync();
-    await using var browserSession = await BrowserSession.StartAsync(playwright, options);
-
-    var context = new ScenarioContext(
-      browserSession.Page,
-      guard,
-      pageInteractor,
-      humanDelay,
-      logger,
-      pauseService,
+    await using var runtime = await ClickerRuntime.StartAsync(
       options,
+      config,
+      logger,
+      alertService,
+      pauseService,
       iterations,
       maxHealth);
-
-    IScenario authenticationScenario = new AuthenticationScenario(config, browserSession.SaveAuthStateAsync);
-    IScenario preparationScenario = new FarmPreparationScenario();
-    IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario);
-    var shouldRunPreparation = true;
 
     try
     {
       while (!cancellationTokenSource.Token.IsCancellationRequested)
       {
-        logger.Log($"Выполняется сценарий: {authenticationScenario.Name}");
-        await authenticationScenario.ExecuteAsync(context, cancellationTokenSource.Token);
-
-        if (shouldRunPreparation)
-        {
-          logger.Log($"Выполняется сценарий: {preparationScenario.Name}");
-          await preparationScenario.ExecuteAsync(context, cancellationTokenSource.Token);
-          shouldRunPreparation = false;
-        }
-
-        logger.Log($"Выполняется сценарий: {farmBattleScenario.Name}");
-        await farmBattleScenario.ExecuteAsync(context, cancellationTokenSource.Token);
+        logger.Log($"Выполняется сценарий: {runtime.Scenarios.FarmCycle.Name}");
+        await runtime.Scenarios.FarmCycle.ExecuteAsync(runtime.Context, cancellationTokenSource.Token);
 
         if (pauseService.IsPauseRequested)
         {
@@ -82,22 +54,19 @@ internal class Program
 
           pauseService.Reset();
 
-          await browserSession.Page.GotoAsync(options.BaseUrl, new()
+          await runtime.Context.Page.GotoAsync(options.BaseUrl, new()
           {
             WaitUntil = WaitUntilState.DOMContentLoaded
           });
 
-          shouldRunPreparation = true;
-
           continue;
         }
 
-        logger.Log($"Готово. Выполнено атак: {context.CompletedIterations}.");
+        logger.Log($"Готово. Выполнено атак: {runtime.Context.CompletedIterations}.");
 
         var nextIterations = ReadPositiveInt("Сколько дополнительных атак выполнить?", 500, logger);
 
-        context.ResetIterations(nextIterations);
-        shouldRunPreparation = true;
+        runtime.Context.ResetIterations(nextIterations);
       }
     }
     catch (OperationCanceledException)
@@ -108,7 +77,7 @@ internal class Program
     {
       logger.Log(exception.Message);
 
-      await alertService.PlayAsync(CancellationToken.None);
+      await runtime.AlertService.PlayAsync(CancellationToken.None);
 
       logger.Log("Приложение остановлено на ошибке. Исправьте состояние в браузере и нажмите Enter для выхода.");
       Console.ReadLine();

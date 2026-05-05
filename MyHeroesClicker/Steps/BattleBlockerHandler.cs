@@ -73,7 +73,7 @@ public sealed class BattleBlockerHandler
       return false;
     }
 
-    context.Logger.Log($"Недостаточно здоровья для атаки: {currentHealth}/{context.MaxHealth}. Нужно минимум: {minHealth}.");
+    context.Logger.Log($"Недостаточно здоровья для атаки: {currentHealth}/{context.CharacterState.MaxHealth}. Нужно минимум: {minHealth}.");
 
     return true;
   }
@@ -202,12 +202,12 @@ public sealed class BattleBlockerHandler
       var estimatedSecondsLeft = (int)Math.Ceiling(healthLeft / recoveryPerSecond);
 
       context.Logger.Log(
-        $"Текущее здоровье: {currentHealth}/{context.MaxHealth}. Нужно минимум: {minHealth}. Примерно ждать: {FormatDuration(estimatedSecondsLeft)}.");
+        $"Текущее здоровье: {currentHealth}/{context.CharacterState.MaxHealth}. Нужно минимум: {minHealth}. Примерно ждать: {FormatDuration(estimatedSecondsLeft)}.");
 
       return;
     }
 
-    context.Logger.Log($"Текущее здоровье: {currentHealth}/{context.MaxHealth}. Нужно минимум: {minHealth}. Скорость восстановления пока неизвестна.");
+    context.Logger.Log($"Текущее здоровье: {currentHealth}/{context.CharacterState.MaxHealth}. Нужно минимум: {minHealth}. Скорость восстановления пока неизвестна.");
   }
 
   private static string FormatDuration(int totalSeconds)
@@ -237,6 +237,6 @@ public sealed class BattleBlockerHandler
     var percent = context.Options.MinAttackHealthPercent
                   + _random.NextDouble() * (context.Options.MaxAttackHealthPercent - context.Options.MinAttackHealthPercent);
 
-    return (int)Math.Ceiling(context.MaxHealth * percent);
+    return (int)Math.Ceiling(context.CharacterState.MaxHealth * percent);
   }
 }

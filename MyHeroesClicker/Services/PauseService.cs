@@ -4,7 +4,7 @@ using System.Text;
 
 namespace MyHeroesClicker.Services;
 
-public sealed class PauseService
+public sealed class PauseService : IPauseService
 {
   private volatile bool _pauseRequested;
 

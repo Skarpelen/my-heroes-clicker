@@ -12,10 +12,10 @@ public sealed class ScenarioContext
     PageInteractor pageInteractor,
     IHumanDelayService humanDelay,
     IRunLogger logger,
-    PauseService pauseService,
+    IPauseService pauseService,
     ClickerOptions options,
     int targetIterations,
-    int maxHealth)
+    CharacterState characterState)
   {
     Page = page;
     Guard = guard;
@@ -25,7 +25,7 @@ public sealed class ScenarioContext
     PauseService = pauseService;
     Options = options;
     TargetIterations = targetIterations;
-    MaxHealth = maxHealth;
+    CharacterState = characterState;
   }
 
   public IPage Page { get; }
@@ -38,7 +38,7 @@ public sealed class ScenarioContext
 
   public IRunLogger Logger { get; }
 
-  public PauseService PauseService { get; }
+  public IPauseService PauseService { get; }
 
   public ClickerOptions Options { get; }
 
@@ -46,7 +46,7 @@ public sealed class ScenarioContext
 
   public int CompletedIterations { get; set; }
 
-  public int MaxHealth { get; }
+  public CharacterState CharacterState { get; }
 
   public void ResetIterations(int targetIterations)
   {

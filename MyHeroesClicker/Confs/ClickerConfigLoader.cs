@@ -60,5 +60,40 @@ public static class ClickerConfigLoader
     {
       throw new InvalidOperationException($"В файле конфигов {configPath} не заполнено поле Login.Password.");
     }
+
+    ValidateEquipmentStyle(config.Equipment.FarmStyle, nameof(config.Equipment.FarmStyle), configPath);
+    ValidateEquipmentStyle(config.Equipment.CombatStyle, nameof(config.Equipment.CombatStyle), configPath);
+    ValidateTechniques(config.Techniques, configPath);
+  }
+
+  private static void ValidateEquipmentStyle(
+    EquipmentStyleConfig styleConfig,
+    string styleName,
+    string configPath)
+  {
+    foreach (var (slot, slotConfig) in styleConfig.Slots)
+    {
+      if (slot <= 0)
+      {
+        throw new InvalidOperationException($"В файле конфигов {configPath} стиль {styleName} содержит некорректный слот {slot}.");
+      }
+
+      if (string.IsNullOrWhiteSpace(slotConfig.ExpectedImageSrc))
+      {
+        throw new InvalidOperationException($"В файле конфигов {configPath} стиль {styleName}, слот {slot}: не заполнено поле ExpectedImageSrc.");
+      }
+    }
+  }
+
+  private static void ValidateTechniques(TechniquesConfig techniquesConfig, string configPath)
+  {
+    for (var index = 0; index < techniquesConfig.FarmDisabledTechniqueNames.Count; index++)
+    {
+      if (string.IsNullOrWhiteSpace(techniquesConfig.FarmDisabledTechniqueNames[index]))
+      {
+        throw new InvalidOperationException(
+          $"В файле конфигов {configPath} Techniques.FarmDisabledTechniqueNames содержит пустое название приема.");
+      }
+    }
   }
 }
