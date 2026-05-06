@@ -1,0 +1,18 @@
+﻿using MyHeroesClicker.Services;
+
+namespace MyHeroesClicker.API.Services;
+
+public sealed class ScenarioRunLogger : IRunLogger
+{
+  private readonly ILogger<ScenarioRunLogger> _logger;
+
+  public ScenarioRunLogger(ILogger<ScenarioRunLogger> logger)
+  {
+    _logger = logger;
+  }
+
+  public void Log(string message)
+  {
+    _logger.LogInformation("{Message}", message);
+  }
+}
