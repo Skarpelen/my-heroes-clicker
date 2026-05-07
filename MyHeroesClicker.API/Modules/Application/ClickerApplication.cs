@@ -30,18 +30,15 @@ public sealed class ClickerApplication
 
   public int CompletedIterations => _runtime.Context.CompletedIterations;
 
-  public int MaxHealth => _runtime.Context.CharacterState.MaxHealth;
+  public int? MaxHealth => _runtime.Context.CharacterState.MaxHealth > 0
+    ? _runtime.Context.CharacterState.MaxHealth
+    : null;
 
   public string? LastError { get; private set; }
 
-  public Task StartFarmAsync(CancellationToken cancellationToken)
+  public Task StartFarmAsync(int targetIterations, CancellationToken cancellationToken)
   {
-    return StartScenarioAsync(_runtime.Scenarios.FarmCycle, cancellationToken);
-  }
-
-  public Task StartFarmAsync(int targetIterations, int maxHealth, CancellationToken cancellationToken)
-  {
-    ConfigureRun(targetIterations, maxHealth);
+    ConfigureRun(targetIterations);
 
     return StartScenarioAsync(_runtime.Scenarios.FarmCycle, cancellationToken);
   }
@@ -54,6 +51,17 @@ public sealed class ClickerApplication
   public Task StartCombatPreparationAsync(CancellationToken cancellationToken)
   {
     return StartScenarioAsync(_runtime.Scenarios.CombatPreparation, cancellationToken);
+  }
+
+  public async Task<int> RefreshMaxHealthAsync(CancellationToken cancellationToken)
+  {
+    await RunScenarioAsync(_runtime.Scenarios.Authentication, cancellationToken);
+
+    var maxHealth = await _runtime.StatsReader.ReadMaxHealthAsync(cancellationToken);
+    _runtime.Context.CharacterState.UpdateMaxHealth(maxHealth);
+    _runtime.Context.Logger.Log($"Максимальное здоровье персонажа: {maxHealth}.");
+
+    return maxHealth;
   }
 
   public Task PrepareFarmAsync(CancellationToken cancellationToken)
@@ -74,7 +82,7 @@ public sealed class ClickerApplication
     }
   }
 
-  private void ConfigureRun(int targetIterations, int maxHealth)
+  private void ConfigureRun(int targetIterations)
   {
     if (targetIterations <= 0)
     {
@@ -82,7 +90,6 @@ public sealed class ClickerApplication
     }
 
     _runtime.Context.ResetIterations(targetIterations);
-    _runtime.Context.CharacterState.UpdateMaxHealth(maxHealth);
   }
 
   private Task StartScenarioAsync(IScenario scenario, CancellationToken cancellationToken)

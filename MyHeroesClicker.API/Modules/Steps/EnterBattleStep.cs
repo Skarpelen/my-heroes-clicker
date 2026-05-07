@@ -16,8 +16,9 @@ public sealed class EnterBattleStep : IScenarioStep
   public async Task<StepResult> ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     var page = context.Page;
+    var battleUrl = new Uri(new Uri(context.Options.BaseUrl), "/battle1").ToString();
 
-    await page.GotoAsync(context.Options.BaseUrl, new()
+    await page.GotoAsync(battleUrl, new()
     {
       WaitUntil = WaitUntilState.DOMContentLoaded
     });
@@ -28,17 +29,6 @@ public sealed class EnterBattleStep : IScenarioStep
     {
       throw new AuthenticationRequiredException("Для входа в бой требуется авторизация.");
     }
-
-    var battleLinks = BattlePageLocators.BattleLinks(page);
-    var startButton = await battleLinks.CountAsync() > 0
-      ? battleLinks.First
-      : page.GetByText("начать игру").First;
-
-    await context.PageInteractor.PrepareForClickAsync(context, startButton, cancellationToken);
-
-    await Task.WhenAll(
-      page.WaitForURLAsync("**/batle1"),
-      startButton.ClickAsync());
 
     await context.Guard.ExpectBattlePageAsync(context, cancellationToken);
 

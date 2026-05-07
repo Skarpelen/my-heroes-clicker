@@ -16,6 +16,8 @@ public sealed class BrowserSession : IAsyncDisposable
 
   public IPage Page { get; }
 
+  public IBrowserContext Context => _context;
+
   public static async Task<BrowserSession> StartAsync(IPlaywright playwright, ClickerOptions options)
   {
     var userDataDir = Path.GetFullPath(options.UserDataDir);

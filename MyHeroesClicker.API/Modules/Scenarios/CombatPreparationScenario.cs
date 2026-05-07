@@ -1,30 +1,36 @@
-﻿using MyHeroesClicker.Confs;
+﻿using MyHeroesClicker.Browser;
 using MyHeroesClicker.Core;
-using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker.Scenarios;
 
 public sealed class CombatPreparationScenario : IScenario
 {
   private readonly IScenario _innerScenario;
+  private readonly CharacterStatsReader _statsReader;
 
   public CombatPreparationScenario(
-    EquipmentStyleService equipmentStyleService,
-    EquipmentStyleConfig combatStyleConfig,
-    TechniquesConfig techniquesConfig)
+    DirectEquipmentClient equipmentClient,
+    DirectTechniqueClient techniqueClient,
+    CharacterStatsReader statsReader)
   {
+    _statsReader = statsReader;
     _innerScenario = new CompositeScenario("Подготовка к бою", [
-      new ApplyEquipmentStyleScenario("Переодевание в боевые вещи", equipmentStyleService, combatStyleConfig, "бой"),
+      new ApplyEquipmentStyleScenario("Переодевание в боевые вещи", equipmentClient, EquipmentStyleMode.Combat),
       new TechniqueModeScenario(
         "Включение приемов",
-        techniquesConfig.EnableAllForCombat ? "включить все боевые приемы" : "боевые приемы не настроены")
+        techniqueClient,
+        TechniqueMode.Combat)
     ]);
   }
 
   public string Name => "Подготовка к бою";
 
-  public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
+  public async Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    return _innerScenario.ExecuteAsync(context, cancellationToken);
+    await _innerScenario.ExecuteAsync(context, cancellationToken);
+
+    var maxHealth = await _statsReader.ReadMaxHealthAsync(cancellationToken);
+    context.CharacterState.UpdateMaxHealth(maxHealth);
+    context.Logger.Log($"Максимальное здоровье после подготовки к бою: {maxHealth}.");
   }
 }

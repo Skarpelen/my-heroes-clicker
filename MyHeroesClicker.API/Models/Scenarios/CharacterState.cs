@@ -2,11 +2,6 @@
 
 public sealed class CharacterState
 {
-  public CharacterState(int maxHealth)
-  {
-    MaxHealth = maxHealth;
-  }
-
   public int MaxHealth { get; private set; }
 
   public void UpdateMaxHealth(int maxHealth)

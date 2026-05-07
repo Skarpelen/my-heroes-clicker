@@ -18,13 +18,15 @@ public sealed class ClickerRuntime : IAsyncDisposable
     BrowserSession browserSession,
     ScenarioContext context,
     ScenarioCatalog scenarios,
-    IAlertService alertService)
+    IAlertService alertService,
+    CharacterStatsReader statsReader)
   {
     _playwright = playwright;
     _browserSession = browserSession;
     Context = context;
     Scenarios = scenarios;
     AlertService = alertService;
+    StatsReader = statsReader;
   }
 
   public ScenarioContext Context { get; }
@@ -33,27 +35,30 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
   public IAlertService AlertService { get; }
 
+  public CharacterStatsReader StatsReader { get; }
+
   public static async Task<ClickerRuntime> StartAsync(
     ClickerOptions options,
     ClickerConfig config,
     IRunLogger logger,
     IAlertService alertService,
     IPauseService pauseService,
-    int targetIterations,
-    int maxHealth)
+    int targetIterations)
   {
     var failureDumpService = new FailureDumpService();
     var guard = new BrowserGuard(alertService, failureDumpService);
     var pageInteractor = new PageInteractor();
     var humanDelay = new HumanDelayService(options);
     var resourcesReader = new BattleResourcesReader();
-    var equipmentReader = new CharacterEquipmentReader();
-    var equipmentStyleService = new EquipmentStyleService(equipmentReader);
 
     var playwright = await Playwright.CreateAsync();
     var browserSession = await BrowserSession.StartAsync(playwright, options);
+    var webClient = new MyHeroesWebClient(browserSession, options);
+    var equipmentClient = new DirectEquipmentClient(webClient);
+    var techniqueClient = new DirectTechniqueClient(webClient);
+    var statsReader = new CharacterStatsReader(webClient);
 
-    var characterState = new CharacterState(maxHealth);
+    var characterState = new CharacterState();
     var context = new ScenarioContext(
       browserSession.Page,
       guard,
@@ -65,15 +70,17 @@ public sealed class ClickerRuntime : IAsyncDisposable
       targetIterations,
       characterState);
 
-    IScenario authenticationScenario = new AuthenticationScenario(config, browserSession.SaveAuthStateAsync);
+    IScenario authenticationScenario = new AuthenticationScenario(config, webClient, browserSession.SaveAuthStateAsync);
     IScenario farmPreparationScenario = new FarmPreparationScenario(
-      equipmentStyleService,
-      config.Equipment.FarmStyle,
-      config.Techniques);
+      equipmentClient,
+      techniqueClient,
+      statsReader);
     IScenario combatPreparationScenario = new CombatPreparationScenario(
-      equipmentStyleService,
-      config.Equipment.CombatStyle,
-      config.Techniques);
+      equipmentClient,
+      techniqueClient,
+      statsReader);
+    IScenario authenticatedFarmPreparationScenario = new AuthenticatedScenario(authenticationScenario, farmPreparationScenario);
+    IScenario authenticatedCombatPreparationScenario = new AuthenticatedScenario(authenticationScenario, combatPreparationScenario);
     IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario);
     IScenario farmCycleScenario = new AuthenticatedScenario(
       authenticationScenario,
@@ -84,12 +91,12 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
     var scenarios = new ScenarioCatalog(
       authenticationScenario,
-      farmPreparationScenario,
-      combatPreparationScenario,
+      authenticatedFarmPreparationScenario,
+      authenticatedCombatPreparationScenario,
       farmBattleScenario,
       farmCycleScenario);
 
-    return new ClickerRuntime(playwright, browserSession, context, scenarios, alertService);
+    return new ClickerRuntime(playwright, browserSession, context, scenarios, alertService, statsReader);
   }
 
   public async ValueTask DisposeAsync()

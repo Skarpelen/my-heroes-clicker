@@ -1,31 +1,36 @@
-﻿using MyHeroesClicker.Confs;
+﻿using MyHeroesClicker.Browser;
 using MyHeroesClicker.Core;
-using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker.Scenarios;
 
 public sealed class FarmPreparationScenario : IScenario
 {
   private readonly IScenario _innerScenario;
+  private readonly CharacterStatsReader _statsReader;
 
   public FarmPreparationScenario(
-    EquipmentStyleService equipmentStyleService,
-    EquipmentStyleConfig farmStyleConfig,
-    TechniquesConfig techniquesConfig)
+    DirectEquipmentClient equipmentClient,
+    DirectTechniqueClient techniqueClient,
+    CharacterStatsReader statsReader)
   {
+    _statsReader = statsReader;
     _innerScenario = new CompositeScenario("Подготовка к фарму", [
-      new ApplyEquipmentStyleScenario("Переодевание в фарм вещи", equipmentStyleService, farmStyleConfig, "фарм"),
+      new ApplyEquipmentStyleScenario("Переодевание в фарм вещи", equipmentClient, EquipmentStyleMode.Farm),
       new TechniqueModeScenario(
         "Отключение лишних приемов",
-        "отключить приемы, не нужные для фарма",
-        techniquesConfig.FarmDisabledTechniqueNames)
+        techniqueClient,
+        TechniqueMode.Farm)
     ]);
   }
 
   public string Name => "Подготовка к фарму";
 
-  public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
+  public async Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    return _innerScenario.ExecuteAsync(context, cancellationToken);
+    await _innerScenario.ExecuteAsync(context, cancellationToken);
+
+    var maxHealth = await _statsReader.ReadMaxHealthAsync(cancellationToken);
+    context.CharacterState.UpdateMaxHealth(maxHealth);
+    context.Logger.Log($"Максимальное здоровье после подготовки к фарму: {maxHealth}.");
   }
 }

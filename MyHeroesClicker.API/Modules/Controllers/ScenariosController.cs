@@ -41,9 +41,18 @@ public sealed class ScenariosController : ControllerBase
   }
 
   [HttpGet("character/health")]
-  public ActionResult<CharacterHealthResponse> GetCharacterHealth()
+  public async Task<ActionResult<CharacterHealthResponse>> GetCharacterHealth(CancellationToken cancellationToken)
   {
-    return Ok(_clicker.GetCharacterHealth());
+    try
+    {
+      return Ok(await _clicker.GetCharacterHealthAsync(cancellationToken));
+    }
+    catch (InvalidOperationException exception)
+    {
+      _logger.LogWarning(exception, "Character health request rejected.");
+
+      return Conflict(new { error = exception.Message });
+    }
   }
 
   [HttpPost("farm/start")]

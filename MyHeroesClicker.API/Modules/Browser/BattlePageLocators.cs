@@ -6,12 +6,7 @@ public static class BattlePageLocators
 {
   public static ILocator AttackButton(IPage page)
   {
-    return page.Locator("a.btn_act[href='/batle1/attack10']");
-  }
-
-  public static ILocator BattleLinks(IPage page)
-  {
-    return page.Locator("a[href='/batle1'], a[href='https://myheroes.ru/batle1']");
+    return page.Locator("a.btn_act[href='/batle1/attack10'], a.btn_act[href='/battle1/attack10']");
   }
 
   public static ILocator ExpiredActionError(IPage page)
@@ -48,7 +43,7 @@ public static class BattlePageLocators
 
   public static ILocator ReturnToBattleButton(IPage page)
   {
-    return page.Locator("a.btn_use.fltl.btn_gspace[href='/batle1']").Filter(new()
+    return page.Locator("a.btn_use.fltl.btn_gspace[href='/batle1'], a.btn_use.fltl.btn_gspace[href='/battle1']").Filter(new()
     {
       HasTextString = "поиск"
     });

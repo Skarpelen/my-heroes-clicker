@@ -23,7 +23,7 @@ public sealed class BrowserGuard
       return false;
     }
 
-    if (!IsExpectedPage(page, "/batle1"))
+    if (!IsExpectedPage(page, "/batle1") && !IsExpectedPage(page, "/battle1"))
     {
       return false;
     }
@@ -41,7 +41,7 @@ public sealed class BrowserGuard
     if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
         || uri.Scheme != "https"
         || uri.Host != "myheroes.ru"
-        || !uri.AbsolutePath.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase))
+        || !IsBattleLogPath(uri.AbsolutePath))
     {
       return false;
     }
@@ -68,7 +68,7 @@ public sealed class BrowserGuard
 
     if (!await IsBattlePageAsync(page))
     {
-      await StopWithErrorAsync(context, $"Ожидалась страница https://myheroes.ru/batle1, но текущий URL: {context.Page.Url}", cancellationToken);
+      await StopWithErrorAsync(context, $"Ожидалась страница боя, но текущий URL: {context.Page.Url}", cancellationToken);
     }
 
     var attackButton = BattlePageLocators.AttackButton(page);
@@ -159,5 +159,11 @@ public sealed class BrowserGuard
     return uri.Scheme == "https"
            && uri.Host == "myheroes.ru"
            && uri.AbsolutePath == expectedPath;
+  }
+
+  private static bool IsBattleLogPath(string path)
+  {
+    return path.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/battle1/log/", StringComparison.OrdinalIgnoreCase);
   }
 }

@@ -234,6 +234,11 @@ public sealed class BattleBlockerHandler
 
   private int GetMinHealth(ScenarioContext context)
   {
+    if (context.CharacterState.MaxHealth <= 0)
+    {
+      throw new InvalidOperationException("Максимальное здоровье не получено. Выполните подготовку режима перед фармом.");
+    }
+
     var percent = context.Options.MinAttackHealthPercent
                   + _random.NextDouble() * (context.Options.MaxAttackHealthPercent - context.Options.MinAttackHealthPercent);
 

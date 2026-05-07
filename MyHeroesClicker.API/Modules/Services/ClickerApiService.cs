@@ -8,7 +8,6 @@ namespace MyHeroesClicker.API.Services;
 
 public sealed class ClickerApiService : IAsyncDisposable
 {
-  private const int DefaultMaxHealth = 3802;
   private readonly SemaphoreSlim _initializationSync = new(1, 1);
   private readonly ClickerOptions _options;
   private readonly IRunLogger _logger;
@@ -46,9 +45,12 @@ public sealed class ClickerApiService : IAsyncDisposable
       _application.LastError ?? _lastError);
   }
 
-  public CharacterHealthResponse GetCharacterHealth()
+  public async Task<CharacterHealthResponse> GetCharacterHealthAsync(CancellationToken cancellationToken)
   {
-    return new CharacterHealthResponse(_application?.MaxHealth ?? DefaultMaxHealth);
+    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
+    var maxHealth = await application.RefreshMaxHealthAsync(cancellationToken);
+
+    return new CharacterHealthResponse(maxHealth);
   }
 
   public async Task StartFarmAsync(ScenarioRunRequest request, CancellationToken cancellationToken)
@@ -59,7 +61,7 @@ public sealed class ClickerApiService : IAsyncDisposable
 
     try
     {
-      await application.StartFarmAsync(request.Iterations, request.MaxHealth, cancellationToken);
+      await application.StartFarmAsync(request.Iterations, cancellationToken);
       _lastError = null;
     }
     catch (Exception exception)
@@ -71,13 +73,13 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   public async Task StartFarmPreparationAsync(CancellationToken cancellationToken)
   {
-    var application = await GetApplicationAsync(new ScenarioRunRequest(500, DefaultMaxHealth), cancellationToken);
+    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
     await StartScenarioAsync(application.StartFarmPreparationAsync, cancellationToken);
   }
 
   public async Task StartCombatPreparationAsync(CancellationToken cancellationToken)
   {
-    var application = await GetApplicationAsync(new ScenarioRunRequest(500, DefaultMaxHealth), cancellationToken);
+    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
     await StartScenarioAsync(application.StartCombatPreparationAsync, cancellationToken);
   }
 
@@ -121,8 +123,7 @@ public sealed class ClickerApiService : IAsyncDisposable
         _logger,
         _alertService,
         _pauseService,
-        initialRequest.Iterations,
-        initialRequest.MaxHealth);
+        initialRequest.Iterations);
 
       _application = new ClickerApplication(_runtime);
 
@@ -155,11 +156,6 @@ public sealed class ClickerApiService : IAsyncDisposable
     if (request.Iterations <= 0)
     {
       throw new ArgumentOutOfRangeException(nameof(request.Iterations), "Iterations must be positive.");
-    }
-
-    if (request.MaxHealth <= 0)
-    {
-      throw new ArgumentOutOfRangeException(nameof(request.MaxHealth), "MaxHealth must be positive.");
     }
   }
 }

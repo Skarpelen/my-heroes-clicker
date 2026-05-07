@@ -1,36 +1,37 @@
-﻿using MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Browser;
+using MyHeroesClicker.Core;
 
 namespace MyHeroesClicker.Scenarios;
 
 public sealed class TechniqueModeScenario : IScenario
 {
-  private readonly string _modeDescription;
-  private readonly IReadOnlyCollection<string> _techniqueNames;
+  private readonly DirectTechniqueClient _techniqueClient;
+  private readonly TechniqueMode _mode;
 
   public TechniqueModeScenario(
     string name,
-    string modeDescription,
-    IReadOnlyCollection<string>? techniqueNames = null)
+    DirectTechniqueClient techniqueClient,
+    TechniqueMode mode)
   {
     Name = name;
-    _modeDescription = modeDescription;
-    _techniqueNames = techniqueNames ?? [];
+    _techniqueClient = techniqueClient;
+    _mode = mode;
   }
 
   public string Name { get; }
 
   public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    if (_techniqueNames.Count == 0)
+    if (_mode == TechniqueMode.Farm)
     {
-      context.Logger.Log($"Сценарий приемов пока не реализован: {_modeDescription}.");
-
-      return Task.CompletedTask;
+      return _techniqueClient.ApplyFarmModeAsync(context, cancellationToken);
     }
 
-    var names = string.Join(", ", _techniqueNames);
-    context.Logger.Log($"Сценарий приемов пока не реализован: {_modeDescription}. Приемы из конфига: {names}.");
-
-    return Task.CompletedTask;
+    return _techniqueClient.ApplyCombatModeAsync(context, cancellationToken);
   }
+}
+public enum TechniqueMode
+{
+  Farm,
+  Combat
 }

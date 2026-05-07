@@ -1,5 +1,4 @@
-﻿using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
+﻿using MyHeroesClicker.Browser;
 using MyHeroesClicker.Confs;
 using MyHeroesClicker.Core;
 
@@ -8,11 +7,16 @@ namespace MyHeroesClicker.Scenarios;
 public sealed class AuthenticationScenario : IScenario
 {
   private readonly ClickerConfig _config;
+  private readonly MyHeroesWebClient _webClient;
   private readonly Func<Task>? _afterAuthenticated;
 
-  public AuthenticationScenario(ClickerConfig config, Func<Task>? afterAuthenticated = null)
+  public AuthenticationScenario(
+    ClickerConfig config,
+    MyHeroesWebClient webClient,
+    Func<Task>? afterAuthenticated = null)
   {
     _config = config;
+    _webClient = webClient;
     _afterAuthenticated = afterAuthenticated;
   }
 
@@ -20,38 +24,17 @@ public sealed class AuthenticationScenario : IScenario
 
   public async Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    var page = context.Page;
+    context.Logger.Log("Выполняю авторизацию прямым запросом.");
 
-    await page.GotoAsync(context.Options.BaseUrl, new()
-    {
-      WaitUntil = WaitUntilState.DOMContentLoaded
-    });
-
-    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-    if (!await context.Guard.IsLoginPageAsync(page))
-    {
-      context.Logger.Log("Сессия уже авторизована.");
-      await SaveAuthStateAsync();
-
-      return;
-    }
-
-    context.Logger.Log("Выполняю авторизацию.");
-
-    await LoginPageLocators.LoginInput(page).FillAsync(_config.Login.UserName);
-    await LoginPageLocators.PasswordInput(page).FillAsync(_config.Login.Password);
-
-    var submitButton = LoginPageLocators.SubmitButton(page);
-
-    await context.PageInteractor.PrepareForClickAsync(context, submitButton, cancellationToken);
-    await submitButton.ClickAsync();
-    await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-
-    if (await context.Guard.IsLoginPageAsync(page))
-    {
-      throw new InvalidOperationException("Не удалось авторизоваться. Проверьте логин и пароль.");
-    }
+    await _webClient.PostFormExpectedAsync(
+      "/main/login",
+      new Dictionary<string, string>
+      {
+        ["login"] = _config.Login.UserName,
+        ["password"] = _config.Login.Password,
+        ["btn_login"] = "вход"
+      },
+      cancellationToken);
 
     await SaveAuthStateAsync();
   }
