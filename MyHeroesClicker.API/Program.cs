@@ -1,6 +1,6 @@
-using MyHeroesClicker.API.Core.Interfaces.Repositories;
-using MyHeroesClicker.API.DataSQLite.Repositories;
-using MyHeroesClicker.API.DataSQLite.Toolkit;
+using MyHeroesClicker.Core.Interfaces.Repositories;
+using MyHeroesClicker.DataSQLite.Repositories;
+using MyHeroesClicker.DataSQLite.Toolkit;
 using MyHeroesClicker.API.Services;
 using MyHeroesClicker.Services;
 using NLog;

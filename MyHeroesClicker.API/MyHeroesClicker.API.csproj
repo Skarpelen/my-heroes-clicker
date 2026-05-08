@@ -13,8 +13,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MyHeroesClicker.Browser\MyHeroesClicker.Browser.csproj" />
-    <ProjectReference Include="..\MyHeroesClicker.API.Core\MyHeroesClicker.API.Core.csproj" />
-    <ProjectReference Include="..\MyHeroesClicker.API.DataSQLite\MyHeroesClicker.API.DataSQLite.csproj" />
+    <ProjectReference Include="..\MyHeroesClicker.Core\MyHeroesClicker.Core.csproj" />
+    <ProjectReference Include="..\MyHeroesClicker.DataSQLite\MyHeroesClicker.DataSQLite.csproj" />
   </ItemGroup>
 
   <ItemGroup>

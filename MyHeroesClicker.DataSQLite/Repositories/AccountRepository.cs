@@ -1,9 +1,9 @@
 using Microsoft.Data.Sqlite;
 using MyHeroesClicker.API.Contracts.Database;
-using MyHeroesClicker.API.Core.Interfaces.Repositories;
-using MyHeroesClicker.API.DataSQLite.Toolkit;
+using MyHeroesClicker.Core.Interfaces.Repositories;
+using MyHeroesClicker.DataSQLite.Toolkit;
 
-namespace MyHeroesClicker.API.DataSQLite.Repositories;
+namespace MyHeroesClicker.DataSQLite.Repositories;
 
 public sealed class AccountRepository : IAccountRepository
 {

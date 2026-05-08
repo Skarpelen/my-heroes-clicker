@@ -1,6 +1,6 @@
 using Microsoft.Data.Sqlite;
 
-namespace MyHeroesClicker.API.DataSQLite.Toolkit;
+namespace MyHeroesClicker.DataSQLite.Toolkit;
 
 public sealed class SqliteConnectionFactory
 {

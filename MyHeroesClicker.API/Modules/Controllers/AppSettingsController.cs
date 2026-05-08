@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.API.Contracts.Database;
-using MyHeroesClicker.API.Core.Interfaces.Repositories;
+using MyHeroesClicker.Core.Interfaces.Repositories;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 

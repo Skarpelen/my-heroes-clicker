@@ -1,6 +1,6 @@
 using MyHeroesClicker.API.Contracts.Database;
 
-namespace MyHeroesClicker.API.Core.Interfaces.Repositories;
+namespace MyHeroesClicker.Core.Interfaces.Repositories;
 
 public interface ITechniquePresetRepository
 {
