@@ -120,6 +120,8 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   public async ValueTask DisposeAsync()
   {
+    _application?.Dispose();
+
     if (_runtime is not null)
     {
       await _runtime.DisposeAsync();

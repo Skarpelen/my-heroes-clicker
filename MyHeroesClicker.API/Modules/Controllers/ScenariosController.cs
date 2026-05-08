@@ -2,7 +2,7 @@
 using MyHeroesClicker.API.Modules.Application;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Contracts;
-using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.API.Modules.Runtime;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -71,7 +71,7 @@ public sealed class ScenariosController : ControllerBase
 
   private async Task<IActionResult> StartRunAsync(
     ScenarioRunRequest request,
-    Func<ClickerApplication, IScenario> selectScenario,
+    Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
     string rejectionLogMessage,
     CancellationToken cancellationToken)
   {
@@ -85,9 +85,8 @@ public sealed class ScenariosController : ControllerBase
       _clicker.ResetPause();
 
       var application = await _clicker.GetApplicationAsync(request.Iterations, cancellationToken);
-      application.ConfigureRun(request.Iterations);
 
-      await application.StartScenarioAsync(selectScenario(application), cancellationToken);
+      await application.StartScenarioAsync(selectScenario(application), request.Iterations, cancellationToken);
       _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));
@@ -141,7 +140,7 @@ public sealed class ScenariosController : ControllerBase
   }
 
   private async Task<IActionResult> StartScenarioAsync(
-    Func<ClickerApplication, IScenario> selectScenario,
+    Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
     string rejectionLogMessage,
     CancellationToken cancellationToken)
   {
@@ -151,7 +150,10 @@ public sealed class ScenariosController : ControllerBase
 
       var application = await _clicker.GetApplicationAsync(DefaultPreparationIterations, cancellationToken);
 
-      await application.StartScenarioAsync(selectScenario(application), cancellationToken);
+      await application.StartScenarioAsync(
+        selectScenario(application),
+        DefaultPreparationIterations,
+        cancellationToken);
       _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));

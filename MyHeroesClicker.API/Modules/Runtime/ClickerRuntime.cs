@@ -5,6 +5,7 @@ using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Models.Scenarios;
@@ -16,10 +17,24 @@ public sealed class ClickerRuntime : IAsyncDisposable
 {
   private readonly IPlaywright _playwright;
   private readonly BrowserSession _browserSession;
+  private readonly ScenarioBrowserTabManager _tabManager;
+  private readonly IBrowserGuard _guard;
+  private readonly IPageInteractor _pageInteractor;
+  private readonly IHumanDelayService _humanDelay;
+  private readonly IRunLogger _logger;
+  private readonly IPauseService _pauseService;
+  private readonly ClickerOptions _options;
 
   private ClickerRuntime(
     IPlaywright playwright,
     BrowserSession browserSession,
+    ScenarioBrowserTabManager tabManager,
+    IBrowserGuard guard,
+    IPageInteractor pageInteractor,
+    IHumanDelayService humanDelay,
+    IRunLogger logger,
+    IPauseService pauseService,
+    ClickerOptions options,
     ScenarioContext context,
     ScenarioCatalog scenarios,
     IAlertService alertService,
@@ -27,6 +42,13 @@ public sealed class ClickerRuntime : IAsyncDisposable
   {
     _playwright = playwright;
     _browserSession = browserSession;
+    _tabManager = tabManager;
+    _guard = guard;
+    _pageInteractor = pageInteractor;
+    _humanDelay = humanDelay;
+    _logger = logger;
+    _pauseService = pauseService;
+    _options = options;
     Context = context;
     Scenarios = scenarios;
     AlertService = alertService;
@@ -40,6 +62,32 @@ public sealed class ClickerRuntime : IAsyncDisposable
   public IAlertService AlertService { get; }
 
   public CharacterStatsReader StatsReader { get; }
+
+  public async Task<ScenarioContext> CreateContextAsync(
+    ScenarioCatalogEntry entry,
+    int targetIterations,
+    CancellationToken cancellationToken)
+  {
+    var tab = await _tabManager.GetOrCreateAsync(
+      entry.BrowserTabKind,
+      entry.BrowserTabName,
+      cancellationToken);
+    var characterState = new CharacterState();
+    var logger = new ScenarioTabRunLogger(_logger, tab.Name);
+
+    return new ScenarioContext(
+      tab.Page,
+      _guard,
+      _pageInteractor,
+      _humanDelay,
+      logger,
+      _pauseService,
+      _options,
+      targetIterations,
+      characterState,
+      tab.Kind,
+      tab.Name);
+  }
 
   public static async Task<ClickerRuntime> StartAsync(
     ClickerOptions options,
@@ -57,6 +105,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
     var playwright = await Playwright.CreateAsync();
     var browserSession = await BrowserSession.StartAsync(playwright, options);
+    var tabManager = new ScenarioBrowserTabManager(browserSession);
     var webClient = new MyHeroesWebClient(browserSession, options);
     var equipmentClient = new DirectEquipmentClient(webClient);
     var techniqueClient = new DirectTechniqueClient(webClient);
@@ -72,7 +121,9 @@ public sealed class ClickerRuntime : IAsyncDisposable
       pauseService,
       options,
       targetIterations,
-      characterState);
+      characterState,
+      ScenarioBrowserTabKind.Main,
+      "Основная вкладка");
 
     IScenario authenticationScenario = new AuthenticationScenario(config, webClient, browserSession.SaveAuthStateAsync);
     IScenario farmPreparationScenario = new FarmPreparationScenario(
@@ -108,7 +159,20 @@ public sealed class ClickerRuntime : IAsyncDisposable
       farmCycleScenario,
       adventureFarmCycleScenario);
 
-    return new ClickerRuntime(playwright, browserSession, context, scenarios, alertService, statsReader);
+    return new ClickerRuntime(
+      playwright,
+      browserSession,
+      tabManager,
+      guard,
+      pageInteractor,
+      humanDelay,
+      logger,
+      pauseService,
+      options,
+      context,
+      scenarios,
+      alertService,
+      statsReader);
   }
 
   public async ValueTask DisposeAsync()

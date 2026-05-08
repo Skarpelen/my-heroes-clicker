@@ -17,7 +17,9 @@ public sealed class ScenarioContext
     IPauseService pauseService,
     ClickerOptions options,
     int targetIterations,
-    CharacterState characterState)
+    CharacterState characterState,
+    ScenarioBrowserTabKind browserTabKind = ScenarioBrowserTabKind.Main,
+    string browserTabName = "Основная вкладка")
   {
     Page = page;
     Guard = guard;
@@ -28,6 +30,8 @@ public sealed class ScenarioContext
     Options = options;
     TargetIterations = targetIterations;
     CharacterState = characterState;
+    BrowserTabKind = browserTabKind;
+    BrowserTabName = browserTabName;
   }
 
   public IPage Page { get; }
@@ -49,6 +53,10 @@ public sealed class ScenarioContext
   public int CompletedIterations { get; set; }
 
   public CharacterState CharacterState { get; }
+
+  public ScenarioBrowserTabKind BrowserTabKind { get; }
+
+  public string BrowserTabName { get; }
 
   public void ResetIterations(int targetIterations)
   {
