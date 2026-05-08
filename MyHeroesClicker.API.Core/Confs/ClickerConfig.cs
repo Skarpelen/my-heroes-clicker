@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker.Confs;
+namespace MyHeroesClicker.Confs;
 
 public sealed class ClickerConfig
 {

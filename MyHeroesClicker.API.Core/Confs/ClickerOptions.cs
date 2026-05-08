@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker;
+namespace MyHeroesClicker;
 
 public sealed class ClickerOptions
 {

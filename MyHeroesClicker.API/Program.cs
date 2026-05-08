@@ -1,4 +1,7 @@
-﻿using MyHeroesClicker.API.Services;
+using MyHeroesClicker.API.Core.Interfaces.Repositories;
+using MyHeroesClicker.API.DataSQLite.Repositories;
+using MyHeroesClicker.API.DataSQLite.Toolkit;
+using MyHeroesClicker.API.Services;
 using MyHeroesClicker.Services;
 using NLog;
 using NLog.Config;
@@ -31,6 +34,20 @@ public class Program
     builder.Services.AddSingleton<IAlertService, WebAlertService>();
     builder.Services.AddSingleton<IPauseService, WebPauseService>();
     builder.Services.AddSingleton<ClickerApiService>();
+    builder.Services.AddSingleton(serviceProvider =>
+    {
+      var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+      var databasePath = configuration["Database:Path"] ?? Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "MyHeroesClicker",
+        "clicker.sqlite");
+
+      return new SqliteConnectionFactory(databasePath);
+    });
+    builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+    builder.Services.AddScoped<IAppSettingsRepository, AppSettingsRepository>();
+    builder.Services.AddScoped<IEquipmentSetRepository, EquipmentSetRepository>();
+    builder.Services.AddScoped<ITechniquePresetRepository, TechniquePresetRepository>();
 
     var app = builder.Build();
 

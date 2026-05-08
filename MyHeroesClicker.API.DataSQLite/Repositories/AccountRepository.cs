@@ -1,0 +1,137 @@
+using Microsoft.Data.Sqlite;
+using MyHeroesClicker.API.Contracts.Database;
+using MyHeroesClicker.API.Core.Interfaces.Repositories;
+using MyHeroesClicker.API.DataSQLite.Toolkit;
+
+namespace MyHeroesClicker.API.DataSQLite.Repositories;
+
+public sealed class AccountRepository : IAccountRepository
+{
+  private readonly SqliteConnectionFactory _connectionFactory;
+
+  public AccountRepository(SqliteConnectionFactory connectionFactory)
+  {
+    _connectionFactory = connectionFactory;
+  }
+
+  public async Task<IReadOnlyCollection<AccountResponse>> GetAllAsync(CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+      SELECT id, title, login, encrypted_password, auth_state_path, is_enabled
+      FROM accounts
+      ORDER BY title;
+      """;
+
+    await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+    var result = new List<AccountResponse>();
+
+    while (await reader.ReadAsync(cancellationToken))
+    {
+      result.Add(ReadAccount(reader));
+    }
+
+    return result;
+  }
+
+  public async Task<AccountResponse?> GetByIdAsync(long id, CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+      SELECT id, title, login, encrypted_password, auth_state_path, is_enabled
+      FROM accounts
+      WHERE id = @id;
+      """;
+    command.Parameters.AddWithValue("@id", id);
+
+    await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+    if (!await reader.ReadAsync(cancellationToken))
+    {
+      return null;
+    }
+
+    return ReadAccount(reader);
+  }
+
+  public async Task<long> CreateAsync(CreateAccountRequest request, CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+      INSERT INTO accounts (title, login, encrypted_password, auth_state_path, is_enabled)
+      VALUES (@title, @login, @encrypted_password, @auth_state_path, @is_enabled)
+      RETURNING id;
+      """;
+    FillAccountParameters(command, request.Title, request.Login, request.EncryptedPassword, request.AuthStatePath, request.IsEnabled);
+
+    var result = await command.ExecuteScalarAsync(cancellationToken);
+
+    return (long)result!;
+  }
+
+  public async Task<bool> UpdateAsync(long id, UpdateAccountRequest request, CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+      UPDATE accounts
+      SET title = @title,
+          login = @login,
+          encrypted_password = @encrypted_password,
+          auth_state_path = @auth_state_path,
+          is_enabled = @is_enabled,
+          updated_utc = CURRENT_TIMESTAMP
+      WHERE id = @id;
+      """;
+    command.Parameters.AddWithValue("@id", id);
+    FillAccountParameters(command, request.Title, request.Login, request.EncryptedPassword, request.AuthStatePath, request.IsEnabled);
+
+    return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+  }
+
+  public async Task<bool> DeleteAsync(long id, CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = "DELETE FROM accounts WHERE id = @id;";
+    command.Parameters.AddWithValue("@id", id);
+
+    return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+  }
+
+  private static void FillAccountParameters(
+    SqliteCommand command,
+    string title,
+    string login,
+    string? encryptedPassword,
+    string? authStatePath,
+    bool isEnabled)
+  {
+    command.Parameters.AddWithValue("@title", title);
+    command.Parameters.AddWithValue("@login", login);
+    command.Parameters.AddWithValue("@encrypted_password", (object?)encryptedPassword ?? DBNull.Value);
+    command.Parameters.AddWithValue("@auth_state_path", (object?)authStatePath ?? DBNull.Value);
+    command.Parameters.AddWithValue("@is_enabled", isEnabled);
+  }
+
+  private static AccountResponse ReadAccount(SqliteDataReader reader)
+  {
+    return new AccountResponse(
+      reader.GetInt64(reader.GetOrdinal("id")),
+      reader.GetString(reader.GetOrdinal("title")),
+      reader.GetString(reader.GetOrdinal("login")),
+      GetNullableString(reader, "encrypted_password"),
+      GetNullableString(reader, "auth_state_path"),
+      reader.GetBoolean(reader.GetOrdinal("is_enabled")));
+  }
+
+  private static string? GetNullableString(SqliteDataReader reader, string name)
+  {
+    var ordinal = reader.GetOrdinal(name);
+
+    return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
+  }
+}

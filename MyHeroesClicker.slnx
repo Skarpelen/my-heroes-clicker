@@ -1,4 +1,7 @@
 ﻿<Solution>
+  <Project Path="MyHeroesClicker.API.Core/MyHeroesClicker.API.Core.csproj" />
+  <Project Path="MyHeroesClicker.API.DataSQLite/MyHeroesClicker.API.DataSQLite.csproj" />
   <Project Path="MyHeroesClicker.API/MyHeroesClicker.API.csproj" Id="d3cf99bd-03f0-4474-a57f-db9ce890e5a1" />
+  <Project Path="MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator.csproj" />
   <Project Path="MyHeroesClicker/MyHeroesClicker.csproj" />
 </Solution>
