@@ -1,4 +1,4 @@
-namespace MyHeroesClicker.Confs;
+namespace MyHeroesClicker.Core.Confs;
 
 public sealed class LoginConfig
 {

@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker.Core;
+﻿namespace MyHeroesClicker.Core.Modules.Core;
 
 public sealed class AuthenticationRequiredException : Exception
 {

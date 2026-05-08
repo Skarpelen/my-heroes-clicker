@@ -1,7 +1,10 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Services;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Interfaces.Browser;
+using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Scenarios;
 
-namespace MyHeroesClicker.Core;
+namespace MyHeroesClicker.Core.Modules.Core;
 
 public sealed class ScenarioContext
 {

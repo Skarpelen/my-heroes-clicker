@@ -1,7 +1,8 @@
 using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Core;
+namespace MyHeroesClicker.Core.Interfaces.Browser;
 
 public interface IBrowserGuard
 {

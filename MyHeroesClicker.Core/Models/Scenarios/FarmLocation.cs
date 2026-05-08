@@ -1,4 +1,4 @@
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Core.Models.Scenarios;
 
 public enum FarmLocation
 {

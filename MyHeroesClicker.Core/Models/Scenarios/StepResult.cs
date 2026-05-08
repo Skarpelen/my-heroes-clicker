@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker.Core;
+﻿namespace MyHeroesClicker.Core.Models.Scenarios;
 
 public sealed class StepResult
 {

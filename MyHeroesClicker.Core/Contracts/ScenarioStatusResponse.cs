@@ -1,4 +1,4 @@
-namespace MyHeroesClicker.API.Contracts;
+namespace MyHeroesClicker.Core.Contracts;
 
 public sealed record ScenarioStatusResponse(
   bool IsInitialized,

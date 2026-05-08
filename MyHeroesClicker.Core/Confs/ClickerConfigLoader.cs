@@ -1,7 +1,7 @@
 using System.Text.Json;
-using MyHeroesClicker.Services;
+using MyHeroesClicker.Core.Interfaces.Services;
 
-namespace MyHeroesClicker.Confs;
+namespace MyHeroesClicker.Core.Confs;
 
 public static class ClickerConfigLoader
 {

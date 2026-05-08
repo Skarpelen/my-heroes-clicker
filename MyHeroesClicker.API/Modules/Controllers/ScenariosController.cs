@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using MyHeroesClicker.API.Contracts;
-using MyHeroesClicker.API.Services;
-using MyHeroesClicker.Application;
-using MyHeroesClicker.Core;
+using MyHeroesClicker.API.Modules.Application;
+using MyHeroesClicker.API.Modules.Services;
+using MyHeroesClicker.Core.Contracts;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 

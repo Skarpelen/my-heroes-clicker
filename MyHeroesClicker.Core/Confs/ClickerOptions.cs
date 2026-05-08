@@ -1,4 +1,4 @@
-namespace MyHeroesClicker;
+namespace MyHeroesClicker.Core.Confs;
 
 public sealed class ClickerOptions
 {

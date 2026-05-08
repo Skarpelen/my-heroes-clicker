@@ -1,7 +1,8 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Core;
+using MyHeroesClicker.Core.Interfaces.Browser;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class PageInteractor : IPageInteractor
 {

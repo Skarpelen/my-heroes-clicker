@@ -1,6 +1,6 @@
 ﻿using Microsoft.Playwright;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class BattleResourcesReader
 {

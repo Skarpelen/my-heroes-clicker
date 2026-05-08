@@ -1,8 +1,9 @@
-﻿using MyHeroesClicker.Browser;
-using MyHeroesClicker.Confs;
-using MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Browser.Browser;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Scenarios;
+namespace MyHeroesClicker.API.Modules.Scenarios;
 
 public sealed class AuthenticationScenario : IScenario
 {

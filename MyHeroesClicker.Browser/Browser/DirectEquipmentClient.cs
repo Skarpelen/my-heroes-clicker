@@ -1,6 +1,6 @@
-﻿using MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class DirectEquipmentClient
 {

@@ -1,9 +1,12 @@
 ﻿using Microsoft.Playwright;
+using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core;
-using MyHeroesClicker.Diagnostics;
-using MyHeroesClicker.Services;
+using MyHeroesClicker.Core.Interfaces.Browser;
+using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class BrowserGuard : IBrowserGuard
 {

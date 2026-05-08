@@ -1,8 +1,10 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
 using MyHeroesClicker.Core;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Steps;
+namespace MyHeroesClicker.API.Modules.Steps;
 
 public sealed class EnterBattleStep : IScenarioStep
 {

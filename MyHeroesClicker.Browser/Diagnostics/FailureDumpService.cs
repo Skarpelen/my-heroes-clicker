@@ -1,6 +1,6 @@
 ﻿using Microsoft.Playwright;
 
-namespace MyHeroesClicker.Diagnostics;
+namespace MyHeroesClicker.Browser.Diagnostics;
 
 public sealed class FailureDumpService
 {

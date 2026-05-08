@@ -1,4 +1,6 @@
-﻿namespace MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Core.Modules.Core;
+
+namespace MyHeroesClicker.Core.Interfaces.Scenarios;
 
 public interface IScenario
 {

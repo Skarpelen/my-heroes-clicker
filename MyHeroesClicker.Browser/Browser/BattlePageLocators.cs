@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
+using MyHeroesClicker.Core.Models.Scenarios;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public static class BattlePageLocators
 {

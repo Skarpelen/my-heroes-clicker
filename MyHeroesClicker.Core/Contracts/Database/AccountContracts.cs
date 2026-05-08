@@ -1,4 +1,4 @@
-namespace MyHeroesClicker.API.Contracts.Database;
+namespace MyHeroesClicker.Core.Contracts.Database;
 
 public sealed record AccountResponse(
   long Id,

@@ -1,6 +1,7 @@
 using Microsoft.Playwright;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Core;
+namespace MyHeroesClicker.Core.Interfaces.Browser;
 
 public interface IPageInteractor
 {

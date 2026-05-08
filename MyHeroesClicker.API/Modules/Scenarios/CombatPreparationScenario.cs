@@ -1,7 +1,9 @@
-﻿using MyHeroesClicker.Browser;
+﻿using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Core;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Scenarios;
+namespace MyHeroesClicker.API.Modules.Scenarios;
 
 public sealed class CombatPreparationScenario : IScenario
 {

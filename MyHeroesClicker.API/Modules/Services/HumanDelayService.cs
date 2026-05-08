@@ -1,4 +1,7 @@
-﻿namespace MyHeroesClicker.Services;
+﻿using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Interfaces.Services;
+
+namespace MyHeroesClicker.API.Modules.Services;
 
 public sealed class HumanDelayService : IHumanDelayService
 {

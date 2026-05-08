@@ -1,6 +1,6 @@
-﻿using MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Core.Interfaces.Scenarios;
 
-namespace MyHeroesClicker.Runtime;
+namespace MyHeroesClicker.API.Modules.Runtime;
 
 public sealed class ScenarioCatalog
 {

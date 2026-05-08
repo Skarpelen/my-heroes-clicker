@@ -1,12 +1,17 @@
 ﻿using Microsoft.Playwright;
 using MyHeroesClicker.Browser;
-using MyHeroesClicker.Confs;
+using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Core;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 using MyHeroesClicker.Diagnostics;
 using MyHeroesClicker.Scenarios;
 using MyHeroesClicker.Services;
 
-namespace MyHeroesClicker.Runtime;
+namespace MyHeroesClicker.API.Modules.Runtime;
 
 public sealed class ClickerRuntime : IAsyncDisposable
 {

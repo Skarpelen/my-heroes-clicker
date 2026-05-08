@@ -1,7 +1,7 @@
-﻿using MyHeroesClicker.Core;
-using MyHeroesClicker.Runtime;
+﻿using MyHeroesClicker.API.Modules.Runtime;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
 
-namespace MyHeroesClicker.Application;
+namespace MyHeroesClicker.API.Modules.Application;
 
 public sealed class ClickerApplication
 {

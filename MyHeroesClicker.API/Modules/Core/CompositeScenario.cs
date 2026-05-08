@@ -1,4 +1,7 @@
-﻿namespace MyHeroesClicker.Core;
+﻿using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
+
+namespace MyHeroesClicker.API.Modules.Core;
 
 public sealed class CompositeScenario : IScenario
 {

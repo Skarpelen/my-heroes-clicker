@@ -1,12 +1,12 @@
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using MyHeroesClicker.DataSQLite.Repositories;
 using MyHeroesClicker.DataSQLite.Toolkit;
-using MyHeroesClicker.API.Services;
-using MyHeroesClicker.Services;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
 using NLog.Web;
+using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.API.Modules.Services;
 
 namespace MyHeroesClicker.API;
 

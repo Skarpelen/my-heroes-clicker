@@ -1,8 +1,11 @@
-﻿using MyHeroesClicker.Browser;
-using MyHeroesClicker.Core;
+﻿using MyHeroesClicker.API.Modules.Core;
+using MyHeroesClicker.Browser.Browser;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 using MyHeroesClicker.Steps;
 
-namespace MyHeroesClicker.Scenarios;
+namespace MyHeroesClicker.API.Modules.Scenarios;
 
 public sealed class FarmBattleScenario : IScenario
 {

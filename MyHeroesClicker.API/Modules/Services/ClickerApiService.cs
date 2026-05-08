@@ -1,10 +1,10 @@
-﻿using MyHeroesClicker.API.Contracts;
-using MyHeroesClicker.Application;
-using MyHeroesClicker.Confs;
-using MyHeroesClicker.Runtime;
-using MyHeroesClicker.Services;
+﻿using MyHeroesClicker.API.Modules.Application;
+using MyHeroesClicker.API.Modules.Runtime;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Contracts;
+using MyHeroesClicker.Core.Interfaces.Services;
 
-namespace MyHeroesClicker.API.Services;
+namespace MyHeroesClicker.API.Modules.Services;
 
 public sealed class ClickerApiService : IAsyncDisposable
 {

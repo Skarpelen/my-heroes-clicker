@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
+using MyHeroesClicker.Core.Confs;
 
-namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class MyHeroesWebClient
 {

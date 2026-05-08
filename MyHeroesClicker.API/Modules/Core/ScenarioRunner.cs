@@ -1,6 +1,9 @@
 ﻿using Microsoft.Playwright;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Modules.Core;
 
-namespace MyHeroesClicker.Core;
+namespace MyHeroesClicker.API.Modules.Core;
 
 public sealed class ScenarioRunner
 {

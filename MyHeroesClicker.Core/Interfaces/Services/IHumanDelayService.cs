@@ -1,4 +1,4 @@
-namespace MyHeroesClicker.Services;
+namespace MyHeroesClicker.Core.Interfaces.Services;
 
 public interface IHumanDelayService
 {
