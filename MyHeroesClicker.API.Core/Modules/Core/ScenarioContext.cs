@@ -1,5 +1,4 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
 using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker.Core;
@@ -8,8 +7,8 @@ public sealed class ScenarioContext
 {
   public ScenarioContext(
     IPage page,
-    BrowserGuard guard,
-    PageInteractor pageInteractor,
+    IBrowserGuard guard,
+    IPageInteractor pageInteractor,
     IHumanDelayService humanDelay,
     IRunLogger logger,
     IPauseService pauseService,
@@ -30,9 +29,9 @@ public sealed class ScenarioContext
 
   public IPage Page { get; }
 
-  public BrowserGuard Guard { get; }
+  public IBrowserGuard Guard { get; }
 
-  public PageInteractor PageInteractor { get; }
+  public IPageInteractor PageInteractor { get; }
 
   public IHumanDelayService HumanDelay { get; }
 

@@ -3,7 +3,7 @@ using MyHeroesClicker.Core;
 
 namespace MyHeroesClicker.Browser;
 
-public sealed class PageInteractor
+public sealed class PageInteractor : IPageInteractor
 {
   public async Task PrepareForClickAsync(
     ScenarioContext context,

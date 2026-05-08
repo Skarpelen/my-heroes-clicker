@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker.Browser;
+namespace MyHeroesClicker.Browser;
 
 public enum FarmLocation
 {

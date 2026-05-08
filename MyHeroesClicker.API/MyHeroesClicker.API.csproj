@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MyHeroesClicker.Browser\MyHeroesClicker.Browser.csproj" />
     <ProjectReference Include="..\MyHeroesClicker.API.Core\MyHeroesClicker.API.Core.csproj" />
     <ProjectReference Include="..\MyHeroesClicker.API.DataSQLite\MyHeroesClicker.API.DataSQLite.csproj" />
   </ItemGroup>

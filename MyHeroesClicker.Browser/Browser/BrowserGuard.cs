@@ -5,7 +5,7 @@ using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker.Browser;
 
-public sealed class BrowserGuard
+public sealed class BrowserGuard : IBrowserGuard
 {
   private readonly IAlertService _alertService;
   private readonly FailureDumpService _failureDumpService;
