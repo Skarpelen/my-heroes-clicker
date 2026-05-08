@@ -1,6 +1,5 @@
 ﻿using Microsoft.Playwright;
 using MyHeroesClicker.Browser.Diagnostics;
-using MyHeroesClicker.Core;
 using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Models.Scenarios;

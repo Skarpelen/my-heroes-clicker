@@ -1,9 +1,9 @@
 ﻿using MyHeroesClicker.API.Modules.Core;
+using MyHeroesClicker.API.Modules.Steps;
 using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Models.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
-using MyHeroesClicker.Steps;
 
 namespace MyHeroesClicker.API.Modules.Scenarios;
 

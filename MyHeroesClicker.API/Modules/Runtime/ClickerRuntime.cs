@@ -1,15 +1,14 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Browser;
+using MyHeroesClicker.API.Modules.Core;
+using MyHeroesClicker.API.Modules.Scenarios;
+using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Browser.Browser;
-using MyHeroesClicker.Core;
+using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core.Confs;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Models.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
-using MyHeroesClicker.Diagnostics;
-using MyHeroesClicker.Scenarios;
-using MyHeroesClicker.Services;
 
 namespace MyHeroesClicker.API.Modules.Runtime;
 

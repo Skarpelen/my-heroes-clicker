@@ -7,6 +7,7 @@ using NLog.Targets;
 using NLog.Web;
 using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.API.Modules.Services;
+using MyHeroesClicker.Core.Confs;
 
 namespace MyHeroesClicker.API;
 

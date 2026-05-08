@@ -1,5 +1,4 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Core;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Models.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
