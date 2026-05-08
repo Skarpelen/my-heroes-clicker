@@ -4,9 +4,21 @@ namespace MyHeroesClicker.Browser;
 
 public static class BattlePageLocators
 {
-  public static ILocator AttackButton(IPage page)
+  public static async Task<ILocator> AttackButtonAsync(IPage page, FarmLocation location)
   {
-    return page.Locator("a.btn_act[href='/batle1/attack10'], a.btn_act[href='/battle1/attack10']");
+    if (location != FarmLocation.Adventure)
+    {
+      return page.Locator("a.btn_act[href='/batle1/attack10'], a.btn_act[href='/battle1/attack10']");
+    }
+
+    var attack10Button = page.Locator("a.btn_act[href='/domp1/attack10']").First;
+
+    if (await attack10Button.CountAsync() > 0)
+    {
+      return attack10Button;
+    }
+
+    return page.Locator("a.btn_act[href='/domp1/attack']").First;
   }
 
   public static ILocator ExpiredActionError(IPage page)
@@ -41,8 +53,16 @@ public static class BattlePageLocators
     }).First;
   }
 
-  public static ILocator ReturnToBattleButton(IPage page)
+  public static ILocator ReturnToBattleButton(IPage page, FarmLocation location)
   {
+    if (location == FarmLocation.Adventure)
+    {
+      return page.Locator("a.btn_use.fltl.btn_gspace[href='/domp1']").Filter(new()
+      {
+        HasTextString = "в бой"
+      });
+    }
+
     return page.Locator("a.btn_use.fltl.btn_gspace[href='/batle1'], a.btn_use.fltl.btn_gspace[href='/battle1']").Filter(new()
     {
       HasTextString = "поиск"

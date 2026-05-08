@@ -16,22 +16,32 @@ public sealed class BrowserGuard
     _failureDumpService = failureDumpService;
   }
 
-  public async Task<bool> IsBattlePageAsync(IPage page)
+  public Task<bool> IsBattlePageAsync(IPage page)
+  {
+    return IsBattlePageAsync(page, FarmLocation.Battle);
+  }
+
+  public async Task<bool> IsBattlePageAsync(IPage page, FarmLocation location)
   {
     if (await IsLoginPageAsync(page))
     {
       return false;
     }
 
-    if (!IsExpectedPage(page, "/batle1") && !IsExpectedPage(page, "/battle1"))
+    if (!IsLocationPage(page, location))
     {
       return false;
     }
 
-    return await BattlePageLocators.AttackButton(page).CountAsync() > 0;
+    return await (await BattlePageLocators.AttackButtonAsync(page, location)).CountAsync() > 0;
   }
 
-  public async Task<bool> IsBattleLogPageAsync(IPage page)
+  public Task<bool> IsBattleLogPageAsync(IPage page)
+  {
+    return IsBattleLogPageAsync(page, FarmLocation.Battle);
+  }
+
+  public async Task<bool> IsBattleLogPageAsync(IPage page, FarmLocation location)
   {
     if (await IsLoginPageAsync(page))
     {
@@ -41,12 +51,12 @@ public sealed class BrowserGuard
     if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
         || uri.Scheme != "https"
         || uri.Host != "myheroes.ru"
-        || !IsBattleLogPath(uri.AbsolutePath))
+        || !IsBattleLogPath(uri.AbsolutePath, location))
     {
       return false;
     }
 
-    return await BattlePageLocators.ReturnToBattleButton(page).CountAsync() > 0;
+    return await BattlePageLocators.ReturnToBattleButton(page, location).CountAsync() > 0;
   }
 
   public async Task<bool> IsLoginPageAsync(IPage page)
@@ -62,33 +72,89 @@ public sealed class BrowserGuard
            && await LoginPageLocators.SubmitButton(page).CountAsync() > 0;
   }
 
+  public Task<bool> IsCaptchaPageAsync(IPage page)
+  {
+    if (!Uri.TryCreate(page.Url, UriKind.Absolute, out var uri))
+    {
+      return Task.FromResult(false);
+    }
+
+    return Task.FromResult(
+      uri.Scheme == "https"
+      && uri.Host == "myheroes.ru"
+      && uri.AbsolutePath.StartsWith("/capcha", StringComparison.OrdinalIgnoreCase));
+  }
+
+  public async Task EnsureNotCaptchaAsync(
+    ScenarioContext context,
+    CancellationToken cancellationToken)
+  {
+    const string reason = "Сайт открыл страницу capcha. Решите проверку вручную и нажмите продолжить.";
+
+    while (await IsCaptchaPageAsync(context.Page))
+    {
+      if (!context.PauseService.IsPauseRequested)
+      {
+        context.Logger.Error(reason);
+        context.PauseService.Request(reason);
+        await _alertService.PlayAsync(cancellationToken);
+      }
+
+      while (context.PauseService.IsPauseRequested)
+      {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Task.Delay(500, cancellationToken);
+      }
+    }
+  }
+
   public async Task ExpectBattlePageAsync(ScenarioContext context, CancellationToken cancellationToken)
+  {
+    await ExpectBattlePageAsync(context, FarmLocation.Battle, cancellationToken);
+  }
+
+  public async Task ExpectBattlePageAsync(
+    ScenarioContext context,
+    FarmLocation location,
+    CancellationToken cancellationToken)
   {
     var page = context.Page;
 
-    if (!await IsBattlePageAsync(page))
+    await EnsureNotCaptchaAsync(context, cancellationToken);
+
+    if (!await IsBattlePageAsync(page, location))
     {
       await StopWithErrorAsync(context, $"Ожидалась страница боя, но текущий URL: {context.Page.Url}", cancellationToken);
     }
 
-    var attackButton = BattlePageLocators.AttackButton(page);
+    var attackButton = await BattlePageLocators.AttackButtonAsync(page, location);
 
     if (await attackButton.CountAsync() == 0)
     {
-      await StopWithErrorAsync(context, "Не найдена кнопка атаки x10.", cancellationToken);
+      await StopWithErrorAsync(context, "Не найдена кнопка атаки.", cancellationToken);
     }
   }
 
   public async Task ExpectBattleLogPageAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
+    await ExpectBattleLogPageAsync(context, FarmLocation.Battle, cancellationToken);
+  }
+
+  public async Task ExpectBattleLogPageAsync(
+    ScenarioContext context,
+    FarmLocation location,
+    CancellationToken cancellationToken)
+  {
     var page = context.Page;
 
-    if (!await IsBattleLogPageAsync(page))
+    await EnsureNotCaptchaAsync(context, cancellationToken);
+
+    if (!await IsBattleLogPageAsync(page, location))
     {
       await StopWithErrorAsync(context, $"Ожидалась страница логов, но текущий URL: {context.Page.Url}", cancellationToken);
     }
 
-    var returnButton = BattlePageLocators.ReturnToBattleButton(page);
+    var returnButton = BattlePageLocators.ReturnToBattleButton(page, location);
 
     if (await returnButton.CountAsync() == 0)
     {
@@ -108,7 +174,7 @@ public sealed class BrowserGuard
       return false;
     }
 
-    context.Logger.Log("Действие устарело. Обновляю страницу и повторяю шаг.");
+    context.Logger.Warn("Действие устарело. Обновляю страницу и повторяю шаг.");
 
     await page.ReloadAsync(new()
     {
@@ -138,6 +204,8 @@ public sealed class BrowserGuard
       string message,
       CancellationToken cancellationToken)
   {
+    await EnsureNotCaptchaAsync(context, cancellationToken);
+
     if (await IsLoginPageAsync(context.Page))
     {
       throw new AuthenticationRequiredException("Сессия не авторизована.");
@@ -161,8 +229,20 @@ public sealed class BrowserGuard
            && uri.AbsolutePath == expectedPath;
   }
 
-  private static bool IsBattleLogPath(string path)
+  private static bool IsLocationPage(IPage page, FarmLocation location)
   {
+    return location == FarmLocation.Adventure
+      ? IsExpectedPage(page, "/domp1")
+      : IsExpectedPage(page, "/batle1") || IsExpectedPage(page, "/battle1");
+  }
+
+  private static bool IsBattleLogPath(string path, FarmLocation location)
+  {
+    if (location == FarmLocation.Adventure)
+    {
+      return path.StartsWith("/domp1/log/", StringComparison.OrdinalIgnoreCase);
+    }
+
     return path.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase)
            || path.StartsWith("/battle1/log/", StringComparison.OrdinalIgnoreCase);
   }

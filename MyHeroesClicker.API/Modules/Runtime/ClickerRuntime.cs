@@ -81,12 +81,19 @@ public sealed class ClickerRuntime : IAsyncDisposable
       statsReader);
     IScenario authenticatedFarmPreparationScenario = new AuthenticatedScenario(authenticationScenario, farmPreparationScenario);
     IScenario authenticatedCombatPreparationScenario = new AuthenticatedScenario(authenticationScenario, combatPreparationScenario);
-    IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario);
+    IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario, FarmLocation.Battle);
+    IScenario adventureFarmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario, FarmLocation.Adventure);
     IScenario farmCycleScenario = new AuthenticatedScenario(
       authenticationScenario,
-      new CompositeScenario("Цикл фарма", [
+      new CompositeScenario("Цикл фарма в драке", [
         farmPreparationScenario,
         farmBattleScenario
+      ]));
+    IScenario adventureFarmCycleScenario = new AuthenticatedScenario(
+      authenticationScenario,
+      new CompositeScenario("Цикл фарма в приключениях", [
+        farmPreparationScenario,
+        adventureFarmBattleScenario
       ]));
 
     var scenarios = new ScenarioCatalog(
@@ -94,7 +101,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
       authenticatedFarmPreparationScenario,
       authenticatedCombatPreparationScenario,
       farmBattleScenario,
-      farmCycleScenario);
+      farmCycleScenario,
+      adventureFarmCycleScenario);
 
     return new ClickerRuntime(playwright, browserSession, context, scenarios, alertService, statsReader);
   }

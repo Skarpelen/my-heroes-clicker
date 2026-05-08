@@ -33,35 +33,51 @@ public sealed class ClickerApiService : IAsyncDisposable
   {
     if (_application is null)
     {
-      return new ScenarioStatusResponse(false, false, null, null, null, _lastError);
+      return new ScenarioStatusResponse(
+        false,
+        false,
+        _pauseService.IsPauseRequested,
+        _pauseService.PauseReason,
+        null,
+        null,
+        null,
+        _lastError);
     }
 
     return new ScenarioStatusResponse(
       true,
       _application.IsRunning,
+      _pauseService.IsPauseRequested,
+      _pauseService.PauseReason,
       _application.TargetIterations,
       _application.CompletedIterations,
       _application.MaxHealth,
       _application.LastError ?? _lastError);
   }
 
-  public async Task<CharacterHealthResponse> GetCharacterHealthAsync(CancellationToken cancellationToken)
-  {
-    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
-    var maxHealth = await application.RefreshMaxHealthAsync(cancellationToken);
-
-    return new CharacterHealthResponse(maxHealth);
-  }
-
   public async Task StartFarmAsync(ScenarioRunRequest request, CancellationToken cancellationToken)
   {
+    await StartRunAsync(request, application => application.StartFarmAsync(request.Iterations, cancellationToken), cancellationToken);
+  }
+
+  public async Task StartAdventureFarmAsync(ScenarioRunRequest request, CancellationToken cancellationToken)
+  {
+    await StartRunAsync(request, application => application.StartAdventureFarmAsync(request.Iterations, cancellationToken), cancellationToken);
+  }
+
+  private async Task StartRunAsync(
+    ScenarioRunRequest request,
+    Func<ClickerApplication, Task> startRun,
+    CancellationToken cancellationToken)
+  {
     ValidateRunRequest(request);
+    _pauseService.Reset();
 
     var application = await GetApplicationAsync(request, cancellationToken);
 
     try
     {
-      await application.StartFarmAsync(request.Iterations, cancellationToken);
+      await startRun(application);
       _lastError = null;
     }
     catch (Exception exception)
@@ -85,7 +101,13 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   public void Stop()
   {
+    _pauseService.Reset();
     _application?.StopCurrentScenario();
+  }
+
+  public void Resume()
+  {
+    _pauseService.Reset();
   }
 
   public async ValueTask DisposeAsync()

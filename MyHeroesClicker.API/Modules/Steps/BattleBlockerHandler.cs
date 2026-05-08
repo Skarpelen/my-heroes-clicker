@@ -7,11 +7,18 @@ namespace MyHeroesClicker.Steps;
 public sealed class BattleBlockerHandler
 {
   private readonly BattleResourcesReader _resourcesReader;
+  private readonly FarmLocation _location;
   private readonly Random _random = new();
 
   public BattleBlockerHandler(BattleResourcesReader resourcesReader)
+    : this(resourcesReader, FarmLocation.Battle)
+  {
+  }
+
+  public BattleBlockerHandler(BattleResourcesReader resourcesReader, FarmLocation location)
   {
     _resourcesReader = resourcesReader;
+    _location = location;
   }
 
   public async Task<StepResult?> TryHandleAsync(
@@ -56,7 +63,7 @@ public sealed class BattleBlockerHandler
       return false;
     }
 
-    context.Logger.Log("Слишком быстро. Повторяю атаку в обычном темпе.");
+    context.Logger.Warn("Слишком быстро. Повторяю атаку в обычном темпе.");
 
     await ReloadBattlePageAsync(context, cancellationToken);
 
@@ -73,7 +80,7 @@ public sealed class BattleBlockerHandler
       return false;
     }
 
-    context.Logger.Log($"Недостаточно здоровья для атаки: {currentHealth}/{context.CharacterState.MaxHealth}. Нужно минимум: {minHealth}.");
+    context.Logger.Warn($"Недостаточно здоровья для атаки: {currentHealth}/{context.CharacterState.MaxHealth}. Нужно минимум: {minHealth}.");
 
     return true;
   }
@@ -121,7 +128,7 @@ public sealed class BattleBlockerHandler
 
     var requiredZeal = await _resourcesReader.ReadRequiredZealAsync(warning);
 
-    context.Logger.Log($"Недостаточно рвения для боя. Нужно минимум: {requiredZeal}.");
+    context.Logger.Warn($"Недостаточно рвения для боя. Нужно минимум: {requiredZeal}.");
 
     return true;
   }
@@ -169,7 +176,7 @@ public sealed class BattleBlockerHandler
     await Task.Delay(delay, cancellationToken);
   }
 
-  private static async Task ReloadBattlePageAsync(
+  private async Task ReloadBattlePageAsync(
     ScenarioContext context,
     CancellationToken cancellationToken)
   {
@@ -181,7 +188,7 @@ public sealed class BattleBlockerHandler
     });
 
     await context.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
-    await context.Guard.ExpectBattlePageAsync(context, cancellationToken);
+    await context.Guard.ExpectBattlePageAsync(context, _location, cancellationToken);
   }
 
   private static void LogHealthRecoveryProgress(

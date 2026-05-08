@@ -96,7 +96,7 @@ public sealed class DirectEquipmentClient
 
     if (!response.IsExpected)
     {
-      context.Logger.Log($"{toleratedErrorMessage} Код ответа: {response.StatusCode}.");
+      context.Logger.Warn($"{toleratedErrorMessage} Код ответа: {response.StatusCode}.");
     }
   }
 }

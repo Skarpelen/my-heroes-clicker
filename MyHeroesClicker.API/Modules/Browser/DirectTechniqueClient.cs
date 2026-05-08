@@ -45,7 +45,7 @@ public sealed class DirectTechniqueClient
 
       if (!response.IsExpected)
       {
-        context.Logger.Log($"Не удалось выполнить {action} для приема {techniqueId}. Считаю это допустимым, если прием уже в нужном состоянии. Код ответа: {response.StatusCode}.");
+        context.Logger.Warn($"Не удалось выполнить {action} для приема {techniqueId}. Считаю это допустимым, если прием уже в нужном состоянии. Код ответа: {response.StatusCode}.");
       }
     }
   }

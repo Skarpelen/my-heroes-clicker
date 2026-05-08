@@ -14,7 +14,8 @@ public sealed class ScenariosController : ControllerBase
     "farmPreparation",
     "combatPreparation",
     "farmBattle",
-    "farmCycle"
+    "farmCycle",
+    "adventureFarmCycle"
   ];
 
   private readonly ClickerApiService _clicker;
@@ -40,29 +41,39 @@ public sealed class ScenariosController : ControllerBase
     return Ok(_clicker.GetStatus());
   }
 
-  [HttpGet("character/health")]
-  public async Task<ActionResult<CharacterHealthResponse>> GetCharacterHealth(CancellationToken cancellationToken)
-  {
-    try
-    {
-      return Ok(await _clicker.GetCharacterHealthAsync(cancellationToken));
-    }
-    catch (InvalidOperationException exception)
-    {
-      _logger.LogWarning(exception, "Character health request rejected.");
-
-      return Conflict(new { error = exception.Message });
-    }
-  }
-
   [HttpPost("farm/start")]
   public async Task<IActionResult> StartFarmAsync(
     [FromBody] ScenarioRunRequest request,
     CancellationToken cancellationToken)
   {
+    return await StartRunAsync(
+      request,
+      clicker => clicker.StartFarmAsync(request, cancellationToken),
+      "Farm scenario start rejected.",
+      cancellationToken);
+  }
+
+  [HttpPost("adventure/start")]
+  public async Task<IActionResult> StartAdventureFarmAsync(
+    [FromBody] ScenarioRunRequest request,
+    CancellationToken cancellationToken)
+  {
+    return await StartRunAsync(
+      request,
+      clicker => clicker.StartAdventureFarmAsync(request, cancellationToken),
+      "Adventure farm scenario start rejected.",
+      cancellationToken);
+  }
+
+  private async Task<IActionResult> StartRunAsync(
+    ScenarioRunRequest request,
+    Func<ClickerApiService, Task> startRun,
+    string rejectionLogMessage,
+    CancellationToken cancellationToken)
+  {
     try
     {
-      await _clicker.StartFarmAsync(request, cancellationToken);
+      await startRun(_clicker);
 
       return AcceptedAtAction(nameof(GetStatus));
     }
@@ -74,7 +85,7 @@ public sealed class ScenariosController : ControllerBase
     }
     catch (InvalidOperationException exception)
     {
-      _logger.LogWarning(exception, "Farm scenario start rejected.");
+      _logger.LogWarning(exception, rejectionLogMessage);
 
       return Conflict(new { error = exception.Message });
     }
@@ -100,6 +111,14 @@ public sealed class ScenariosController : ControllerBase
   public IActionResult Stop()
   {
     _clicker.Stop();
+
+    return AcceptedAtAction(nameof(GetStatus));
+  }
+
+  [HttpPost("resume")]
+  public IActionResult Resume()
+  {
+    _clicker.Resume();
 
     return AcceptedAtAction(nameof(GetStatus));
   }

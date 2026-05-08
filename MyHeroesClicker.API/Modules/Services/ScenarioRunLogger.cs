@@ -15,4 +15,14 @@ public sealed class ScenarioRunLogger : IRunLogger
   {
     _logger.LogInformation("{Message}", message);
   }
+
+  public void Warn(string message)
+  {
+    _logger.LogWarning("{Message}", message);
+  }
+
+  public void Error(string message)
+  {
+    _logger.LogError("{Message}", message);
+  }
 }

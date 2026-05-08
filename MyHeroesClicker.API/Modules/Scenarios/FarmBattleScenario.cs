@@ -7,19 +7,31 @@ namespace MyHeroesClicker.Scenarios;
 public sealed class FarmBattleScenario : IScenario
 {
   private readonly ScenarioRunner _runner;
+  private readonly string _name;
 
   public FarmBattleScenario(BattleResourcesReader resourcesReader, IScenario authenticationScenario)
+    : this(resourcesReader, authenticationScenario, FarmLocation.Battle)
   {
-    var blockerHandler = new BattleBlockerHandler(resourcesReader);
+  }
+
+  public FarmBattleScenario(
+    BattleResourcesReader resourcesReader,
+    IScenario authenticationScenario,
+    FarmLocation location)
+  {
+    var blockerHandler = new BattleBlockerHandler(resourcesReader, location);
+    _name = location == FarmLocation.Adventure
+      ? "Фарм приключений"
+      : "Фарм боев";
 
     _runner = new ScenarioRunner([
-      new EnterBattleStep(),
-      new AttackStep(blockerHandler),
-      new BattleLogStep()
+      new EnterBattleStep(location),
+      new AttackStep(blockerHandler, location),
+      new BattleLogStep(location)
     ], authenticationScenario);
   }
 
-  public string Name => "Фарм боев";
+  public string Name => _name;
 
   public Task ExecuteAsync(ScenarioContext context, CancellationToken cancellationToken)
   {

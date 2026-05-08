@@ -43,6 +43,13 @@ public sealed class ClickerApplication
     return StartScenarioAsync(_runtime.Scenarios.FarmCycle, cancellationToken);
   }
 
+  public Task StartAdventureFarmAsync(int targetIterations, CancellationToken cancellationToken)
+  {
+    ConfigureRun(targetIterations);
+
+    return StartScenarioAsync(_runtime.Scenarios.AdventureFarmCycle, cancellationToken);
+  }
+
   public Task StartFarmPreparationAsync(CancellationToken cancellationToken)
   {
     return StartScenarioAsync(_runtime.Scenarios.FarmPreparation, cancellationToken);
@@ -51,17 +58,6 @@ public sealed class ClickerApplication
   public Task StartCombatPreparationAsync(CancellationToken cancellationToken)
   {
     return StartScenarioAsync(_runtime.Scenarios.CombatPreparation, cancellationToken);
-  }
-
-  public async Task<int> RefreshMaxHealthAsync(CancellationToken cancellationToken)
-  {
-    await RunScenarioAsync(_runtime.Scenarios.Authentication, cancellationToken);
-
-    var maxHealth = await _runtime.StatsReader.ReadMaxHealthAsync(cancellationToken);
-    _runtime.Context.CharacterState.UpdateMaxHealth(maxHealth);
-    _runtime.Context.Logger.Log($"Максимальное здоровье персонажа: {maxHealth}.");
-
-    return maxHealth;
   }
 
   public Task PrepareFarmAsync(CancellationToken cancellationToken)
@@ -134,6 +130,7 @@ public sealed class ClickerApplication
     catch (Exception exception)
     {
       LastError = exception.Message;
+      _runtime.Context.Logger.Error(exception.Message);
       throw;
     }
     finally

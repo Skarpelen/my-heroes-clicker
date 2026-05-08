@@ -1,8 +1,14 @@
 import { useState } from 'react'
-import { HeartPulse, Play, Square, WandSparkles } from 'lucide-react'
+import { Map, Play, Shield, Square, Sprout, Swords, WandSparkles } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button'
-import { ToggleRow } from '../../../shared/ui/ToggleRow'
-import { getCharacterHealth, startFarmScenario, stopScenario } from '../api/scenariosApi'
+import {
+  prepareCombatMode,
+  prepareFarmMode,
+  resumeScenario,
+  startAdventureFarmScenario,
+  startBattleFarmScenario,
+  stopScenario,
+} from '../api/scenariosApi'
 import type { FarmScenarioOptions, ScenarioStatus } from '../model/types'
 
 type FarmScenarioPanelProps = {
@@ -13,39 +19,43 @@ type FarmScenarioPanelProps = {
 export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanelProps) {
   const [options, setOptions] = useState<FarmScenarioOptions>({
     iterations: 500,
-    maxHealth: status?.maxHealth ?? null,
-    disableTechniques: false,
-    prepareFarmSet: true,
-    returnToCombatSet: false,
   })
 
-  const [isLoadingHealth, setIsLoadingHealth] = useState(false)
+  const [isPreparing, setIsPreparing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isRunning = status?.isRunning ?? false
-  const canStart = !isRunning && options.maxHealth !== null
+  const isPaused = status?.isPaused ?? false
+  const canStart = !isRunning
 
-  async function loadHealth() {
+  async function prepareMode(mode: 'farm' | 'combat') {
     setError(null)
-    setIsLoadingHealth(true)
+    setIsPreparing(true)
 
     try {
-      const health = await getCharacterHealth()
-      setOptions((current) => ({
-        ...current,
-        maxHealth: health.maxHealth,
-      }))
+      if (mode === 'farm') {
+        await prepareFarmMode()
+      } else {
+        await prepareCombatMode()
+      }
+
+      await onRefreshStatus()
     } catch (exception) {
-      setError(exception instanceof Error ? exception.message : 'Не удалось получить здоровье.')
+      setError(exception instanceof Error ? exception.message : 'Не удалось сменить сет.')
     } finally {
-      setIsLoadingHealth(false)
+      setIsPreparing(false)
     }
   }
 
-  async function startFarm() {
+  async function startFarm(location: 'battle' | 'adventure') {
     setError(null)
 
     try {
-      await startFarmScenario(options)
+      if (location === 'battle') {
+        await startBattleFarmScenario(options)
+      } else {
+        await startAdventureFarmScenario(options)
+      }
+
       await onRefreshStatus()
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Не удалось запустить фарм.')
@@ -63,6 +73,17 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
     }
   }
 
+  async function resumeFarm() {
+    setError(null)
+
+    try {
+      await resumeScenario()
+      await onRefreshStatus()
+    } catch (exception) {
+      setError(exception instanceof Error ? exception.message : 'Не удалось снять паузу.')
+    }
+  }
+
   return (
     <section className="scenario-card scenario-card-active">
       <div className="scenario-header">
@@ -76,7 +97,7 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
         </div>
       </div>
 
-      <div className="form-grid">
+      <div className="form-grid form-grid-single">
         <label>
           Атак выполнить
           <input
@@ -91,48 +112,38 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
             }
           />
         </label>
-
-        <div className="health-field">
-          <span>Максимальное здоровье</span>
-          <div className="health-value">
-            <strong>{options.maxHealth ?? 'Не получено'}</strong>
-            <Button variant="ghost" disabled={isLoadingHealth || isRunning} onClick={loadHealth}>
-              <HeartPulse size={18} />
-              {isLoadingHealth ? 'Получение...' : 'Получить'}
-            </Button>
-          </div>
-        </div>
       </div>
 
-      <div className="option-grid option-grid-compact">
-        <ToggleRow
-          title="Отключить приемы"
-          description="Не использовать приемы во время фарма."
-          checked={options.disableTechniques}
-          onChange={(checked) => setOptions((current) => ({ ...current, disableTechniques: checked }))}
-        />
+      <div className="actions actions-secondary">
+        <Button variant="ghost" disabled={isPreparing || isRunning} onClick={() => void prepareMode('farm')}>
+          <Sprout size={18} />
+          Фарм сет
+        </Button>
 
-        <ToggleRow
-          title="Надеть фарм-сет"
-          description="Перед запуском переодеться в комплект для фарма."
-          checked={options.prepareFarmSet}
-          onChange={(checked) => setOptions((current) => ({ ...current, prepareFarmSet: checked }))}
-        />
-
-        <ToggleRow
-          title="Вернуть боевой сет"
-          description="Переодеться обратно после завершения."
-          checked={options.returnToCombatSet}
-          onChange={(checked) => setOptions((current) => ({ ...current, returnToCombatSet: checked }))}
-        />
+        <Button variant="ghost" disabled={isPreparing || isRunning} onClick={() => void prepareMode('combat')}>
+          <Shield size={18} />
+          Боевой сет
+        </Button>
       </div>
 
       {error && <p className="panel-error">{error}</p>}
 
+      <div className="farm-starts">
+        <Button disabled={!canStart} onClick={() => void startFarm('battle')}>
+          <Swords size={18} />
+          Запустить драку
+        </Button>
+
+        <Button disabled={!canStart} onClick={() => void startFarm('adventure')}>
+          <Map size={18} />
+          Запустить приключения
+        </Button>
+      </div>
+
       <div className="actions">
-        <Button disabled={!canStart} onClick={startFarm}>
+        <Button variant="ghost" disabled={!isPaused} onClick={resumeFarm}>
           <Play size={18} />
-          Запустить фарм
+          Продолжить
         </Button>
 
         <Button variant="danger" disabled={!isRunning} onClick={stopFarm}>

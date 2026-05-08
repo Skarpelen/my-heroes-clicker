@@ -15,7 +15,7 @@ export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
     <section className="status-bar">
       <div>
         <span className="eyebrow">Статус</span>
-        <h2>{status?.isRunning ? 'Фарм запущен' : 'Остановлено'}</h2>
+        <h2>{status?.isPaused ? 'Пауза' : status?.isRunning ? 'Фарм запущен' : 'Остановлено'}</h2>
       </div>
 
       <div className="status-progress" aria-label="Прогресс сценария">
@@ -28,6 +28,7 @@ export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
         </span>
       </div>
 
+      {status?.isPaused && <p className="pause-warning">{status.pauseReason ?? 'Сценарий поставлен на паузу.'}</p>}
       {status?.lastError && <p className="status-error">{status.lastError}</p>}
     </section>
   )

@@ -44,10 +44,15 @@ public class Program
     var config = new LoggingConfiguration();
     var consoleTarget = new ColoredConsoleTarget("console")
     {
-      Layout = "[${date:format=HH\\:mm\\:ss}] ${message}"
+      Layout = "[${date:format=HH\\:mm\\:ss}] ${uppercase:${level}} ${message}",
+      UseDefaultRowHighlightingRules = true
     };
 
-    config.AddRule(NLog.LogLevel.Info, NLog.LogLevel.Fatal, consoleTarget);
+    config.AddRule(
+      NLog.LogLevel.Info,
+      NLog.LogLevel.Fatal,
+      consoleTarget,
+      typeof(ScenarioRunLogger).FullName!);
 
     LogManager.Configuration = config;
   }

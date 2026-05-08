@@ -24,8 +24,10 @@ public sealed class ScenarioRunner
 
       if (context.PauseService.IsPauseRequested)
       {
-        return;
+        await WaitWhilePausedAsync(context, cancellationToken);
       }
+
+      await context.Guard.EnsureNotCaptchaAsync(context, cancellationToken);
 
       if (await context.Guard.IsLoginPageAsync(context.Page))
       {
@@ -54,7 +56,7 @@ public sealed class ScenarioRunner
       {
         retryCount++;
 
-        context.Logger.Log($"Таймаут шага {currentStep}. Попытка {retryCount}/{context.Options.MaxStepRetryCount}: {exception.Message}");
+        context.Logger.Warn($"Таймаут шага {currentStep}. Попытка {retryCount}/{context.Options.MaxStepRetryCount}: {exception.Message}");
 
         await Task.Delay(context.Options.RetryDelayMs, cancellationToken);
 
@@ -64,7 +66,7 @@ public sealed class ScenarioRunner
       {
         retryCount++;
 
-        context.Logger.Log($"Таймаут Playwright на шаге {currentStep}. Попытка {retryCount}/{context.Options.MaxStepRetryCount}: {exception.Message}");
+        context.Logger.Warn($"Таймаут Playwright на шаге {currentStep}. Попытка {retryCount}/{context.Options.MaxStepRetryCount}: {exception.Message}");
 
         await Task.Delay(context.Options.RetryDelayMs, cancellationToken);
 
@@ -91,7 +93,7 @@ public sealed class ScenarioRunner
 
     if (waitBeforeAuthentication)
     {
-      context.Logger.Log($"Сессия сброшена. Повторная авторизация через {FormatDelay(context.Options.AuthenticationRetryDelayMs)}.");
+      context.Logger.Warn($"Сессия сброшена. Повторная авторизация через {FormatDelay(context.Options.AuthenticationRetryDelayMs)}.");
       await Task.Delay(context.Options.AuthenticationRetryDelayMs, cancellationToken);
     }
     else
@@ -123,7 +125,7 @@ public sealed class ScenarioRunner
 
       if (await step.CanHandleAsync(context, cancellationToken))
       {
-        context.Logger.Log($"Ожидался шаг {expectedStep}, но текущая страница соответствует шагу {step.Type}. Продолжаю с него.");
+        context.Logger.Warn($"Ожидался шаг {expectedStep}, но текущая страница соответствует шагу {step.Type}. Продолжаю с него.");
 
         return step.Type;
       }
@@ -147,5 +149,20 @@ public sealed class ScenarioRunner
     }
 
     return $"{delay.Seconds} сек";
+  }
+
+  private static async Task WaitWhilePausedAsync(
+    ScenarioContext context,
+    CancellationToken cancellationToken)
+  {
+    context.Logger.Warn($"Сценарий на паузе: {context.PauseService.PauseReason ?? "причина не указана"}.");
+
+    while (context.PauseService.IsPauseRequested)
+    {
+      cancellationToken.ThrowIfCancellationRequested();
+      await Task.Delay(500, cancellationToken);
+    }
+
+    context.Logger.Log("Пауза снята. Продолжаю сценарий.");
   }
 }

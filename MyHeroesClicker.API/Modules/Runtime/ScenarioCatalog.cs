@@ -9,13 +9,15 @@ public sealed class ScenarioCatalog
     IScenario farmPreparation,
     IScenario combatPreparation,
     IScenario farmBattle,
-    IScenario farmCycle)
+    IScenario farmCycle,
+    IScenario adventureFarmCycle)
   {
     Authentication = authentication;
     FarmPreparation = farmPreparation;
     CombatPreparation = combatPreparation;
     FarmBattle = farmBattle;
     FarmCycle = farmCycle;
+    AdventureFarmCycle = adventureFarmCycle;
   }
 
   public IScenario Authentication { get; }
@@ -27,4 +29,6 @@ public sealed class ScenarioCatalog
   public IScenario FarmBattle { get; }
 
   public IScenario FarmCycle { get; }
+
+  public IScenario AdventureFarmCycle { get; }
 }

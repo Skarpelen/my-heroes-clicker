@@ -68,6 +68,7 @@
 
 .global-error,
 .status-error,
+.pause-warning,
 .panel-error {
   margin: 0;
   color: var(--danger);
@@ -115,8 +116,13 @@
 }
 
 .status-error,
+.pause-warning,
 .panel-error {
   grid-column: 1 / -1;
+}
+
+.pause-warning {
+  color: var(--accent-strong);
 }
 
 .scenario-card {
@@ -169,6 +175,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 28px;
+}
+
+.form-grid-single {
+  grid-template-columns: minmax(220px, 360px);
 }
 
 .form-grid label,
@@ -263,6 +273,14 @@
   margin-top: 22px;
 }
 
+.farm-starts {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 240px));
+  gap: 12px;
+  margin-top: 22px;
+}
+
 .button {
   display: inline-flex;
   gap: 10px;
@@ -315,6 +333,7 @@
   .status-bar,
   .scenario-header,
   .form-grid,
+  .farm-starts,
   .option-grid {
     grid-template-columns: 1fr;
   }
