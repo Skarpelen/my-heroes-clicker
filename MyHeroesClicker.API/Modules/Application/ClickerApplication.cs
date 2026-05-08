@@ -34,41 +34,9 @@ public sealed class ClickerApplication
     ? _runtime.Context.CharacterState.MaxHealth
     : null;
 
+  public ScenarioCatalog Scenarios => _runtime.Scenarios;
+
   public string? LastError { get; private set; }
-
-  public Task StartFarmAsync(int targetIterations, CancellationToken cancellationToken)
-  {
-    ConfigureRun(targetIterations);
-
-    return StartScenarioAsync(_runtime.Scenarios.FarmCycle, cancellationToken);
-  }
-
-  public Task StartAdventureFarmAsync(int targetIterations, CancellationToken cancellationToken)
-  {
-    ConfigureRun(targetIterations);
-
-    return StartScenarioAsync(_runtime.Scenarios.AdventureFarmCycle, cancellationToken);
-  }
-
-  public Task StartFarmPreparationAsync(CancellationToken cancellationToken)
-  {
-    return StartScenarioAsync(_runtime.Scenarios.FarmPreparation, cancellationToken);
-  }
-
-  public Task StartCombatPreparationAsync(CancellationToken cancellationToken)
-  {
-    return StartScenarioAsync(_runtime.Scenarios.CombatPreparation, cancellationToken);
-  }
-
-  public Task PrepareFarmAsync(CancellationToken cancellationToken)
-  {
-    return RunScenarioAsync(_runtime.Scenarios.FarmPreparation, cancellationToken);
-  }
-
-  public Task PrepareCombatAsync(CancellationToken cancellationToken)
-  {
-    return RunScenarioAsync(_runtime.Scenarios.CombatPreparation, cancellationToken);
-  }
 
   public void StopCurrentScenario()
   {
@@ -78,7 +46,7 @@ public sealed class ClickerApplication
     }
   }
 
-  private void ConfigureRun(int targetIterations)
+  public void ConfigureRun(int targetIterations)
   {
     if (targetIterations <= 0)
     {
@@ -88,7 +56,7 @@ public sealed class ClickerApplication
     _runtime.Context.ResetIterations(targetIterations);
   }
 
-  private Task StartScenarioAsync(IScenario scenario, CancellationToken cancellationToken)
+  public Task StartScenarioAsync(IScenario scenario, CancellationToken cancellationToken)
   {
     lock (_sync)
     {
@@ -103,20 +71,6 @@ public sealed class ClickerApplication
 
       return Task.CompletedTask;
     }
-  }
-
-  private async Task RunScenarioAsync(IScenario scenario, CancellationToken cancellationToken)
-  {
-    await StartScenarioAsync(scenario, cancellationToken);
-
-    Task scenarioTask;
-
-    lock (_sync)
-    {
-      scenarioTask = _currentScenarioTask ?? Task.CompletedTask;
-    }
-
-    await scenarioTask;
   }
 
   private async Task ExecuteCurrentScenarioAsync(IScenario scenario, CancellationToken cancellationToken)

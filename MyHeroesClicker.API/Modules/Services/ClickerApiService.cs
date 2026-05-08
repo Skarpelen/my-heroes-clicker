@@ -55,73 +55,8 @@ public sealed class ClickerApiService : IAsyncDisposable
       _application.LastError ?? _lastError);
   }
 
-  public async Task StartFarmAsync(ScenarioRunRequest request, CancellationToken cancellationToken)
-  {
-    await StartRunAsync(request, application => application.StartFarmAsync(request.Iterations, cancellationToken), cancellationToken);
-  }
-
-  public async Task StartAdventureFarmAsync(ScenarioRunRequest request, CancellationToken cancellationToken)
-  {
-    await StartRunAsync(request, application => application.StartAdventureFarmAsync(request.Iterations, cancellationToken), cancellationToken);
-  }
-
-  private async Task StartRunAsync(
-    ScenarioRunRequest request,
-    Func<ClickerApplication, Task> startRun,
-    CancellationToken cancellationToken)
-  {
-    ValidateRunRequest(request);
-    _pauseService.Reset();
-
-    var application = await GetApplicationAsync(request, cancellationToken);
-
-    try
-    {
-      await startRun(application);
-      _lastError = null;
-    }
-    catch (Exception exception)
-    {
-      _lastError = exception.Message;
-      throw;
-    }
-  }
-
-  public async Task StartFarmPreparationAsync(CancellationToken cancellationToken)
-  {
-    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
-    await StartScenarioAsync(application.StartFarmPreparationAsync, cancellationToken);
-  }
-
-  public async Task StartCombatPreparationAsync(CancellationToken cancellationToken)
-  {
-    var application = await GetApplicationAsync(new ScenarioRunRequest(500), cancellationToken);
-    await StartScenarioAsync(application.StartCombatPreparationAsync, cancellationToken);
-  }
-
-  public void Stop()
-  {
-    _pauseService.Reset();
-    _application?.StopCurrentScenario();
-  }
-
-  public void Resume()
-  {
-    _pauseService.Reset();
-  }
-
-  public async ValueTask DisposeAsync()
-  {
-    if (_runtime is not null)
-    {
-      await _runtime.DisposeAsync();
-    }
-
-    _initializationSync.Dispose();
-  }
-
-  private async Task<ClickerApplication> GetApplicationAsync(
-    ScenarioRunRequest initialRequest,
+  public async Task<ClickerApplication> GetApplicationAsync(
+    int initialTargetIterations,
     CancellationToken cancellationToken)
   {
     if (_application is not null)
@@ -145,7 +80,7 @@ public sealed class ClickerApiService : IAsyncDisposable
         _logger,
         _alertService,
         _pauseService,
-        initialRequest.Iterations);
+        initialTargetIterations);
 
       _application = new ClickerApplication(_runtime);
 
@@ -157,27 +92,39 @@ public sealed class ClickerApiService : IAsyncDisposable
     }
   }
 
-  private async Task StartScenarioAsync(
-    Func<CancellationToken, Task> startScenario,
-    CancellationToken cancellationToken)
+  public void ResetPause()
   {
-    try
-    {
-      await startScenario(cancellationToken);
-      _lastError = null;
-    }
-    catch (Exception exception)
-    {
-      _lastError = exception.Message;
-      throw;
-    }
+    _pauseService.Reset();
   }
 
-  private static void ValidateRunRequest(ScenarioRunRequest request)
+  public void Stop()
   {
-    if (request.Iterations <= 0)
+    _pauseService.Reset();
+    _application?.StopCurrentScenario();
+  }
+
+  public void Resume()
+  {
+    _pauseService.Reset();
+  }
+
+  public void ClearLastError()
+  {
+    _lastError = null;
+  }
+
+  public void SetLastError(string error)
+  {
+    _lastError = error;
+  }
+
+  public async ValueTask DisposeAsync()
+  {
+    if (_runtime is not null)
     {
-      throw new ArgumentOutOfRangeException(nameof(request.Iterations), "Iterations must be positive.");
+      await _runtime.DisposeAsync();
     }
+
+    _initializationSync.Dispose();
   }
 }

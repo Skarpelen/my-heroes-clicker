@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.API.Contracts;
 using MyHeroesClicker.API.Services;
+using MyHeroesClicker.Application;
+using MyHeroesClicker.Core;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -8,6 +10,8 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/scenarios")]
 public sealed class ScenariosController : ControllerBase
 {
+  private const int DefaultPreparationIterations = 500;
+
   private static readonly string[] ScenarioNames =
   [
     "authentication",
@@ -48,7 +52,7 @@ public sealed class ScenariosController : ControllerBase
   {
     return await StartRunAsync(
       request,
-      clicker => clicker.StartFarmAsync(request, cancellationToken),
+      application => application.Scenarios.FarmCycle,
       "Farm scenario start rejected.",
       cancellationToken);
   }
@@ -60,34 +64,45 @@ public sealed class ScenariosController : ControllerBase
   {
     return await StartRunAsync(
       request,
-      clicker => clicker.StartAdventureFarmAsync(request, cancellationToken),
+      application => application.Scenarios.AdventureFarmCycle,
       "Adventure farm scenario start rejected.",
       cancellationToken);
   }
 
   private async Task<IActionResult> StartRunAsync(
     ScenarioRunRequest request,
-    Func<ClickerApiService, Task> startRun,
+    Func<ClickerApplication, IScenario> selectScenario,
     string rejectionLogMessage,
     CancellationToken cancellationToken)
   {
+    if (request.Iterations <= 0)
+    {
+      return BadRequest(new { error = "Iterations must be positive." });
+    }
+
     try
     {
-      await startRun(_clicker);
+      _clicker.ResetPause();
+
+      var application = await _clicker.GetApplicationAsync(request.Iterations, cancellationToken);
+      application.ConfigureRun(request.Iterations);
+
+      await application.StartScenarioAsync(selectScenario(application), cancellationToken);
+      _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));
     }
-    catch (ArgumentOutOfRangeException exception)
-    {
-      _logger.LogWarning(exception, "Invalid farm scenario request.");
-
-      return BadRequest(new { error = exception.Message });
-    }
     catch (InvalidOperationException exception)
     {
+      _clicker.SetLastError(exception.Message);
       _logger.LogWarning(exception, rejectionLogMessage);
 
       return Conflict(new { error = exception.Message });
+    }
+    catch (Exception exception)
+    {
+      _clicker.SetLastError(exception.Message);
+      throw;
     }
   }
 
@@ -95,16 +110,18 @@ public sealed class ScenariosController : ControllerBase
   public async Task<IActionResult> StartFarmPreparationAsync(CancellationToken cancellationToken)
   {
     return await StartScenarioAsync(
-      clicker => clicker.StartFarmPreparationAsync(cancellationToken),
-      "Farm preparation scenario start rejected.");
+      application => application.Scenarios.FarmPreparation,
+      "Farm preparation scenario start rejected.",
+      cancellationToken);
   }
 
   [HttpPost("combat/prepare")]
   public async Task<IActionResult> StartCombatPreparationAsync(CancellationToken cancellationToken)
   {
     return await StartScenarioAsync(
-      clicker => clicker.StartCombatPreparationAsync(cancellationToken),
-      "Combat preparation scenario start rejected.");
+      application => application.Scenarios.CombatPreparation,
+      "Combat preparation scenario start rejected.",
+      cancellationToken);
   }
 
   [HttpPost("stop")]
@@ -124,20 +141,32 @@ public sealed class ScenariosController : ControllerBase
   }
 
   private async Task<IActionResult> StartScenarioAsync(
-    Func<ClickerApiService, Task> startScenario,
-    string rejectionLogMessage)
+    Func<ClickerApplication, IScenario> selectScenario,
+    string rejectionLogMessage,
+    CancellationToken cancellationToken)
   {
     try
     {
-      await startScenario(_clicker);
+      _clicker.ResetPause();
+
+      var application = await _clicker.GetApplicationAsync(DefaultPreparationIterations, cancellationToken);
+
+      await application.StartScenarioAsync(selectScenario(application), cancellationToken);
+      _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));
     }
     catch (InvalidOperationException exception)
     {
+      _clicker.SetLastError(exception.Message);
       _logger.LogWarning(exception, rejectionLogMessage);
 
       return Conflict(new { error = exception.Message });
+    }
+    catch (Exception exception)
+    {
+      _clicker.SetLastError(exception.Message);
+      throw;
     }
   }
 }
