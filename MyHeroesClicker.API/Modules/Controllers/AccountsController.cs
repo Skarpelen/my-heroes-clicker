@@ -38,7 +38,7 @@ public sealed class AccountsController : ControllerBase
     [FromBody] CreateAccountRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidateAccount(request.Title, request.Login, out var validationResult))
+    if (!ValidateAccount(request.Login, out var validationResult))
     {
       return validationResult;
     }
@@ -63,7 +63,7 @@ public sealed class AccountsController : ControllerBase
     [FromBody] UpdateAccountRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidateAccount(request.Title, request.Login, out var validationResult))
+    if (!ValidateAccount(request.Login, out var validationResult))
     {
       return validationResult;
     }
@@ -81,14 +81,9 @@ public sealed class AccountsController : ControllerBase
     return deleted ? NoContent() : NotFound();
   }
 
-  private bool ValidateAccount(string title, string login, out IActionResult validationResult)
+  private bool ValidateAccount(string login, out IActionResult validationResult)
   {
     var errors = new Dictionary<string, string[]>();
-
-    if (string.IsNullOrWhiteSpace(title))
-    {
-      errors.Add(nameof(CreateAccountRequest.Title), ["Укажите название аккаунта."]);
-    }
 
     if (string.IsNullOrWhiteSpace(login))
     {

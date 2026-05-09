@@ -19,9 +19,9 @@ public sealed class AccountRepository : IAccountRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      SELECT id, title, login, encrypted_password, auth_state_path, is_enabled
+      SELECT id, login, encrypted_password, is_enabled
       FROM accounts
-      ORDER BY title;
+      ORDER BY login;
       """;
 
     await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -40,7 +40,7 @@ public sealed class AccountRepository : IAccountRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      SELECT id, title, login, encrypted_password, auth_state_path, is_enabled
+      SELECT id, login, encrypted_password, is_enabled
       FROM accounts
       WHERE id = @id;
       """;
@@ -61,11 +61,11 @@ public sealed class AccountRepository : IAccountRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      INSERT INTO accounts (title, login, encrypted_password, auth_state_path, is_enabled)
-      VALUES (@title, @login, @encrypted_password, @auth_state_path, @is_enabled)
+      INSERT INTO accounts (login, encrypted_password, is_enabled)
+      VALUES (@login, @encrypted_password, @is_enabled)
       RETURNING id;
       """;
-    FillAccountParameters(command, request.Title, request.Login, request.EncryptedPassword, request.AuthStatePath, request.IsEnabled);
+    FillAccountParameters(command, request.Login, request.EncryptedPassword, request.IsEnabled);
 
     var result = await command.ExecuteScalarAsync(cancellationToken);
 
@@ -78,16 +78,14 @@ public sealed class AccountRepository : IAccountRepository
     await using var command = connection.CreateCommand();
     command.CommandText = """
       UPDATE accounts
-      SET title = @title,
-          login = @login,
+      SET login = @login,
           encrypted_password = @encrypted_password,
-          auth_state_path = @auth_state_path,
           is_enabled = @is_enabled,
           updated_utc = CURRENT_TIMESTAMP
       WHERE id = @id;
       """;
     command.Parameters.AddWithValue("@id", id);
-    FillAccountParameters(command, request.Title, request.Login, request.EncryptedPassword, request.AuthStatePath, request.IsEnabled);
+    FillAccountParameters(command, request.Login, request.EncryptedPassword, request.IsEnabled);
 
     return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
   }
@@ -104,16 +102,12 @@ public sealed class AccountRepository : IAccountRepository
 
   private static void FillAccountParameters(
     SqliteCommand command,
-    string title,
     string login,
     string? encryptedPassword,
-    string? authStatePath,
     bool isEnabled)
   {
-    command.Parameters.AddWithValue("@title", title);
     command.Parameters.AddWithValue("@login", login);
     command.Parameters.AddWithValue("@encrypted_password", (object?)encryptedPassword ?? DBNull.Value);
-    command.Parameters.AddWithValue("@auth_state_path", (object?)authStatePath ?? DBNull.Value);
     command.Parameters.AddWithValue("@is_enabled", isEnabled);
   }
 
@@ -121,10 +115,8 @@ public sealed class AccountRepository : IAccountRepository
   {
     return new AccountResponse(
       reader.GetInt64(reader.GetOrdinal("id")),
-      reader.GetString(reader.GetOrdinal("title")),
       reader.GetString(reader.GetOrdinal("login")),
       GetNullableString(reader, "encrypted_password"),
-      GetNullableString(reader, "auth_state_path"),
       reader.GetBoolean(reader.GetOrdinal("is_enabled")));
   }
 

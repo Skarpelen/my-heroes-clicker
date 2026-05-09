@@ -22,11 +22,11 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      SELECT id, account_id, kind, name
+      SELECT id, account_id, kind
       FROM technique_presets
       WHERE (@account_id IS NULL OR account_id = @account_id)
         AND (@kind IS NULL OR kind = @kind)
-      ORDER BY kind, name;
+      ORDER BY kind;
       """;
     command.Parameters.AddWithValue("@account_id", (object?)accountId ?? DBNull.Value);
     command.Parameters.AddWithValue("@kind", (object?)kind ?? DBNull.Value);
@@ -47,7 +47,7 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      SELECT id, account_id, kind, name
+      SELECT id, account_id, kind
       FROM technique_presets
       WHERE id = @id;
       """;
@@ -68,11 +68,11 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      INSERT INTO technique_presets (account_id, kind, name)
-      VALUES (@account_id, @kind, @name)
+      INSERT INTO technique_presets (account_id, kind)
+      VALUES (@account_id, @kind)
       RETURNING id;
       """;
-    FillPresetParameters(command, request.AccountId, request.Kind, request.Name);
+    FillPresetParameters(command, request.AccountId, request.Kind);
 
     var result = await command.ExecuteScalarAsync(cancellationToken);
 
@@ -87,12 +87,11 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
       UPDATE technique_presets
       SET account_id = @account_id,
           kind = @kind,
-          name = @name,
           updated_utc = CURRENT_TIMESTAMP
       WHERE id = @id;
       """;
     command.Parameters.AddWithValue("@id", id);
-    FillPresetParameters(command, request.AccountId, request.Kind, request.Name);
+    FillPresetParameters(command, request.AccountId, request.Kind);
 
     return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
   }
@@ -170,11 +169,10 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
     return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
   }
 
-  private static void FillPresetParameters(SqliteCommand command, long? accountId, string kind, string name)
+  private static void FillPresetParameters(SqliteCommand command, long? accountId, string kind)
   {
     command.Parameters.AddWithValue("@account_id", (object?)accountId ?? DBNull.Value);
     command.Parameters.AddWithValue("@kind", kind);
-    command.Parameters.AddWithValue("@name", name);
   }
 
   private static TechniquePresetResponse ReadPreset(SqliteDataReader reader)
@@ -182,8 +180,7 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
     return new TechniquePresetResponse(
       reader.GetInt64(reader.GetOrdinal("id")),
       GetNullableInt64(reader, "account_id"),
-      reader.GetString(reader.GetOrdinal("kind")),
-      reader.GetString(reader.GetOrdinal("name")));
+      reader.GetString(reader.GetOrdinal("kind")));
   }
 
   private static TechniquePresetSlotResponse ReadSlot(SqliteDataReader reader)

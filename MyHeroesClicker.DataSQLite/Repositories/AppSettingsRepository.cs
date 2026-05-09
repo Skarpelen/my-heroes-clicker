@@ -22,6 +22,7 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
       SELECT id,
              active_account_id,
              base_url,
+             browser_kind,
              headless,
              user_data_dir,
              min_delay_ms,
@@ -54,6 +55,7 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
     command.CommandText = """
       UPDATE app_settings
       SET base_url = @base_url,
+          browser_kind = @browser_kind,
           headless = @headless,
           user_data_dir = @user_data_dir,
           min_delay_ms = @min_delay_ms,
@@ -89,6 +91,7 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
   private static void FillSettingsParameters(SqliteCommand command, UpdateAppSettingsRequest request)
   {
     command.Parameters.AddWithValue("@base_url", request.BaseUrl);
+    command.Parameters.AddWithValue("@browser_kind", request.BrowserKind);
     command.Parameters.AddWithValue("@headless", request.Headless);
     command.Parameters.AddWithValue("@user_data_dir", (object?)request.UserDataDir ?? DBNull.Value);
     command.Parameters.AddWithValue("@min_delay_ms", request.MinDelayMs);
@@ -108,6 +111,7 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
       reader.GetInt64(reader.GetOrdinal("id")),
       GetNullableInt64(reader, "active_account_id"),
       reader.GetString(reader.GetOrdinal("base_url")),
+      reader.GetString(reader.GetOrdinal("browser_kind")),
       reader.GetBoolean(reader.GetOrdinal("headless")),
       GetNullableString(reader, "user_data_dir"),
       reader.GetInt32(reader.GetOrdinal("min_delay_ms")),

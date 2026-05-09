@@ -3,8 +3,7 @@ namespace MyHeroesClicker.Core.Contracts.Database;
 public sealed record EquipmentSetResponse(
   long Id,
   long? AccountId,
-  string Kind,
-  string Name);
+  string Kind);
 
 public sealed record EquipmentSetSlotResponse(
   long EquipmentSetId,
@@ -14,13 +13,11 @@ public sealed record EquipmentSetSlotResponse(
 
 public sealed record CreateEquipmentSetRequest(
   long? AccountId,
-  string Kind,
-  string Name);
+  string Kind);
 
 public sealed record UpdateEquipmentSetRequest(
   long? AccountId,
-  string Kind,
-  string Name);
+  string Kind);
 
 public sealed record UpsertEquipmentSetSlotRequest(
   string ExpectedImageSrc,

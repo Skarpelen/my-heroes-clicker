@@ -46,7 +46,7 @@ public sealed class TechniquePresetsController : ControllerBase
     [FromBody] CreateTechniquePresetRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidatePreset(request.Kind, request.Name, out var validationResult))
+    if (!ValidatePreset(request.Kind, out var validationResult))
     {
       return validationResult;
     }
@@ -71,7 +71,7 @@ public sealed class TechniquePresetsController : ControllerBase
     [FromBody] UpdateTechniquePresetRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidatePreset(request.Kind, request.Name, out var validationResult))
+    if (!ValidatePreset(request.Kind, out var validationResult))
     {
       return validationResult;
     }
@@ -143,18 +143,13 @@ public sealed class TechniquePresetsController : ControllerBase
     return deleted ? NoContent() : NotFound();
   }
 
-  private bool ValidatePreset(string kind, string name, out IActionResult validationResult)
+  private bool ValidatePreset(string kind, out IActionResult validationResult)
   {
     var errors = new Dictionary<string, string[]>();
 
     if (!IsValidKind(kind))
     {
       errors.Add(nameof(CreateTechniquePresetRequest.Kind), ["Допустимые значения: farm, combat."]);
-    }
-
-    if (string.IsNullOrWhiteSpace(name))
-    {
-      errors.Add(nameof(CreateTechniquePresetRequest.Name), ["Укажите название пресета."]);
     }
 
     validationResult = errors.Count > 0 ? BadRequest(new { errors }) : Ok();

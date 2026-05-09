@@ -4,6 +4,8 @@ public sealed class ClickerOptions
 {
   public string BaseUrl { get; set; } = "https://myheroes.ru/";
 
+  public string BrowserKind { get; set; } = "chrome";
+
   public string ConfigPath { get; set; } = Path.Combine("conf", "clicker-config.json");
 
   public bool Headless { get; set; }
@@ -30,9 +32,4 @@ public sealed class ClickerOptions
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "MyHeroesClicker",
     "chrome-profile");
-
-  public string AuthStatePath { get; set; } = Path.Combine(
-    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-    "MyHeroesClicker",
-    "auth-state.json");
 }

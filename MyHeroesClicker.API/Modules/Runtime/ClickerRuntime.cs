@@ -1,4 +1,4 @@
-﻿using Microsoft.Playwright;
+using Microsoft.Playwright;
 using MyHeroesClicker.API.Modules.Core;
 using MyHeroesClicker.API.Modules.Scenarios;
 using MyHeroesClicker.API.Modules.Services;
@@ -125,7 +125,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
       ScenarioBrowserTabKind.Main,
       "Основная вкладка");
 
-    IScenario authenticationScenario = new AuthenticationScenario(config, webClient, browserSession.SaveAuthStateAsync);
+    IScenario authenticationScenario = new AuthenticationScenario(config, webClient);
     IScenario farmPreparationScenario = new FarmPreparationScenario(
       equipmentClient,
       techniqueClient,

@@ -4,6 +4,7 @@ public sealed record AppSettingsResponse(
   long Id,
   long? ActiveAccountId,
   string BaseUrl,
+  string BrowserKind,
   bool Headless,
   string? UserDataDir,
   int MinDelayMs,
@@ -18,6 +19,7 @@ public sealed record AppSettingsResponse(
 
 public sealed record UpdateAppSettingsRequest(
   string BaseUrl,
+  string BrowserKind,
   bool Headless,
   string? UserDataDir,
   int MinDelayMs,

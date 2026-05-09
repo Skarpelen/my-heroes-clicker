@@ -70,6 +70,11 @@ public sealed class AppSettingsController : ControllerBase
       errors.Add(nameof(UpdateAppSettingsRequest.BaseUrl), ["Укажите базовый URL."]);
     }
 
+    if (!IsValidBrowserKind(request.BrowserKind))
+    {
+      errors.Add(nameof(UpdateAppSettingsRequest.BrowserKind), ["Допустимые значения: chromium, chrome, edge, firefox, webkit."]);
+    }
+
     if (request.MinDelayMs < 0 || request.MaxDelayMs < request.MinDelayMs)
     {
       errors.Add(nameof(UpdateAppSettingsRequest.MaxDelayMs), ["Диапазон задержки указан некорректно."]);
@@ -88,5 +93,14 @@ public sealed class AppSettingsController : ControllerBase
     validationResult = errors.Count > 0 ? BadRequest(new { errors }) : Ok();
 
     return errors.Count == 0;
+  }
+
+  private static bool IsValidBrowserKind(string? browserKind)
+  {
+    return string.Equals(browserKind, "chromium", StringComparison.Ordinal)
+      || string.Equals(browserKind, "chrome", StringComparison.Ordinal)
+      || string.Equals(browserKind, "edge", StringComparison.Ordinal)
+      || string.Equals(browserKind, "firefox", StringComparison.Ordinal)
+      || string.Equals(browserKind, "webkit", StringComparison.Ordinal);
   }
 }

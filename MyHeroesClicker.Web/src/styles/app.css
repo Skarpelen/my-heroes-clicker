@@ -42,7 +42,8 @@
 
 .account-card,
 .status-bar,
-.scenario-card {
+.scenario-card,
+.settings-panel {
   border: 1px solid var(--line);
   border-radius: 28px;
   background: var(--card);
@@ -66,17 +67,60 @@
   font-size: 22px;
 }
 
+.account-card small {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.global-error,
+.status-error,
+.pause-warning,
+.panel-error,
+.success-line,
+.muted-line {
+  margin: 0;
+  font-weight: 800;
+}
+
 .global-error,
 .status-error,
 .pause-warning,
 .panel-error {
-  margin: 0;
   color: var(--danger);
-  font-weight: 800;
+}
+
+.success-line {
+  color: var(--green);
+}
+
+.muted-line {
+  color: var(--muted);
 }
 
 .global-error {
   margin-bottom: 16px;
+}
+
+.page-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.page-tabs button {
+  border-radius: 999px;
+  padding: 12px 18px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.46);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.page-tabs .page-tab-active {
+  color: #fff8eb;
+  background: var(--accent-strong);
 }
 
 .status-bar {
@@ -156,6 +200,13 @@
   padding: 28px;
 }
 
+.settings-panel {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+  padding: 28px;
+}
+
 .scenario-card-active::before {
   position: absolute;
   inset: 0;
@@ -194,6 +245,61 @@
   box-shadow: 0 24px 48px rgba(158, 63, 29, 0.28);
 }
 
+.settings-panel-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: end;
+}
+
+.settings-panel-header h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font-size: 36px;
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.settings-tabs button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.46);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.settings-tabs .settings-tab-active {
+  color: #fff8eb;
+  background: var(--accent-strong);
+}
+
+.settings-tabs .settings-tab-danger {
+  background: var(--danger);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+}
+
+.settings-list,
+.settings-form {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
 .form-grid {
   position: relative;
   display: grid;
@@ -206,6 +312,12 @@
   grid-template-columns: minmax(220px, 360px);
 }
 
+.advanced-form-grid {
+  grid-template-columns: minmax(280px, 640px);
+  margin-top: 0;
+}
+
+.select-row label,
 .form-grid label,
 .health-field {
   display: grid;
@@ -214,7 +326,10 @@
   font-weight: 800;
 }
 
-.form-grid input {
+.form-grid input,
+.form-grid select,
+.select-row select,
+.slot-row input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -224,9 +339,157 @@
   outline: none;
 }
 
-.form-grid input:focus {
+.form-grid input:focus,
+.form-grid select:focus,
+.select-row select:focus,
+.slot-row input:focus {
   border-color: rgba(216, 111, 44, 0.78);
   box-shadow: 0 0 0 4px rgba(216, 111, 44, 0.16);
+}
+
+.form-grid small {
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.account-list {
+  display: grid;
+  gap: 8px;
+}
+
+.account-list-item {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.44);
+  cursor: pointer;
+}
+
+.account-list-item-active {
+  border-color: rgba(79, 125, 63, 0.66);
+  background: rgba(79, 125, 63, 0.14);
+}
+
+.account-list-item span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.slot-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.slot-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 96px 132px;
+  gap: 10px;
+  align-items: center;
+}
+
+.slot-row strong {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: #fff8eb;
+  background: var(--green);
+}
+
+.slot-row label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.slot-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
+.danger-note,
+.empty-state {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.danger-note {
+  grid-template-columns: 28px 1fr;
+  align-items: start;
+  color: var(--danger);
+}
+
+.danger-note p,
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.danger-note p {
+  color: var(--danger);
+}
+
+.technique-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.technique-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.technique-row strong {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: #fff8eb;
+  background: var(--green);
+}
+
+.technique-row span {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.technique-row label {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.technique-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
 }
 
 .health-value {
@@ -350,6 +613,24 @@
   .option-grid-compact {
     grid-template-columns: 1fr;
   }
+
+  .settings-grid,
+  .settings-panel-header {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-tabs {
+    justify-content: flex-start;
+  }
+
+  .technique-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .slot-row,
+  .technique-row {
+    grid-template-columns: 32px 1fr auto;
+  }
 }
 
 @media (max-width: 760px) {
@@ -365,6 +646,10 @@
   .form-grid,
   .farm-starts,
   .option-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .technique-grid {
     grid-template-columns: 1fr;
   }
 

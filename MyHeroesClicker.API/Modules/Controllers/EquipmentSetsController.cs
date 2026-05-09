@@ -46,7 +46,7 @@ public sealed class EquipmentSetsController : ControllerBase
     [FromBody] CreateEquipmentSetRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidateSet(request.Kind, request.Name, out var validationResult))
+    if (!ValidateSet(request.Kind, out var validationResult))
     {
       return validationResult;
     }
@@ -71,7 +71,7 @@ public sealed class EquipmentSetsController : ControllerBase
     [FromBody] UpdateEquipmentSetRequest request,
     CancellationToken cancellationToken)
   {
-    if (!ValidateSet(request.Kind, request.Name, out var validationResult))
+    if (!ValidateSet(request.Kind, out var validationResult))
     {
       return validationResult;
     }
@@ -143,18 +143,13 @@ public sealed class EquipmentSetsController : ControllerBase
     return deleted ? NoContent() : NotFound();
   }
 
-  private bool ValidateSet(string kind, string name, out IActionResult validationResult)
+  private bool ValidateSet(string kind, out IActionResult validationResult)
   {
     var errors = new Dictionary<string, string[]>();
 
     if (!IsValidKind(kind))
     {
       errors.Add(nameof(CreateEquipmentSetRequest.Kind), ["Допустимые значения: farm, combat."]);
-    }
-
-    if (string.IsNullOrWhiteSpace(name))
-    {
-      errors.Add(nameof(CreateEquipmentSetRequest.Name), ["Укажите название сета."]);
     }
 
     validationResult = errors.Count > 0 ? BadRequest(new { errors }) : Ok();

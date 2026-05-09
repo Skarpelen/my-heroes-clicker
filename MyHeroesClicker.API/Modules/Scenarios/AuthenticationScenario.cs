@@ -1,4 +1,4 @@
-﻿using MyHeroesClicker.Browser.Browser;
+using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Core.Confs;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
@@ -9,16 +9,13 @@ public sealed class AuthenticationScenario : IScenario
 {
   private readonly ClickerConfig _config;
   private readonly MyHeroesWebClient _webClient;
-  private readonly Func<Task>? _afterAuthenticated;
 
   public AuthenticationScenario(
     ClickerConfig config,
-    MyHeroesWebClient webClient,
-    Func<Task>? afterAuthenticated = null)
+    MyHeroesWebClient webClient)
   {
     _config = config;
     _webClient = webClient;
-    _afterAuthenticated = afterAuthenticated;
   }
 
   public string Name => "Авторизация";
@@ -37,14 +34,5 @@ public sealed class AuthenticationScenario : IScenario
       },
       cancellationToken);
 
-    await SaveAuthStateAsync();
-  }
-
-  private async Task SaveAuthStateAsync()
-  {
-    if (_afterAuthenticated is not null)
-    {
-      await _afterAuthenticated();
-    }
   }
 }

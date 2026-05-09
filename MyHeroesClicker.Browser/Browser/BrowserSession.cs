@@ -1,4 +1,4 @@
-﻿using Microsoft.Playwright;
+using Microsoft.Playwright;
 using MyHeroesClicker.Core.Confs;
 
 namespace MyHeroesClicker.Browser.Browser;
@@ -6,12 +6,10 @@ namespace MyHeroesClicker.Browser.Browser;
 public sealed class BrowserSession : IAsyncDisposable
 {
   private readonly IBrowserContext _context;
-  private readonly string _authStatePath;
 
-  private BrowserSession(IBrowserContext context, IPage page, string authStatePath)
+  private BrowserSession(IBrowserContext context, IPage page)
   {
     _context = context;
-    _authStatePath = authStatePath;
     Page = page;
   }
 
@@ -22,14 +20,13 @@ public sealed class BrowserSession : IAsyncDisposable
   public static async Task<BrowserSession> StartAsync(IPlaywright playwright, ClickerOptions options)
   {
     var userDataDir = Path.GetFullPath(options.UserDataDir);
-    var authStatePath = Path.GetFullPath(options.AuthStatePath);
 
     Directory.CreateDirectory(userDataDir);
-    Directory.CreateDirectory(Path.GetDirectoryName(authStatePath)!);
 
-    var context = await playwright.Chromium.LaunchPersistentContextAsync(userDataDir, new()
+    var browserType = GetBrowserType(playwright, options.BrowserKind, out var channel);
+    var context = await browserType.LaunchPersistentContextAsync(userDataDir, new()
     {
-      Channel = "chrome",
+      Channel = channel,
       Headless = options.Headless,
       SlowMo = 50,
       Locale = "ru-RU",
@@ -40,11 +37,6 @@ public sealed class BrowserSession : IAsyncDisposable
       }
     });
 
-    if (File.Exists(authStatePath))
-    {
-      await context.SetStorageStateAsync(authStatePath);
-    }
-
     context.SetDefaultTimeout(options.DefaultTimeoutMs);
     context.SetDefaultNavigationTimeout(options.DefaultTimeoutMs);
 
@@ -52,20 +44,33 @@ public sealed class BrowserSession : IAsyncDisposable
       ? context.Pages[0]
       : await context.NewPageAsync();
 
-    return new BrowserSession(context, page, authStatePath);
-  }
-
-  public async Task SaveAuthStateAsync()
-  {
-    await _context.StorageStateAsync(new()
-    {
-      Path = _authStatePath,
-      IndexedDB = true
-    });
+    return new BrowserSession(context, page);
   }
 
   public async ValueTask DisposeAsync()
   {
     await _context.DisposeAsync();
+  }
+
+  private static IBrowserType GetBrowserType(IPlaywright playwright, string browserKind, out string? channel)
+  {
+    channel = null;
+
+    return browserKind.Trim().ToLowerInvariant() switch
+    {
+      "chromium" => playwright.Chromium,
+      "chrome" => GetChromiumChannel(playwright, "chrome", out channel),
+      "edge" => GetChromiumChannel(playwright, "msedge", out channel),
+      "firefox" => playwright.Firefox,
+      "webkit" => playwright.Webkit,
+      _ => throw new InvalidOperationException($"Неподдерживаемый браузер: {browserKind}.")
+    };
+  }
+
+  private static IBrowserType GetChromiumChannel(IPlaywright playwright, string channelName, out string channel)
+  {
+    channel = channelName;
+
+    return playwright.Chromium;
   }
 }

@@ -13,7 +13,12 @@ public static class Program
 
       Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
 
-      await using var connection = new SqliteConnection($"Data Source={databasePath}");
+      var connectionString = new SqliteConnectionStringBuilder
+      {
+        DataSource = databasePath
+      }.ToString();
+
+      await using var connection = new SqliteConnection(connectionString);
       await connection.OpenAsync();
 
       await EnableForeignKeysAsync(connection);
@@ -150,31 +155,54 @@ public static class Program
   {
     var script = await File.ReadAllTextAsync(migration.Path);
 
+    await SetForeignKeysAsync(connection, enabled: false);
     await using var transaction = await connection.BeginTransactionAsync();
 
-    await using (var migrationCommand = connection.CreateCommand())
+    try
     {
-      migrationCommand.Transaction = (SqliteTransaction)transaction;
-      migrationCommand.CommandText = script;
+      await using (var migrationCommand = connection.CreateCommand())
+      {
+        migrationCommand.Transaction = (SqliteTransaction)transaction;
+        migrationCommand.CommandText = script;
 
-      await migrationCommand.ExecuteNonQueryAsync();
+        await migrationCommand.ExecuteNonQueryAsync();
+      }
+
+      await using (var versionCommand = connection.CreateCommand())
+      {
+        versionCommand.Transaction = (SqliteTransaction)transaction;
+        versionCommand.CommandText = """
+          INSERT INTO schema_migrations (version, name)
+          VALUES (@version, @name);
+          """;
+        versionCommand.Parameters.AddWithValue("@version", migration.Version);
+        versionCommand.Parameters.AddWithValue("@name", migration.Name);
+
+        await versionCommand.ExecuteNonQueryAsync();
+      }
+
+      await transaction.CommitAsync();
+      Console.WriteLine($"Applied migration v{migration.Version:000}: {migration.Name}");
     }
-
-    await using (var versionCommand = connection.CreateCommand())
+    catch
     {
-      versionCommand.Transaction = (SqliteTransaction)transaction;
-      versionCommand.CommandText = """
-        INSERT INTO schema_migrations (version, name)
-        VALUES (@version, @name);
-        """;
-      versionCommand.Parameters.AddWithValue("@version", migration.Version);
-      versionCommand.Parameters.AddWithValue("@name", migration.Name);
-
-      await versionCommand.ExecuteNonQueryAsync();
+      await transaction.RollbackAsync();
+      throw;
     }
+    finally
+    {
+      await SetForeignKeysAsync(connection, enabled: true);
+    }
+  }
 
-    await transaction.CommitAsync();
-    Console.WriteLine($"Applied migration v{migration.Version:000}: {migration.Name}");
+  private static async Task SetForeignKeysAsync(SqliteConnection connection, bool enabled)
+  {
+    await using var command = connection.CreateCommand();
+    command.CommandText = enabled
+      ? "PRAGMA foreign_keys = ON;"
+      : "PRAGMA foreign_keys = OFF;";
+
+    await command.ExecuteNonQueryAsync();
   }
 
   private sealed record MigrationFile(int Version, string Name, string Path)
