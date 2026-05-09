@@ -1,84 +1,70 @@
-﻿using MyHeroesClicker.Core.Modules.Core;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class DirectEquipmentClient
 {
-  private static readonly IReadOnlyDictionary<int, int> FarmItemIds = new Dictionary<int, int>
-  {
-    [1] = 9165,
-    [3] = 9166,
-    [4] = 9167,
-    [5] = 7881,
-    [6] = 6035,
-    [7] = 7533
-  };
-
-  private static readonly IReadOnlyDictionary<int, int> CombatItemIds = new Dictionary<int, int>
-  {
-    [1] = 9165,
-    [2] = 9169,
-    [3] = 9166,
-    [4] = 9167,
-    [5] = 7881,
-    [6] = 7531,
-    [7] = 7533,
-    [8] = 7532
-  };
-
-  private static readonly IReadOnlyDictionary<int, int> FarmUndressItemIds = new Dictionary<int, int>
-  {
-    [2] = 9169,
-    [8] = 7532
-  };
-
-  private static readonly IReadOnlyDictionary<int, int> EmptyUndressItemIds = new Dictionary<int, int>();
-
   private readonly MyHeroesWebClient _webClient;
+  private readonly EquipmentModeConfiguration _configuration;
 
-  public DirectEquipmentClient(MyHeroesWebClient webClient)
+  public DirectEquipmentClient(
+    MyHeroesWebClient webClient,
+    EquipmentModeConfiguration configuration)
   {
     _webClient = webClient;
+    _configuration = configuration;
   }
 
   public Task ApplyFarmStyleAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    return ApplyAsync(context, FarmItemIds, FarmUndressItemIds, "фарм", cancellationToken);
+    return ApplyAsync(context, _configuration.FarmSlots, "фарм", cancellationToken);
   }
 
   public Task ApplyCombatStyleAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    return ApplyAsync(context, CombatItemIds, EmptyUndressItemIds, "бой", cancellationToken);
+    return ApplyAsync(context, _configuration.CombatSlots, "бой", cancellationToken);
   }
 
   private async Task ApplyAsync(
     ScenarioContext context,
-    IReadOnlyDictionary<int, int> itemIdsBySlot,
-    IReadOnlyDictionary<int, int> undressItemIdsBySlot,
+    IReadOnlyCollection<EquipmentSlotConfiguration> slots,
     string styleName,
     CancellationToken cancellationToken)
   {
-    foreach (var (slot, itemId) in undressItemIdsBySlot.OrderBy(item => item.Key))
+    foreach (var slot in slots.Where(slot => slot.ShouldBeEmpty).OrderBy(slot => slot.SlotNumber))
     {
       cancellationToken.ThrowIfCancellationRequested();
 
+      if (slot.ItemId is null)
+      {
+        context.Logger.Warn($"Слот {slot.SlotNumber} для режима {styleName} должен быть пустым, но ID вещи для снятия не задан.");
+        continue;
+      }
+
       await TryApplyItemCommandAsync(
         context,
-        $"/inventory/undress/{itemId}",
-        $"Снимаю вещь {itemId} из слота {slot} для режима {styleName} прямым запросом.",
-        $"Не удалось снять вещь {itemId} из слота {slot}. Считаю это допустимым, если вещь уже снята.",
+        $"/inventory/undress/{slot.ItemId.Value}",
+        $"Снимаю вещь {slot.ItemId.Value} из слота {slot.SlotNumber} для режима {styleName} прямым запросом.",
+        $"Не удалось снять вещь {slot.ItemId.Value} из слота {slot.SlotNumber}. Считаю это допустимым, если вещь уже снята.",
         cancellationToken);
     }
 
-    foreach (var (slot, itemId) in itemIdsBySlot.OrderBy(item => item.Key))
+    foreach (var slot in slots.Where(slot => !slot.ShouldBeEmpty).OrderBy(slot => slot.SlotNumber))
     {
       cancellationToken.ThrowIfCancellationRequested();
 
+      if (slot.ItemId is null)
+      {
+        context.Logger.Warn($"В слоте {slot.SlotNumber} для режима {styleName} не задан ID вещи. Пропускаю слот.");
+        continue;
+      }
+
       await TryApplyItemCommandAsync(
         context,
-        $"/inventory/dress/{itemId}",
-        $"Надеваю вещь {itemId} в слот {slot} для режима {styleName} прямым запросом.",
-        $"Не удалось надеть вещь {itemId} в слот {slot}. Считаю это допустимым, если вещь уже надета.",
+        $"/inventory/dress/{slot.ItemId.Value}",
+        $"Надеваю вещь {slot.ItemId.Value} в слот {slot.SlotNumber} для режима {styleName} прямым запросом.",
+        $"Не удалось надеть вещь {slot.ItemId.Value} в слот {slot.SlotNumber}. Считаю это допустимым, если вещь уже надета.",
         cancellationToken);
     }
   }

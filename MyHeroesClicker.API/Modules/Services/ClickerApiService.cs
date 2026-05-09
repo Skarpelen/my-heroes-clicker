@@ -93,9 +93,11 @@ public sealed class ClickerApiService : IAsyncDisposable
       }
 
       var activeAccount = await ApplyStoredSettingsAsync(cancellationToken);
+      var scenarioConfiguration = await LoadScenarioConfigurationAsync(activeAccount.Id, cancellationToken);
       _runtime = await ClickerRuntime.StartAsync(
         _options,
         activeAccount,
+        scenarioConfiguration,
         _logger,
         _alertService,
         _pauseService,
@@ -216,5 +218,107 @@ public sealed class ClickerApiService : IAsyncDisposable
     _options.MaxStepRetryCount = settings.MaxStepRetryCount;
     _options.RetryDelayMs = settings.RetryDelayMs;
     _options.AuthenticationRetryDelayMs = settings.AuthenticationRetryDelayMs;
+  }
+
+  private async Task<ScenarioConfiguration> LoadScenarioConfigurationAsync(
+    long accountId,
+    CancellationToken cancellationToken)
+  {
+    using var scope = _scopeFactory.CreateScope();
+    var equipmentSets = scope.ServiceProvider.GetRequiredService<IEquipmentSetRepository>();
+    var techniquePresets = scope.ServiceProvider.GetRequiredService<ITechniquePresetRepository>();
+
+    return new ScenarioConfiguration(
+      new EquipmentModeConfiguration(
+        await LoadEquipmentSlotsAsync(equipmentSets, accountId, "farm", cancellationToken),
+        await LoadEquipmentSlotsAsync(equipmentSets, accountId, "combat", cancellationToken)),
+      new TechniqueModeConfiguration(
+        await LoadTechniqueIdsAsync(techniquePresets, accountId, "farm", cancellationToken),
+        await LoadTechniqueIdsAsync(techniquePresets, accountId, "combat", cancellationToken)));
+  }
+
+  private static async Task<IReadOnlyCollection<EquipmentSlotConfiguration>> LoadEquipmentSlotsAsync(
+    IEquipmentSetRepository equipmentSets,
+    long accountId,
+    string kind,
+    CancellationToken cancellationToken)
+  {
+    var set = await FindConfigurationAsync(
+      accountId,
+      kind,
+      equipmentSets.GetAllAsync,
+      configuration => configuration.AccountId,
+      cancellationToken);
+
+    if (set is null)
+    {
+      throw new InvalidOperationException($"Не найден сет экипировки для режима {kind}. Создайте сет в настройках.");
+    }
+
+    var slots = await equipmentSets.GetSlotsAsync(set.Id, cancellationToken);
+
+    if (slots.Count == 0)
+    {
+      throw new InvalidOperationException($"В сете экипировки для режима {kind} нет слотов. Сохраните текущую экипировку в настройках.");
+    }
+
+    return slots
+      .Select(slot => new EquipmentSlotConfiguration(
+        slot.SlotNumber,
+        slot.ItemId,
+        slot.ShouldBeEmpty))
+      .ToArray();
+  }
+
+  private static async Task<IReadOnlySet<int>> LoadTechniqueIdsAsync(
+    ITechniquePresetRepository techniquePresets,
+    long accountId,
+    string kind,
+    CancellationToken cancellationToken)
+  {
+    var preset = await FindConfigurationAsync(
+      accountId,
+      kind,
+      techniquePresets.GetAllAsync,
+      configuration => configuration.AccountId,
+      cancellationToken);
+
+    if (preset is null)
+    {
+      throw new InvalidOperationException($"Не найден пресет приемов для режима {kind}. Создайте пресет в настройках.");
+    }
+
+    var slots = await techniquePresets.GetSlotsAsync(preset.Id, cancellationToken);
+
+    if (slots.Count == 0)
+    {
+      throw new InvalidOperationException($"В пресете приемов для режима {kind} нет приемов. Сохраните приемы в настройках.");
+    }
+
+    return slots
+      .Where(slot => slot.IsEnabled)
+      .Select(slot => slot.TechniqueNumber)
+      .ToHashSet();
+  }
+
+  private static async Task<TConfiguration?> FindConfigurationAsync<TConfiguration>(
+    long accountId,
+    string kind,
+    Func<long?, string?, CancellationToken, Task<IReadOnlyCollection<TConfiguration>>> loadAsync,
+    Func<TConfiguration, long?> getAccountId,
+    CancellationToken cancellationToken)
+  {
+    var accountConfigurations = await loadAsync(accountId, kind, cancellationToken);
+
+    if (accountConfigurations.FirstOrDefault() is { } accountConfiguration)
+    {
+      return accountConfiguration;
+    }
+
+    var configurations = await loadAsync(null, kind, cancellationToken);
+
+    return configurations
+      .Where(configuration => getAccountId(configuration) is null)
+      .FirstOrDefault();
   }
 }

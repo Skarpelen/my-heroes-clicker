@@ -113,7 +113,7 @@ public sealed class EquipmentSetRepository : IEquipmentSetRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      SELECT equipment_set_id, slot_number, expected_image_src, should_be_empty
+      SELECT equipment_set_id, slot_number, item_id, expected_image_src, should_be_empty
       FROM equipment_set_slots
       WHERE equipment_set_id = @equipment_set_id
       ORDER BY slot_number;
@@ -140,14 +140,16 @@ public sealed class EquipmentSetRepository : IEquipmentSetRepository
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
     await using var command = connection.CreateCommand();
     command.CommandText = """
-      INSERT INTO equipment_set_slots (equipment_set_id, slot_number, expected_image_src, should_be_empty)
-      VALUES (@equipment_set_id, @slot_number, @expected_image_src, @should_be_empty)
+      INSERT INTO equipment_set_slots (equipment_set_id, slot_number, item_id, expected_image_src, should_be_empty)
+      VALUES (@equipment_set_id, @slot_number, @item_id, @expected_image_src, @should_be_empty)
       ON CONFLICT(equipment_set_id, slot_number) DO UPDATE
-      SET expected_image_src = excluded.expected_image_src,
+      SET item_id = excluded.item_id,
+          expected_image_src = excluded.expected_image_src,
           should_be_empty = excluded.should_be_empty;
       """;
     command.Parameters.AddWithValue("@equipment_set_id", equipmentSetId);
     command.Parameters.AddWithValue("@slot_number", slotNumber);
+    command.Parameters.AddWithValue("@item_id", (object?)request.ItemId ?? DBNull.Value);
     command.Parameters.AddWithValue("@expected_image_src", request.ExpectedImageSrc);
     command.Parameters.AddWithValue("@should_be_empty", request.ShouldBeEmpty);
 
@@ -188,8 +190,16 @@ public sealed class EquipmentSetRepository : IEquipmentSetRepository
     return new EquipmentSetSlotResponse(
       reader.GetInt64(reader.GetOrdinal("equipment_set_id")),
       reader.GetInt32(reader.GetOrdinal("slot_number")),
+      GetNullableInt32(reader, "item_id"),
       reader.GetString(reader.GetOrdinal("expected_image_src")),
       reader.GetBoolean(reader.GetOrdinal("should_be_empty")));
+  }
+
+  private static int? GetNullableInt32(SqliteDataReader reader, string name)
+  {
+    var ordinal = reader.GetOrdinal(name);
+
+    return reader.IsDBNull(ordinal) ? null : reader.GetInt32(ordinal);
   }
 
   private static long? GetNullableInt64(SqliteDataReader reader, string name)

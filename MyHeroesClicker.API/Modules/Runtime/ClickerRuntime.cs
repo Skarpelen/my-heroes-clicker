@@ -93,6 +93,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
   public static async Task<ClickerRuntime> StartAsync(
     ClickerOptions options,
     AccountResponse activeAccount,
+    ScenarioConfiguration configuration,
     IRunLogger logger,
     IAlertService alertService,
     IPauseService pauseService,
@@ -108,8 +109,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
     var browserSession = await BrowserSession.StartAsync(playwright, options);
     var tabManager = new ScenarioBrowserTabManager(browserSession);
     var webClient = new MyHeroesWebClient(browserSession, options);
-    var equipmentClient = new DirectEquipmentClient(webClient);
-    var techniqueClient = new DirectTechniqueClient(webClient);
+    var equipmentClient = new DirectEquipmentClient(webClient, configuration.Equipment);
+    var techniqueClient = new DirectTechniqueClient(webClient, configuration.Techniques);
     var statsReader = new CharacterStatsReader(webClient);
 
     var characterState = new CharacterState();

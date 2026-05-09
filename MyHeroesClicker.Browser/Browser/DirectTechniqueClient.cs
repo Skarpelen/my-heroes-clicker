@@ -1,31 +1,35 @@
-﻿using MyHeroesClicker.Core.Modules.Core;
+using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;
 
 public sealed class DirectTechniqueClient
 {
-  private static readonly HashSet<int> FarmEnabledTechniqueIds = [2, 5, 7];
   private static readonly HashSet<int> TechniqueIds = Enumerable.Range(1, 15).ToHashSet();
 
   private readonly MyHeroesWebClient _webClient;
+  private readonly TechniqueModeConfiguration _configuration;
 
-  public DirectTechniqueClient(MyHeroesWebClient webClient)
+  public DirectTechniqueClient(
+    MyHeroesWebClient webClient,
+    TechniqueModeConfiguration configuration)
   {
     _webClient = webClient;
+    _configuration = configuration;
   }
 
   public Task ApplyFarmModeAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
     context.Logger.Log("Переключаю приемы в режим фарма прямыми запросами.");
 
-    return ApplyAsync(context, FarmEnabledTechniqueIds, cancellationToken);
+    return ApplyAsync(context, _configuration.FarmEnabledTechniqueIds, cancellationToken);
   }
 
   public Task ApplyCombatModeAsync(ScenarioContext context, CancellationToken cancellationToken)
   {
-    context.Logger.Log("Включаю все приемы прямыми запросами.");
+    context.Logger.Log("Включаю боевые приемы прямыми запросами.");
 
-    return ApplyAsync(context, TechniqueIds, cancellationToken);
+    return ApplyAsync(context, _configuration.CombatEnabledTechniqueIds, cancellationToken);
   }
 
   private async Task ApplyAsync(

@@ -8,6 +8,7 @@ public sealed record EquipmentSetResponse(
 public sealed record EquipmentSetSlotResponse(
   long EquipmentSetId,
   int SlotNumber,
+  int? ItemId,
   string ExpectedImageSrc,
   bool ShouldBeEmpty);
 
@@ -20,5 +21,6 @@ public sealed record UpdateEquipmentSetRequest(
   string Kind);
 
 public sealed record UpsertEquipmentSetSlotRequest(
+  int? ItemId,
   string ExpectedImageSrc,
   bool ShouldBeEmpty);

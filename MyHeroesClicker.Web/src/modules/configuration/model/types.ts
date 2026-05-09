@@ -38,6 +38,7 @@ export type EquipmentSet = {
 export type EquipmentSetSlot = {
   equipmentSetId: number
   slotNumber: number
+  itemId: number | null
   expectedImageSrc: string
   shouldBeEmpty: boolean
 }
