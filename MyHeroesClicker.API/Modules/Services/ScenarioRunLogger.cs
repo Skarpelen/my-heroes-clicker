@@ -1,28 +1,24 @@
 ﻿using MyHeroesClicker.Core.Interfaces.Services;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Services;
 
 public sealed class ScenarioRunLogger : IRunLogger
 {
-  private readonly ILogger<ScenarioRunLogger> _logger;
-
-  public ScenarioRunLogger(ILogger<ScenarioRunLogger> logger)
-  {
-    _logger = logger;
-  }
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
 
   public void Log(string message)
   {
-    _logger.LogInformation("{Message}", message);
+    _log.Info(message);
   }
 
   public void Warn(string message)
   {
-    _logger.LogWarning("{Message}", message);
+    _log.Warn(message);
   }
 
   public void Error(string message)
   {
-    _logger.LogError("{Message}", message);
+    _log.Error(message);
   }
 }

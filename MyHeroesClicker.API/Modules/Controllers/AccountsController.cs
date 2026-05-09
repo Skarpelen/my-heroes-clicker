@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -8,15 +9,12 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/accounts")]
 public sealed class AccountsController : ControllerBase
 {
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly IAccountRepository _accounts;
-  private readonly ILogger<AccountsController> _logger;
 
-  public AccountsController(
-    IAccountRepository accounts,
-    ILogger<AccountsController> logger)
+  public AccountsController(IAccountRepository accounts)
   {
     _accounts = accounts;
-    _logger = logger;
   }
 
   [HttpGet]
@@ -51,7 +49,7 @@ public sealed class AccountsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Account creation failed.");
+      _log.Warn(exception, "Account creation failed.");
 
       return Conflict(new { error = exception.Message });
     }

@@ -16,4 +16,10 @@
     <ProjectReference Include="..\MyHeroesClicker.DataSQLite\MyHeroesClicker.DataSQLite.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -8,15 +9,12 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/settings")]
 public sealed class AppSettingsController : ControllerBase
 {
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly IAppSettingsRepository _settings;
-  private readonly ILogger<AppSettingsController> _logger;
 
-  public AppSettingsController(
-    IAppSettingsRepository settings,
-    ILogger<AppSettingsController> logger)
+  public AppSettingsController(IAppSettingsRepository settings)
   {
     _settings = settings;
-    _logger = logger;
   }
 
   [HttpGet]
@@ -55,7 +53,7 @@ public sealed class AppSettingsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Active account update failed.");
+      _log.Warn(exception, "Active account update failed.");
 
       return BadRequest(new { error = "Указанный аккаунт не найден." });
     }

@@ -3,6 +3,7 @@ using MyHeroesClicker.API.Modules.Application;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Contracts;
 using MyHeroesClicker.API.Modules.Runtime;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -12,6 +13,7 @@ public sealed class ScenariosController : ControllerBase
 {
   private const int DefaultPreparationIterations = 500;
 
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private static readonly string[] ScenarioNames =
   [
     "authentication",
@@ -23,14 +25,10 @@ public sealed class ScenariosController : ControllerBase
   ];
 
   private readonly ClickerApiService _clicker;
-  private readonly ILogger<ScenariosController> _logger;
 
-  public ScenariosController(
-    ClickerApiService clicker,
-    ILogger<ScenariosController> logger)
+  public ScenariosController(ClickerApiService clicker)
   {
     _clicker = clicker;
-    _logger = logger;
   }
 
   [HttpGet]
@@ -101,7 +99,7 @@ public sealed class ScenariosController : ControllerBase
     catch (InvalidOperationException exception)
     {
       _clicker.SetLastError(exception.Message);
-      _logger.LogWarning(exception, rejectionLogMessage);
+      _log.Warn(exception, rejectionLogMessage);
 
       return Conflict(new { error = exception.Message });
     }
@@ -175,7 +173,7 @@ public sealed class ScenariosController : ControllerBase
     catch (InvalidOperationException exception)
     {
       _clicker.SetLastError(exception.Message);
-      _logger.LogWarning(exception, rejectionLogMessage);
+      _log.Warn(exception, rejectionLogMessage);
 
       return Conflict(new { error = exception.Message });
     }

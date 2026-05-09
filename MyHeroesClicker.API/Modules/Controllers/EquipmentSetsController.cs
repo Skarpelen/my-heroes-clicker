@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -11,18 +12,16 @@ public sealed class EquipmentSetsController : ControllerBase
 {
   private static readonly int[] DefaultEquipmentSlotNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
 
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly IEquipmentSetRepository _equipmentSets;
   private readonly ClickerApiService _clicker;
-  private readonly ILogger<EquipmentSetsController> _logger;
 
   public EquipmentSetsController(
     IEquipmentSetRepository equipmentSets,
-    ClickerApiService clicker,
-    ILogger<EquipmentSetsController> logger)
+    ClickerApiService clicker)
   {
     _equipmentSets = equipmentSets;
     _clicker = clicker;
-    _logger = logger;
   }
 
   [HttpGet]
@@ -65,7 +64,7 @@ public sealed class EquipmentSetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Equipment set creation failed.");
+      _log.Warn(exception, "Equipment set creation failed.");
 
       return Conflict(new { error = exception.Message });
     }
@@ -90,7 +89,7 @@ public sealed class EquipmentSetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Equipment set update failed.");
+      _log.Warn(exception, "Equipment set update failed.");
 
       return Conflict(new { error = exception.Message });
     }
@@ -132,7 +131,7 @@ public sealed class EquipmentSetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Equipment set slot update failed.");
+      _log.Warn(exception, "Equipment set slot update failed.");
 
       return BadRequest(new { error = "Сет не найден или слот указан некорректно." });
     }
@@ -173,7 +172,7 @@ public sealed class EquipmentSetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Current equipment set reading failed.");
+      _log.Warn(exception, "Current equipment set reading failed.");
 
       return BadRequest(new { error = exception.Message });
     }

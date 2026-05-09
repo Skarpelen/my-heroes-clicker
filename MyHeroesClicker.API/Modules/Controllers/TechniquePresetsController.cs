@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
+using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -8,15 +9,12 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/technique-presets")]
 public sealed class TechniquePresetsController : ControllerBase
 {
+  private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly ITechniquePresetRepository _techniquePresets;
-  private readonly ILogger<TechniquePresetsController> _logger;
 
-  public TechniquePresetsController(
-    ITechniquePresetRepository techniquePresets,
-    ILogger<TechniquePresetsController> logger)
+  public TechniquePresetsController(ITechniquePresetRepository techniquePresets)
   {
     _techniquePresets = techniquePresets;
-    _logger = logger;
   }
 
   [HttpGet]
@@ -59,7 +57,7 @@ public sealed class TechniquePresetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Technique preset creation failed.");
+      _log.Warn(exception, "Technique preset creation failed.");
 
       return Conflict(new { error = exception.Message });
     }
@@ -84,7 +82,7 @@ public sealed class TechniquePresetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Technique preset update failed.");
+      _log.Warn(exception, "Technique preset update failed.");
 
       return Conflict(new { error = exception.Message });
     }
@@ -126,7 +124,7 @@ public sealed class TechniquePresetsController : ControllerBase
     }
     catch (Exception exception)
     {
-      _logger.LogWarning(exception, "Technique preset slot update failed.");
+      _log.Warn(exception, "Technique preset slot update failed.");
 
       return BadRequest(new { error = "Пресет не найден или прием указан некорректно." });
     }

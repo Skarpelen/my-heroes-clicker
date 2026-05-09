@@ -1,11 +1,9 @@
-using MyHeroesClicker.Core.Interfaces.Repositories;
+﻿using MyHeroesClicker.Core.Interfaces.Repositories;
 using MyHeroesClicker.DataSQLite.Repositories;
 using MyHeroesClicker.DataSQLite.Toolkit;
-using NLog;
-using NLog.Config;
-using NLog.Targets;
 using NLog.Web;
 using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.API.Modules.Middlewares;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Confs;
 
@@ -15,14 +13,15 @@ public class Program
 {
   public static void Main(string[] args)
   {
-    ConfigureNLog();
-
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Logging.ClearProviders();
     builder.Host.UseNLog();
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+    {
+      options.SuppressAsyncSuffixInActionNames = false;
+    });
     builder.Services.AddSingleton(serviceProvider =>
     {
       var options = new ClickerOptions();
@@ -52,26 +51,10 @@ public class Program
 
     var app = builder.Build();
 
+    app.UseMiddleware<ApiExceptionMiddleware>();
+
     app.MapControllers();
 
     app.Run();
-  }
-
-  private static void ConfigureNLog()
-  {
-    var config = new LoggingConfiguration();
-    var consoleTarget = new ColoredConsoleTarget("console")
-    {
-      Layout = "[${date:format=HH\\:mm\\:ss}] ${uppercase:${level}} ${message}",
-      UseDefaultRowHighlightingRules = true
-    };
-
-    config.AddRule(
-      NLog.LogLevel.Info,
-      NLog.LogLevel.Fatal,
-      consoleTarget,
-      typeof(ScenarioRunLogger).FullName!);
-
-    LogManager.Configuration = config;
   }
 }
