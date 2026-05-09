@@ -12,6 +12,7 @@ import {
   getEquipmentSets,
   getTechniquePresets,
   getTechniquePresetSlots,
+  readCurrentEquipmentSetSlots,
   setActiveAccount,
   updateAccount,
   updateAppSettings,
@@ -228,6 +229,18 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
 
       await refreshConfiguration()
     }, 'Сет сохранен.')
+  }
+
+  async function readCurrentEquipmentSet() {
+    if (selectedEquipmentSetId === null) {
+      setError('Сначала создайте или выберите сет.')
+      return
+    }
+
+    await saveAsync(async () => {
+      await readCurrentEquipmentSetSlots(selectedEquipmentSetId)
+      await refreshConfiguration()
+    }, 'Текущий сет считан и сохранен.')
   }
 
   async function saveTechniquePreset() {
@@ -562,12 +575,13 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
         >
           <div className="empty-state">
             <p>
-              Ручной ввод ID вещей убран. Правильный сценарий здесь такой: надеть сет в игре и нажать кнопку чтения текущего снаряжения.
+              Нужно надеть сет в игре и нажать кнопку чтения текущего снаряжения.
             </p>
-            <p>
-              Сейчас в API нет метода, который читает текущий сет из браузера и сохраняет его в SQLite, поэтому кнопку пока нельзя подключить честно.
-            </p>
-            <Button variant="ghost" disabled>
+            <Button
+              variant="ghost"
+              disabled={isSaving || selectedEquipmentSetId === null}
+              onClick={() => void readCurrentEquipmentSet()}
+            >
               Считать текущий сет
             </Button>
           </div>

@@ -147,6 +147,42 @@ public sealed class ClickerApiService : IAsyncDisposable
     _lastError = error;
   }
 
+  public async Task<IReadOnlyCollection<EquipmentSetSlotResponse>> ReadCurrentEquipmentSetAsync(
+    long equipmentSetId,
+    IReadOnlyCollection<int> slotNumbers,
+    CancellationToken cancellationToken)
+  {
+    var application = await GetApplicationAsync(1, cancellationToken);
+
+    if (application.IsRunning)
+    {
+      throw new InvalidOperationException("Нельзя читать текущий сет, пока выполняется сценарий.");
+    }
+
+    if (_runtime is null)
+    {
+      throw new InvalidOperationException("Браузер не инициализирован.");
+    }
+
+    await application.Scenarios.Authentication.Scenario.ExecuteAsync(_runtime.Context, cancellationToken);
+
+    var currentSlots = await _runtime.EquipmentReader.ReadAsync(slotNumbers, cancellationToken);
+
+    using var scope = _scopeFactory.CreateScope();
+    var equipmentSets = scope.ServiceProvider.GetRequiredService<IEquipmentSetRepository>();
+
+    foreach (var slot in currentSlots)
+    {
+      await equipmentSets.UpsertSlotAsync(
+        equipmentSetId,
+        slot.SlotNumber,
+        new UpsertEquipmentSetSlotRequest(slot.ItemId, slot.ExpectedImageSrc, slot.ShouldBeEmpty),
+        cancellationToken);
+    }
+
+    return await equipmentSets.GetSlotsAsync(equipmentSetId, cancellationToken);
+  }
+
   public async ValueTask DisposeAsync()
   {
     _application?.Dispose();

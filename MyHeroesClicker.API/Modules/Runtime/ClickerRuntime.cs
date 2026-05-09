@@ -39,7 +39,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
     ScenarioContext context,
     ScenarioCatalog scenarios,
     IAlertService alertService,
-    CharacterStatsReader statsReader)
+    CharacterStatsReader statsReader,
+    CurrentEquipmentReader equipmentReader)
   {
     _playwright = playwright;
     _browserSession = browserSession;
@@ -54,6 +55,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
     Scenarios = scenarios;
     AlertService = alertService;
     StatsReader = statsReader;
+    EquipmentReader = equipmentReader;
   }
 
   public ScenarioContext Context { get; }
@@ -63,6 +65,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
   public IAlertService AlertService { get; }
 
   public CharacterStatsReader StatsReader { get; }
+
+  public CurrentEquipmentReader EquipmentReader { get; }
 
   public async Task<ScenarioContext> CreateContextAsync(
     ScenarioCatalogEntry entry,
@@ -112,6 +116,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
     var equipmentClient = new DirectEquipmentClient(webClient, configuration.Equipment);
     var techniqueClient = new DirectTechniqueClient(webClient, configuration.Techniques);
     var statsReader = new CharacterStatsReader(webClient);
+    var equipmentReader = new CurrentEquipmentReader(webClient);
 
     var characterState = new CharacterState();
     var context = new ScenarioContext(
@@ -174,7 +179,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
       context,
       scenarios,
       alertService,
-      statsReader);
+      statsReader,
+      equipmentReader);
   }
 
   public async ValueTask DisposeAsync()

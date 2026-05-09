@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 
@@ -8,14 +9,19 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/equipment-sets")]
 public sealed class EquipmentSetsController : ControllerBase
 {
+  private static readonly int[] DefaultEquipmentSlotNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
+
   private readonly IEquipmentSetRepository _equipmentSets;
+  private readonly ClickerApiService _clicker;
   private readonly ILogger<EquipmentSetsController> _logger;
 
   public EquipmentSetsController(
     IEquipmentSetRepository equipmentSets,
+    ClickerApiService clicker,
     ILogger<EquipmentSetsController> logger)
   {
     _equipmentSets = equipmentSets;
+    _clicker = clicker;
     _logger = logger;
   }
 
@@ -143,6 +149,36 @@ public sealed class EquipmentSetsController : ControllerBase
     return deleted ? NoContent() : NotFound();
   }
 
+  [HttpPost("{id:long}/slots/read-current")]
+  public async Task<ActionResult<IReadOnlyCollection<EquipmentSetSlotResponse>>> ReadCurrentSlotsAsync(
+    long id,
+    [FromQuery] int[]? slotNumbers,
+    CancellationToken cancellationToken)
+  {
+    if (await _equipmentSets.GetByIdAsync(id, cancellationToken) is null)
+    {
+      return NotFound();
+    }
+
+    var slotsToRead = NormalizeSlotNumbers(slotNumbers);
+
+    if (slotsToRead.Count == 0)
+    {
+      return BadRequest(new { error = "Нужно указать хотя бы один положительный номер слота." });
+    }
+
+    try
+    {
+      return Ok(await _clicker.ReadCurrentEquipmentSetAsync(id, slotsToRead, cancellationToken));
+    }
+    catch (Exception exception)
+    {
+      _logger.LogWarning(exception, "Current equipment set reading failed.");
+
+      return BadRequest(new { error = exception.Message });
+    }
+  }
+
   private bool ValidateSet(string kind, out IActionResult validationResult)
   {
     var errors = new Dictionary<string, string[]>();
@@ -173,5 +209,14 @@ public sealed class EquipmentSetsController : ControllerBase
   {
     return string.Equals(kind, "farm", StringComparison.Ordinal)
       || string.Equals(kind, "combat", StringComparison.Ordinal);
+  }
+
+  private static IReadOnlyCollection<int> NormalizeSlotNumbers(int[]? slotNumbers)
+  {
+    return (slotNumbers is { Length: > 0 } ? slotNumbers : DefaultEquipmentSlotNumbers)
+      .Where(slotNumber => slotNumber > 0)
+      .Distinct()
+      .Order()
+      .ToArray();
   }
 }

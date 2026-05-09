@@ -127,6 +127,18 @@ export async function updateEquipmentSetSlot(
     'Не удалось сохранить слот сета.')
 }
 
+export async function readCurrentEquipmentSetSlots(setId: number): Promise<EquipmentSetSlot[]> {
+  const response = await fetch(`/api/equipment-sets/${setId}/slots/read-current`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(await readError(response, 'Не удалось считать текущий сет.'))
+  }
+
+  return await response.json()
+}
+
 export async function getTechniquePresets(): Promise<TechniquePreset[]> {
   return await readJson<TechniquePreset[]>('/api/technique-presets', 'Не удалось загрузить пресеты приемов.')
 }

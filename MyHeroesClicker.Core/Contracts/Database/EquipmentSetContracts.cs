@@ -12,6 +12,12 @@ public sealed record EquipmentSetSlotResponse(
   string ExpectedImageSrc,
   bool ShouldBeEmpty);
 
+public sealed record CurrentEquipmentSlotResponse(
+  int SlotNumber,
+  int? ItemId,
+  string ExpectedImageSrc,
+  bool ShouldBeEmpty);
+
 public sealed record CreateEquipmentSetRequest(
   long? AccountId,
   string Kind);
