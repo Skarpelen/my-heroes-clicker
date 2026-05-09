@@ -5,6 +5,7 @@ using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
@@ -91,7 +92,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
   public static async Task<ClickerRuntime> StartAsync(
     ClickerOptions options,
-    ClickerConfig config,
+    AccountResponse activeAccount,
     IRunLogger logger,
     IAlertService alertService,
     IPauseService pauseService,
@@ -125,7 +126,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
       ScenarioBrowserTabKind.Main,
       "Основная вкладка");
 
-    IScenario authenticationScenario = new AuthenticationScenario(config, webClient);
+    IScenario authenticationScenario = new AuthenticationScenario(activeAccount, webClient);
     IScenario farmPreparationScenario = new FarmPreparationScenario(
       equipmentClient,
       techniqueClient,

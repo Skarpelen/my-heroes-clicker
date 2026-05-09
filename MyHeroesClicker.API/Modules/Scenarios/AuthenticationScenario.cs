@@ -1,5 +1,5 @@
 using MyHeroesClicker.Browser.Browser;
-using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
 
@@ -7,14 +7,14 @@ namespace MyHeroesClicker.API.Modules.Scenarios;
 
 public sealed class AuthenticationScenario : IScenario
 {
-  private readonly ClickerConfig _config;
+  private readonly AccountResponse _account;
   private readonly MyHeroesWebClient _webClient;
 
   public AuthenticationScenario(
-    ClickerConfig config,
+    AccountResponse account,
     MyHeroesWebClient webClient)
   {
-    _config = config;
+    _account = account;
     _webClient = webClient;
   }
 
@@ -28,8 +28,8 @@ public sealed class AuthenticationScenario : IScenario
       "/main/login",
       new Dictionary<string, string>
       {
-        ["login"] = _config.Login.UserName,
-        ["password"] = _config.Login.Password,
+        ["login"] = _account.Login,
+        ["password"] = _account.EncryptedPassword!,
         ["btn_login"] = "вход"
       },
       cancellationToken);

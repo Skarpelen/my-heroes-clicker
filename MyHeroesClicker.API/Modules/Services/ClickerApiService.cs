@@ -92,11 +92,10 @@ public sealed class ClickerApiService : IAsyncDisposable
         return _application;
       }
 
-      await ApplyStoredSettingsAsync(cancellationToken);
-      var config = ClickerConfigLoader.Load(_options, _logger);
+      var activeAccount = await ApplyStoredSettingsAsync(cancellationToken);
       _runtime = await ClickerRuntime.StartAsync(
         _options,
-        config,
+        activeAccount,
         _logger,
         _alertService,
         _pauseService,
@@ -158,7 +157,7 @@ public sealed class ClickerApiService : IAsyncDisposable
     _initializationSync.Dispose();
   }
 
-  private async Task ApplyStoredSettingsAsync(CancellationToken cancellationToken)
+  private async Task<AccountResponse> ApplyStoredSettingsAsync(CancellationToken cancellationToken)
   {
     using var scope = _scopeFactory.CreateScope();
     var settingsRepository = scope.ServiceProvider.GetRequiredService<IAppSettingsRepository>();
@@ -166,10 +165,35 @@ public sealed class ClickerApiService : IAsyncDisposable
 
     if (settings is null)
     {
-      return;
+      throw new InvalidOperationException("Настройки приложения не найдены. Запустите миграции БД.");
     }
 
     ApplySettings(settings);
+
+    if (settings.ActiveAccountId is null)
+    {
+      throw new InvalidOperationException("Активный аккаунт не выбран. Выберите аккаунт в настройках.");
+    }
+
+    var accountRepository = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+    var account = await accountRepository.GetByIdAsync(settings.ActiveAccountId.Value, cancellationToken);
+
+    if (account is null)
+    {
+      throw new InvalidOperationException("Активный аккаунт не найден. Выберите аккаунт в настройках.");
+    }
+
+    if (!account.IsEnabled)
+    {
+      throw new InvalidOperationException("Активный аккаунт отключен. Выберите включенный аккаунт в настройках.");
+    }
+
+    if (string.IsNullOrWhiteSpace(account.EncryptedPassword))
+    {
+      throw new InvalidOperationException("У активного аккаунта не заполнен пароль.");
+    }
+
+    return account;
   }
 
   private void ApplySettings(AppSettingsResponse settings)
