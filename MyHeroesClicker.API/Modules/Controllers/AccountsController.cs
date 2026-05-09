@@ -47,6 +47,12 @@ public sealed class AccountsController : ControllerBase
 
       return CreatedAtAction(nameof(GetByIdAsync), new { id }, new { id });
     }
+    catch (Exception exception) when (IsUniqueConstraintViolation(exception))
+    {
+      _log.Warn(exception, "Account creation failed: duplicate login.");
+
+      return Conflict(new { error = "Аккаунт с таким логином уже существует." });
+    }
     catch (Exception exception)
     {
       _log.Warn(exception, "Account creation failed.");
@@ -66,9 +72,18 @@ public sealed class AccountsController : ControllerBase
       return validationResult;
     }
 
-    var updated = await _accounts.UpdateAsync(id, request, cancellationToken);
+    try
+    {
+      var updated = await _accounts.UpdateAsync(id, request, cancellationToken);
 
-    return updated ? NoContent() : NotFound();
+      return updated ? NoContent() : NotFound();
+    }
+    catch (Exception exception) when (IsUniqueConstraintViolation(exception))
+    {
+      _log.Warn(exception, "Account update failed: duplicate login.");
+
+      return Conflict(new { error = "Аккаунт с таким логином уже существует." });
+    }
   }
 
   [HttpDelete("{id:long}")]
@@ -91,5 +106,10 @@ public sealed class AccountsController : ControllerBase
     validationResult = errors.Count > 0 ? BadRequest(new { errors }) : Ok();
 
     return errors.Count == 0;
+  }
+
+  private static bool IsUniqueConstraintViolation(Exception exception)
+  {
+    return exception.Message.Contains("UNIQUE constraint failed", StringComparison.OrdinalIgnoreCase);
   }
 }

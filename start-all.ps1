@@ -10,7 +10,24 @@ Start-Process powershell.exe -ArgumentList @(
   "-File", $backendScript
 ) -WorkingDirectory $root -WindowStyle Normal
 
-Start-Sleep -Seconds 2
+$backendReadyUrl = "http://localhost:51617/api/scenarios/status"
+$deadline = (Get-Date).AddSeconds(60)
+
+do {
+  try {
+    $response = Invoke-WebRequest -Uri $backendReadyUrl -UseBasicParsing -TimeoutSec 2
+
+    if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+      break
+    }
+  } catch {
+    Start-Sleep -Seconds 1
+  }
+
+  if ((Get-Date) -gt $deadline) {
+    throw "Backend did not become ready in 60 seconds."
+  }
+} while ($true)
 
 Start-Process powershell.exe -ArgumentList @(
   "-NoExit",
