@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import { AlertTriangle, Save, Settings, Shield, Swords, UserPlus, Users } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button'
 import { ToggleRow } from '../../../shared/ui/ToggleRow'
@@ -16,8 +15,6 @@ import {
   setActiveAccount,
   updateAccount,
   updateAppSettings,
-  updateEquipmentSet,
-  updateTechniquePreset,
   updateTechniquePresetSlot,
 } from '../api/configurationApi'
 import type {
@@ -26,9 +23,7 @@ import type {
   AppSettings,
   ConfigurationKind,
   EquipmentSet,
-  EquipmentSetPayload,
   TechniquePreset,
-  TechniquePresetPayload,
   TechniquePresetSlot,
   UpdateAppSettingsRequest,
 } from '../model/types'
@@ -79,6 +74,8 @@ const techniqueNames = [
   'Удар подковой',
 ]
 
+const configurationKinds: ConfigurationKind[] = ['farm', 'combat']
+
 export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   const [tab, setTab] = useState<SettingsTab>('accounts')
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -86,18 +83,11 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   const [settingsForm, setSettingsForm] = useState<UpdateAppSettingsRequest>(defaultSettings)
   const [equipmentSets, setEquipmentSets] = useState<EquipmentSet[]>([])
   const [techniquePresets, setTechniquePresets] = useState<TechniquePreset[]>([])
-  const [selectedAccountId, setSelectedAccountId] = useState<number | 'new'>('new')
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
   const [accountForm, setAccountForm] = useState<AccountPayload>(emptyAccount)
-  const [selectedEquipmentSetId, setSelectedEquipmentSetId] = useState<number | null>(null)
-  const [equipmentForm, setEquipmentForm] = useState<EquipmentSetPayload>({
-    accountId: null,
-    kind: 'farm',
-  })
-  const [selectedTechniquePresetId, setSelectedTechniquePresetId] = useState<number | null>(null)
-  const [techniqueForm, setTechniqueForm] = useState<TechniquePresetPayload>({
-    accountId: null,
-    kind: 'farm',
-  })
+  const [newAccountForm, setNewAccountForm] = useState<AccountPayload>(emptyAccount)
+  const [equipmentKind, setEquipmentKind] = useState<ConfigurationKind>('farm')
+  const [techniqueKind, setTechniqueKind] = useState<ConfigurationKind>('farm')
   const [techniqueSlots, setTechniqueSlots] = useState<Record<number, TechniquePresetSlot>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -107,6 +97,15 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   const activeAccount = useMemo(
     () => accounts.find((account) => account.id === settings?.activeAccountId) ?? null,
     [accounts, settings?.activeAccountId])
+  const selectedAccount = useMemo(
+    () => accounts.find((account) => account.id === selectedAccountId) ?? null,
+    [accounts, selectedAccountId])
+  const selectedEquipmentSet = useMemo(
+    () => findConfiguration(equipmentSets, selectedAccountId, equipmentKind),
+    [equipmentKind, equipmentSets, selectedAccountId])
+  const selectedTechniquePreset = useMemo(
+    () => findConfiguration(techniquePresets, selectedAccountId, techniqueKind),
+    [selectedAccountId, techniqueKind, techniquePresets])
 
   const refreshConfiguration = useCallback(async () => {
     try {
@@ -122,15 +121,13 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
       setSettingsForm(settingsToForm(nextSettings))
       setEquipmentSets(nextEquipmentSets)
       setTechniquePresets(nextTechniquePresets)
-      syncSelectedAccount(selectedAccountId, nextAccounts)
-      syncSelectedEquipmentSet(selectedEquipmentSetId, nextEquipmentSets)
-      syncSelectedTechniquePreset(selectedTechniquePresetId, nextTechniquePresets)
+      syncSelectedAccount(selectedAccountId, nextAccounts, nextSettings)
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Не удалось загрузить конфигурацию.')
     } finally {
       setIsLoading(false)
     }
-  }, [selectedAccountId, selectedEquipmentSetId, selectedTechniquePresetId])
+  }, [selectedAccountId])
 
   useEffect(() => {
     const refreshId = window.setTimeout(() => {
@@ -143,42 +140,25 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   }, [refreshConfiguration])
 
   useEffect(() => {
-    if (selectedTechniquePresetId === null) {
+    if (selectedTechniquePreset === null) {
+      setTechniqueSlots({})
       return
     }
 
-    void refreshTechniqueSlots(selectedTechniquePresetId)
-  }, [selectedTechniquePresetId])
+    void refreshTechniqueSlots(selectedTechniquePreset.id)
+  }, [selectedTechniquePreset])
 
-  function syncSelectedAccount(id: number | 'new', nextAccounts: Account[]) {
-    if (id === 'new') {
-      setAccountForm(emptyAccount)
-      return
-    }
-
-    const account = nextAccounts.find((item) => item.id === id)
+  function syncSelectedAccount(id: number | null, nextAccounts: Account[], nextSettings: AppSettings) {
+    const fallbackAccount = nextAccounts.find((item) => item.id === nextSettings.activeAccountId) ?? nextAccounts[0]
+    const account = id === null ? fallbackAccount : nextAccounts.find((item) => item.id === id) ?? fallbackAccount
 
     if (account) {
+      setSelectedAccountId(account.id)
       setAccountForm(accountToForm(account))
     } else {
-      setSelectedAccountId('new')
+      setSelectedAccountId(null)
       setAccountForm(emptyAccount)
     }
-  }
-
-  function syncSelectedEquipmentSet(id: number | null, nextSets: EquipmentSet[]) {
-    const set = id === null ? nextSets[0] : nextSets.find((item) => item.id === id)
-
-    setSelectedEquipmentSetId(set?.id ?? null)
-    setEquipmentForm(set ? setToForm(set) : { accountId: null, kind: 'farm' })
-  }
-
-  function syncSelectedTechniquePreset(id: number | null, nextPresets: TechniquePreset[]) {
-    const preset = id === null ? nextPresets[0] : nextPresets.find((item) => item.id === id)
-
-    setSelectedTechniquePresetId(preset?.id ?? null)
-    setTechniqueForm(preset ? presetToForm(preset) : { accountId: null, kind: 'farm' })
-    setTechniqueSlots({})
   }
 
   async function refreshTechniqueSlots(id: number) {
@@ -191,16 +171,33 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   }
 
   async function saveAccount() {
+    if (selectedAccountId === null) {
+      setError('Выберите аккаунт для редактирования.')
+      return
+    }
+
     await saveAsync(async () => {
-      if (selectedAccountId === 'new') {
-        await createAccount(accountForm)
-      } else {
-        await updateAccount(selectedAccountId, accountForm)
-      }
+      await updateAccount(selectedAccountId, accountForm)
 
       await refreshConfiguration()
       await onConfigurationChanged()
     }, 'Аккаунт сохранен.')
+  }
+
+  async function createNewAccount() {
+    await saveAsync(async () => {
+      const nextAccountForm = newAccountForm
+      const accountId = await createAccount(nextAccountForm)
+
+      setSelectedAccountId(accountId)
+      setAccountForm(nextAccountForm)
+      setNewAccountForm(emptyAccount)
+
+      await refreshConfiguration()
+      setSelectedAccountId(accountId)
+      setAccountForm(nextAccountForm)
+      await onConfigurationChanged()
+    }, 'Аккаунт создан.')
   }
 
   async function chooseActiveAccount(accountId: number | null) {
@@ -219,57 +216,71 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
     }, 'Настройки сохранены.')
   }
 
-  async function saveEquipmentSet() {
-    await saveAsync(async () => {
-      if (selectedEquipmentSetId === null) {
-        await createEquipmentSet(equipmentForm)
-      } else {
-        await updateEquipmentSet(selectedEquipmentSetId, equipmentForm)
-      }
+  async function ensureEquipmentSetId(kind: ConfigurationKind) {
+    if (selectedAccountId === null) {
+      throw new Error('Сначала выберите аккаунт.')
+    }
 
-      await refreshConfiguration()
-    }, 'Сет сохранен.')
+    const existingSet = findConfiguration(equipmentSets, selectedAccountId, kind)
+
+    if (existingSet) {
+      return existingSet.id
+    }
+
+    return await createEquipmentSet({ accountId: selectedAccountId, kind })
   }
 
   async function readCurrentEquipmentSet() {
-    if (selectedEquipmentSetId === null) {
-      setError('Сначала создайте или выберите сет.')
-      return
-    }
-
     await saveAsync(async () => {
-      await readCurrentEquipmentSetSlots(selectedEquipmentSetId)
+      const setId = await ensureEquipmentSetId(equipmentKind)
+
+      await readCurrentEquipmentSetSlots(setId)
       await refreshConfiguration()
     }, 'Текущий сет считан и сохранен.')
   }
 
+  async function ensureTechniquePresetId(kind: ConfigurationKind) {
+    if (selectedAccountId === null) {
+      throw new Error('Сначала выберите аккаунт.')
+    }
+
+    const existingPreset = findConfiguration(techniquePresets, selectedAccountId, kind)
+
+    if (existingPreset) {
+      return existingPreset.id
+    }
+
+    return await createTechniquePreset({ accountId: selectedAccountId, kind })
+  }
+
   async function saveTechniquePreset() {
     await saveAsync(async () => {
-      let presetId = selectedTechniquePresetId
+      const presetId = await ensureTechniquePresetId(techniqueKind)
 
-      if (selectedTechniquePresetId === null) {
-        presetId = await createTechniquePreset(techniqueForm)
-        setSelectedTechniquePresetId(presetId)
-      } else {
-        await updateTechniquePreset(selectedTechniquePresetId, techniqueForm)
-      }
+      await Promise.all(techniqueNames.map((techniqueName, index) => {
+        const techniqueNumber = index + 1
+        const slot = techniqueSlots[techniqueNumber] ?? createEmptyTechniqueSlot(presetId, techniqueNumber, techniqueName)
 
-      if (presetId !== null) {
-        await Promise.all(techniqueNames.map((techniqueName, index) => {
-          const techniqueNumber = index + 1
-          const slot = techniqueSlots[techniqueNumber] ?? createEmptyTechniqueSlot(presetId, techniqueNumber, techniqueName)
+        return updateTechniquePresetSlot(presetId, techniqueNumber, {
+          techniqueName,
+          isEnabled: slot.isEnabled,
+        })
+      }))
 
-          return updateTechniquePresetSlot(presetId, techniqueNumber, {
-            techniqueName,
-            isEnabled: slot.isEnabled,
-          })
-        }))
-
-        await refreshTechniqueSlots(presetId)
-      }
+      await refreshTechniqueSlots(presetId)
 
       await refreshConfiguration()
     }, 'Пресет и приемы сохранены.')
+  }
+
+  function setAllTechniqueSlots(isEnabled: boolean) {
+    setTechniqueSlots(Object.fromEntries(techniqueNames.map((techniqueName, index) => {
+      const techniqueNumber = index + 1
+      const slot = techniqueSlots[techniqueNumber]
+        ?? createEmptyTechniqueSlot(selectedTechniquePreset?.id ?? 0, techniqueNumber, techniqueName)
+
+      return [techniqueNumber, { ...slot, isEnabled }]
+    })))
   }
 
   async function saveAsync(action: () => Promise<void>, successMessage: string) {
@@ -287,47 +298,11 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
     }
   }
 
-  function selectAccount(value: string) {
-    if (value === 'new') {
-      setSelectedAccountId('new')
-      setAccountForm(emptyAccount)
-      return
-    }
-
-    const accountId = Number(value)
+  function selectAccount(accountId: number) {
     const account = accounts.find((item) => item.id === accountId)
 
     setSelectedAccountId(accountId)
     setAccountForm(account ? accountToForm(account) : emptyAccount)
-  }
-
-  function selectEquipmentSet(value: string) {
-    if (value === 'new') {
-      setSelectedEquipmentSetId(null)
-      setEquipmentForm({ accountId: settings?.activeAccountId ?? null, kind: 'farm' })
-      return
-    }
-
-    const setId = Number(value)
-    const set = equipmentSets.find((item) => item.id === setId)
-
-    setSelectedEquipmentSetId(setId)
-    setEquipmentForm(set ? setToForm(set) : { accountId: null, kind: 'farm' })
-  }
-
-  function selectTechniquePreset(value: string) {
-    if (value === 'new') {
-      setSelectedTechniquePresetId(null)
-      setTechniqueForm({ accountId: settings?.activeAccountId ?? null, kind: 'farm' })
-      setTechniqueSlots({})
-      return
-    }
-
-    const presetId = Number(value)
-    const preset = techniquePresets.find((item) => item.id === presetId)
-
-    setSelectedTechniquePresetId(presetId)
-    setTechniqueForm(preset ? presetToForm(preset) : { accountId: null, kind: 'farm' })
   }
 
   return (
@@ -365,42 +340,78 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
       {tab === 'accounts' && (
         <div className="settings-grid">
           <div className="settings-list">
-            <div className="select-row">
-              <label>
-                Аккаунт
-                <select value={selectedAccountId} onChange={(event) => selectAccount(event.target.value)}>
-                  <option value="new">Новый аккаунт</option>
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>
-                      {account.login}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
             <div className="account-list">
               {accounts.map((account) => (
                 <button
                   key={account.id}
-                  className={account.id === activeAccount?.id ? 'account-list-item account-list-item-active' : 'account-list-item'}
-                  onClick={() => void chooseActiveAccount(account.id)}>
+                  className={account.id === selectedAccountId ? 'account-list-item account-list-item-active' : 'account-list-item'}
+                  onClick={() => selectAccount(account.id)}>
                   <strong>{account.login}</strong>
-                  <span>{account.isEnabled ? 'Включен' : 'Отключен'}</span>
+                  <span>
+                    {account.id === activeAccount?.id ? 'Активный' : account.isEnabled ? 'Включен' : 'Отключен'}
+                  </span>
                 </button>
               ))}
             </div>
 
-            <Button variant="ghost" disabled={isSaving || !settings?.activeAccountId} onClick={() => void chooseActiveAccount(null)}>
-              Сбросить активный
-            </Button>
+            <div className="actions">
+              <Button
+                variant="ghost"
+                disabled={isSaving || selectedAccountId === null || selectedAccountId === settings?.activeAccountId}
+                onClick={() => {
+                  if (selectedAccountId !== null) {
+                    void chooseActiveAccount(selectedAccountId)
+                  }
+                }}
+              >
+                Сделать активным
+              </Button>
+              <Button variant="ghost" disabled={isSaving || !settings?.activeAccountId} onClick={() => void chooseActiveAccount(null)}>
+                Сбросить активный
+              </Button>
+            </div>
           </div>
 
           <div className="settings-form">
+            <h3>Новый аккаунт</h3>
             <div className="form-grid">
               <label>
                 Логин
                 <input
+                  value={newAccountForm.login}
+                  onChange={(event) => setNewAccountForm((current) => ({
+                    ...current,
+                    login: event.target.value,
+                  }))}
+                />
+              </label>
+
+              <label>
+                Пароль
+                <input
+                  type="password"
+                  value={newAccountForm.encryptedPassword ?? ''}
+                  onChange={(event) => setNewAccountForm((current) => ({
+                    ...current,
+                    encryptedPassword: event.target.value,
+                  }))}
+                />
+              </label>
+            </div>
+
+            <div className="actions">
+              <Button disabled={isSaving} onClick={() => void createNewAccount()}>
+                <UserPlus size={18} />
+                Добавить аккаунт
+              </Button>
+            </div>
+
+            <h3>{selectedAccount ? `Редактирование: ${selectedAccount.login}` : 'Выберите аккаунт'}</h3>
+            <div className="form-grid">
+              <label>
+                Логин
+                <input
+                  disabled={selectedAccountId === null}
                   value={accountForm.login}
                   onChange={(event) => setAccountForm((current) => ({
                     ...current,
@@ -413,6 +424,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
                 Пароль
                 <input
                   type="password"
+                  disabled={selectedAccountId === null}
                   value={accountForm.encryptedPassword ?? ''}
                   onChange={(event) => setAccountForm((current) => ({ ...current, encryptedPassword: event.target.value }))}
                 />
@@ -423,13 +435,14 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               title="Аккаунт включен"
               description="Отключенные аккаунты остаются в базе, но помечаются неактивными."
               checked={accountForm.isEnabled}
+              disabled={selectedAccountId === null}
               onChange={(checked) => setAccountForm((current) => ({ ...current, isEnabled: checked }))}
             />
 
             <div className="actions">
-              <Button disabled={isSaving} onClick={() => void saveAccount()}>
-                <UserPlus size={18} />
-                Сохранить аккаунт
+              <Button disabled={isSaving || selectedAccountId === null} onClick={() => void saveAccount()}>
+                <Save size={18} />
+                Сохранить выбранный аккаунт
               </Button>
             </div>
           </div>
@@ -562,49 +575,35 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
       )}
 
       {tab === 'equipment' && (
-        <SetEditor
-          accounts={accounts}
-          disabled={isSaving}
-          itemLabel="Сет"
-          selectedId={selectedEquipmentSetId}
-          items={equipmentSets}
-          form={equipmentForm}
-          onSelect={selectEquipmentSet}
-          onChange={setEquipmentForm}
-          onSave={() => void saveEquipmentSet()}
-        >
+        <div className="settings-form">
+          <ConfigurationHeader
+            selectedAccount={selectedAccount}
+            selectedKind={equipmentKind}
+            onSelectKind={setEquipmentKind}
+          />
+
           <div className="empty-state">
-            <p>
-              Нужно надеть сет в игре и нажать кнопку чтения текущего снаряжения.
-            </p>
-            <Button
-              variant="ghost"
-              disabled={isSaving || selectedEquipmentSetId === null}
-              onClick={() => void readCurrentEquipmentSet()}
-            >
+            <p>{selectedEquipmentSet ? 'Сет готов к обновлению.' : 'Сет будет создан автоматически при чтении текущего снаряжения.'}</p>
+            <Button disabled={isSaving || selectedAccountId === null} onClick={() => void readCurrentEquipmentSet()}>
               Считать текущий сет
             </Button>
           </div>
-        </SetEditor>
+        </div>
       )}
 
       {tab === 'techniques' && (
-        <SetEditor
-          accounts={accounts}
-          disabled={isSaving}
-          itemLabel="Пресет"
-          selectedId={selectedTechniquePresetId}
-          items={techniquePresets}
-          form={techniqueForm}
-          onSelect={selectTechniquePreset}
-          onChange={setTechniqueForm}
-          onSave={() => void saveTechniquePreset()}
-        >
+        <div className="settings-form">
+          <ConfigurationHeader
+            selectedAccount={selectedAccount}
+            selectedKind={techniqueKind}
+            onSelectKind={setTechniqueKind}
+          />
+
           <div className="technique-grid">
             {techniqueNames.map((techniqueName, index) => {
               const techniqueNumber = index + 1
               const slot = techniqueSlots[techniqueNumber]
-                ?? createEmptyTechniqueSlot(selectedTechniquePresetId ?? 0, techniqueNumber, techniqueName)
+                ?? createEmptyTechniqueSlot(selectedTechniquePreset?.id ?? 0, techniqueNumber, techniqueName)
 
               return (
                 <div className="technique-row" key={techniqueName}>
@@ -625,7 +624,28 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               )
             })}
           </div>
-        </SetEditor>
+
+          <div className="actions">
+            <Button
+              variant="ghost"
+              disabled={isSaving || selectedAccountId === null}
+              onClick={() => setAllTechniqueSlots(true)}
+            >
+              Включить все
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={isSaving || selectedAccountId === null}
+              onClick={() => setAllTechniqueSlots(false)}
+            >
+              Выключить все
+            </Button>
+            <Button disabled={isSaving || selectedAccountId === null} onClick={() => void saveTechniquePreset()}>
+              <Save size={18} />
+              Сохранить приемы
+            </Button>
+          </div>
+        </div>
       )}
     </section>
   )
@@ -654,82 +674,30 @@ function NumberField({ label, description, step = 1, value, onChange }: NumberFi
   )
 }
 
-type SetEditorProps<TItem extends { id: number; accountId: number | null; kind: ConfigurationKind }> = {
-  accounts: Account[]
-  disabled: boolean
-  itemLabel: string
-  selectedId: number | null
-  items: TItem[]
-  form: Omit<TItem, 'id'>
-  children: ReactNode
-  onSelect: (value: string) => void
-  onChange: (value: Omit<TItem, 'id'>) => void
-  onSave: () => void
+type ConfigurationHeaderProps = {
+  selectedAccount: Account | null
+  selectedKind: ConfigurationKind
+  onSelectKind: (kind: ConfigurationKind) => void
 }
 
-function SetEditor<TItem extends { id: number; accountId: number | null; kind: ConfigurationKind }>({
-  accounts,
-  disabled,
-  itemLabel,
-  selectedId,
-  items,
-  form,
-  children,
-  onSelect,
-  onChange,
-  onSave,
-}: SetEditorProps<TItem>) {
+function ConfigurationHeader({ selectedAccount, selectedKind, onSelectKind }: ConfigurationHeaderProps) {
   return (
-    <div className="settings-grid">
-      <div className="settings-list">
-        <div className="select-row">
-          <label>
-            {itemLabel}
-            <select value={selectedId ?? 'new'} onChange={(event) => onSelect(event.target.value)}>
-              <option value="new">Новый</option>
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {getModeName(item.kind)}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+    <div className="configuration-header">
+      <div>
+        <span>Аккаунт</span>
+        <strong>{selectedAccount?.login ?? 'Не выбран'}</strong>
       </div>
 
-      <div className="settings-form">
-        <div className="form-grid">
-          <label>
-            Режим
-            <select value={form.kind} onChange={(event) => onChange({ ...form, kind: event.target.value as ConfigurationKind })}>
-              <option value="farm">Фарм</option>
-              <option value="combat">Бой</option>
-            </select>
-          </label>
-
-          <label>
-            Аккаунт
-            <select
-              value={form.accountId ?? ''}
-              onChange={(event) => onChange({ ...form, accountId: event.target.value ? Number(event.target.value) : null })}>
-              <option value="">Общий</option>
-              {accounts.map((account) => (
-                <option key={account.id} value={account.id}>
-                  {account.login}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="actions">
-          <Button disabled={disabled} onClick={onSave}>
-            <Save size={18} />
-            Сохранить
-          </Button>
-        </div>
-
-        {children}
+      <div className="mode-switch" role="tablist" aria-label="Режим конфигурации">
+        {configurationKinds.map((kind) => (
+          <button
+            key={kind}
+            className={selectedKind === kind ? 'mode-switch-active' : ''}
+            onClick={() => onSelectKind(kind)}
+          >
+            {getModeName(kind)}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -761,22 +729,19 @@ function accountToForm(account: Account): AccountPayload {
   }
 }
 
-function setToForm(set: EquipmentSet): EquipmentSetPayload {
-  return {
-    accountId: set.accountId,
-    kind: set.kind,
-  }
-}
-
-function presetToForm(preset: TechniquePreset): TechniquePresetPayload {
-  return {
-    accountId: preset.accountId,
-    kind: preset.kind,
-  }
-}
-
 function getModeName(kind: ConfigurationKind) {
   return kind === 'farm' ? 'Фарм' : 'Бой'
+}
+
+function findConfiguration<TItem extends { accountId: number | null; kind: ConfigurationKind }>(
+  items: TItem[],
+  accountId: number | null,
+  kind: ConfigurationKind): TItem | null {
+  if (accountId === null) {
+    return null
+  }
+
+  return items.find((item) => item.accountId === accountId && item.kind === kind) ?? null
 }
 
 function createEmptyTechniqueSlot(

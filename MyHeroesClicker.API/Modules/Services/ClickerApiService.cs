@@ -152,21 +152,39 @@ public sealed class ClickerApiService : IAsyncDisposable
     IReadOnlyCollection<int> slotNumbers,
     CancellationToken cancellationToken)
   {
-    var application = await GetApplicationAsync(1, cancellationToken);
+    IReadOnlyCollection<CurrentEquipmentSlotResponse> currentSlots;
 
-    if (application.IsRunning)
+    if (_application is not null)
     {
-      throw new InvalidOperationException("Нельзя читать текущий сет, пока выполняется сценарий.");
-    }
+      if (_application.IsRunning)
+      {
+        throw new InvalidOperationException("Нельзя читать текущий сет, пока выполняется сценарий.");
+      }
 
-    if (_runtime is null)
+      if (_runtime is null)
+      {
+        throw new InvalidOperationException("Браузер не инициализирован.");
+      }
+
+      await _application.Scenarios.Authentication.Scenario.ExecuteAsync(_runtime.Context, cancellationToken);
+      currentSlots = await _runtime.EquipmentReader.ReadAsync(slotNumbers, cancellationToken);
+    }
+    else
     {
-      throw new InvalidOperationException("Браузер не инициализирован.");
+      var activeAccount = await ApplyStoredSettingsAsync(cancellationToken);
+
+      await using var runtime = await ClickerRuntime.StartAsync(
+        _options,
+        activeAccount,
+        CreateEmptyScenarioConfiguration(),
+        _logger,
+        _alertService,
+        _pauseService,
+        1);
+
+      await runtime.Scenarios.Authentication.Scenario.ExecuteAsync(runtime.Context, cancellationToken);
+      currentSlots = await runtime.EquipmentReader.ReadAsync(slotNumbers, cancellationToken);
     }
-
-    await application.Scenarios.Authentication.Scenario.ExecuteAsync(_runtime.Context, cancellationToken);
-
-    var currentSlots = await _runtime.EquipmentReader.ReadAsync(slotNumbers, cancellationToken);
 
     using var scope = _scopeFactory.CreateScope();
     var equipmentSets = scope.ServiceProvider.GetRequiredService<IEquipmentSetRepository>();
@@ -181,6 +199,13 @@ public sealed class ClickerApiService : IAsyncDisposable
     }
 
     return await equipmentSets.GetSlotsAsync(equipmentSetId, cancellationToken);
+  }
+
+  private static ScenarioConfiguration CreateEmptyScenarioConfiguration()
+  {
+    return new ScenarioConfiguration(
+      new EquipmentModeConfiguration([], []),
+      new TechniqueModeConfiguration(new HashSet<int>(), new HashSet<int>()));
   }
 
   public async ValueTask DisposeAsync()

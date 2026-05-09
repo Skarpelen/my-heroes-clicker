@@ -300,6 +300,59 @@
   gap: 16px;
 }
 
+.settings-form h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.configuration-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.configuration-header span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.configuration-header strong {
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.mode-switch {
+  display: inline-flex;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.mode-switch button {
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 16px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.mode-switch .mode-switch-active {
+  color: #fff8eb;
+  background: var(--accent-strong);
+}
+
 .form-grid {
   position: relative;
   display: grid;
@@ -647,6 +700,18 @@
   .farm-starts,
   .option-grid {
     grid-template-columns: 1fr;
+  }
+
+  .configuration-header {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-switch {
+    width: 100%;
+  }
+
+  .mode-switch button {
+    flex: 1;
   }
 
   .technique-grid {

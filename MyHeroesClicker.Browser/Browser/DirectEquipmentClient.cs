@@ -1,4 +1,5 @@
 using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;
@@ -32,21 +33,38 @@ public sealed class DirectEquipmentClient
     string styleName,
     CancellationToken cancellationToken)
   {
-    foreach (var slot in slots.Where(slot => slot.ShouldBeEmpty).OrderBy(slot => slot.SlotNumber))
+    var emptySlots = slots
+      .Where(slot => slot.ShouldBeEmpty)
+      .OrderBy(slot => slot.SlotNumber)
+      .ToArray();
+
+    var currentEmptyTargetSlots = emptySlots.Length == 0
+      ? new Dictionary<int, CurrentEquipmentSlotResponse>()
+      : (await new CurrentEquipmentReader(_webClient)
+          .ReadAsync(emptySlots.Select(slot => slot.SlotNumber).ToArray(), cancellationToken))
+        .ToDictionary(slot => slot.SlotNumber);
+
+    foreach (var slot in emptySlots)
     {
       cancellationToken.ThrowIfCancellationRequested();
 
-      if (slot.ItemId is null)
+      if (!currentEmptyTargetSlots.TryGetValue(slot.SlotNumber, out var currentSlot) || currentSlot.ShouldBeEmpty)
       {
-        context.Logger.Warn($"Слот {slot.SlotNumber} для режима {styleName} должен быть пустым, но ID вещи для снятия не задан.");
+        context.Logger.Log($"Слот {slot.SlotNumber} для режима {styleName} уже пустой.");
+        continue;
+      }
+
+      if (currentSlot.ItemId is null)
+      {
+        context.Logger.Warn($"Слот {slot.SlotNumber} для режима {styleName} должен быть пустым, но текущий ID вещи для снятия не найден.");
         continue;
       }
 
       await TryApplyItemCommandAsync(
         context,
-        $"/inventory/undress/{slot.ItemId.Value}",
-        $"Снимаю вещь {slot.ItemId.Value} из слота {slot.SlotNumber} для режима {styleName} прямым запросом.",
-        $"Не удалось снять вещь {slot.ItemId.Value} из слота {slot.SlotNumber}. Считаю это допустимым, если вещь уже снята.",
+        $"/inventory/undress/{currentSlot.ItemId.Value}",
+        $"Снимаю вещь {currentSlot.ItemId.Value} из слота {slot.SlotNumber} для режима {styleName} прямым запросом.",
+        $"Не удалось снять вещь {currentSlot.ItemId.Value} из слота {slot.SlotNumber}. Считаю это допустимым, если вещь уже снята.",
         cancellationToken);
     }
 

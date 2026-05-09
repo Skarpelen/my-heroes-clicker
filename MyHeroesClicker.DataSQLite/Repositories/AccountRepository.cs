@@ -59,17 +59,32 @@ public sealed class AccountRepository : IAccountRepository
   public async Task<long> CreateAsync(CreateAccountRequest request, CancellationToken cancellationToken)
   {
     await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
-    await using var command = connection.CreateCommand();
-    command.CommandText = """
-      INSERT INTO accounts (login, encrypted_password, is_enabled)
-      VALUES (@login, @encrypted_password, @is_enabled)
-      RETURNING id;
-      """;
-    FillAccountParameters(command, request.Login, request.EncryptedPassword, request.IsEnabled);
+    await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-    var result = await command.ExecuteScalarAsync(cancellationToken);
+    try
+    {
+      await using var command = connection.CreateCommand();
+      command.Transaction = (SqliteTransaction)transaction;
+      command.CommandText = """
+        INSERT INTO accounts (login, encrypted_password, is_enabled)
+        VALUES (@login, @encrypted_password, @is_enabled)
+        RETURNING id;
+        """;
+      FillAccountParameters(command, request.Login, request.EncryptedPassword, request.IsEnabled);
 
-    return (long)result!;
+      var result = await command.ExecuteScalarAsync(cancellationToken);
+      var accountId = (long)result!;
+
+      await CreateDefaultConfigurationsAsync(connection, (SqliteTransaction)transaction, accountId, cancellationToken);
+      await transaction.CommitAsync(cancellationToken);
+
+      return accountId;
+    }
+    catch
+    {
+      await transaction.RollbackAsync(cancellationToken);
+      throw;
+    }
   }
 
   public async Task<bool> UpdateAsync(long id, UpdateAccountRequest request, CancellationToken cancellationToken)
@@ -109,6 +124,26 @@ public sealed class AccountRepository : IAccountRepository
     command.Parameters.AddWithValue("@login", login);
     command.Parameters.AddWithValue("@encrypted_password", (object?)encryptedPassword ?? DBNull.Value);
     command.Parameters.AddWithValue("@is_enabled", isEnabled);
+  }
+
+  private static async Task CreateDefaultConfigurationsAsync(
+    SqliteConnection connection,
+    SqliteTransaction transaction,
+    long accountId,
+    CancellationToken cancellationToken)
+  {
+    await using var command = connection.CreateCommand();
+    command.Transaction = transaction;
+    command.CommandText = """
+      INSERT INTO equipment_sets (account_id, kind)
+      VALUES (@account_id, 'farm'), (@account_id, 'combat');
+
+      INSERT INTO technique_presets (account_id, kind)
+      VALUES (@account_id, 'farm'), (@account_id, 'combat');
+      """;
+    command.Parameters.AddWithValue("@account_id", accountId);
+
+    await command.ExecuteNonQueryAsync(cancellationToken);
   }
 
   private static AccountResponse ReadAccount(SqliteDataReader reader)

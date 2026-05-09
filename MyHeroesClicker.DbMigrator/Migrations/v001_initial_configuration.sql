@@ -30,8 +30,7 @@ CREATE TABLE equipment_sets (
   account_id INTEGER NULL REFERENCES accounts(id) ON DELETE CASCADE,
   kind TEXT NOT NULL CHECK (kind IN ('farm', 'combat')),
   created_utc TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_utc TEXT NULL,
-  UNIQUE(account_id, kind)
+  updated_utc TEXT NULL
 );
 
 CREATE TABLE equipment_set_slots (
@@ -48,8 +47,7 @@ CREATE TABLE technique_presets (
   account_id INTEGER NULL REFERENCES accounts(id) ON DELETE CASCADE,
   kind TEXT NOT NULL CHECK (kind IN ('farm', 'combat')),
   created_utc TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_utc TEXT NULL,
-  UNIQUE(account_id, kind)
+  updated_utc TEXT NULL
 );
 
 CREATE TABLE technique_preset_slots (
@@ -65,6 +63,22 @@ ON equipment_sets(account_id, kind);
 
 CREATE INDEX idx_technique_presets_account_kind
 ON technique_presets(account_id, kind);
+
+CREATE UNIQUE INDEX ux_equipment_sets_account_kind
+ON equipment_sets(account_id, kind)
+WHERE account_id IS NOT NULL;
+
+CREATE UNIQUE INDEX ux_equipment_sets_default_kind
+ON equipment_sets(kind)
+WHERE account_id IS NULL;
+
+CREATE UNIQUE INDEX ux_technique_presets_account_kind
+ON technique_presets(account_id, kind)
+WHERE account_id IS NOT NULL;
+
+CREATE UNIQUE INDEX ux_technique_presets_default_kind
+ON technique_presets(kind)
+WHERE account_id IS NULL;
 
 INSERT INTO app_settings (
   id,
