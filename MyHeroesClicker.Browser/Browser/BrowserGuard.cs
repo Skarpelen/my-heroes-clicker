@@ -235,7 +235,7 @@ public sealed class BrowserGuard : IBrowserGuard
   {
     return location == FarmLocation.Adventure
       ? IsExpectedPage(page, "/domp1")
-      : IsExpectedPage(page, "/batle1") || IsExpectedPage(page, "/battle1");
+      : IsExpectedPage(page, "/batle1");
   }
 
   private static bool IsBattleLogPath(string path, FarmLocation location)
@@ -245,7 +245,6 @@ public sealed class BrowserGuard : IBrowserGuard
       return path.StartsWith("/domp1/log/", StringComparison.OrdinalIgnoreCase);
     }
 
-    return path.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase)
-           || path.StartsWith("/battle1/log/", StringComparison.OrdinalIgnoreCase);
+    return path.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase);
   }
 }

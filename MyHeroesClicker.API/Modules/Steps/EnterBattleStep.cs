@@ -32,19 +32,13 @@ public sealed class EnterBattleStep : IScenarioStep
 
     var primaryPath = _location == FarmLocation.Adventure
       ? "/domp1"
-      : "/battle1";
+      : "/batle1";
 
     await GoToBattleAsync(context, primaryPath);
 
     if (await context.Guard.IsLoginPageAsync(page))
     {
       throw new AuthenticationRequiredException("Для входа в бой требуется авторизация.");
-    }
-
-    if (_location == FarmLocation.Battle && !await context.Guard.IsBattlePageAsync(page, _location))
-    {
-      context.Logger.Log($"Не удалось открыть /battle1, текущий URL: {page.Url}. Пробую /batle1.");
-      await GoToBattleAsync(context, "/batle1");
     }
 
     await context.Guard.ExpectBattlePageAsync(context, _location, cancellationToken);

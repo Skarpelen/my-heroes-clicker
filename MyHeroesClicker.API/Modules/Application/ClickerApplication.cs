@@ -33,6 +33,12 @@ public sealed class ClickerApplication : IDisposable
 
   public int CompletedIterations => GetStatusContext().CompletedIterations;
 
+  public string? ActiveScenarioKey => GetActiveRun()?.Entry.Key;
+
+  public string? ActiveScenarioName => GetActiveRun()?.Entry.Scenario.Name;
+
+  public string? BrowserTabName => GetActiveRun()?.Entry.BrowserTabName ?? GetStatusContext().BrowserTabName;
+
   public int? MaxHealth
   {
     get
@@ -150,6 +156,14 @@ public sealed class ClickerApplication : IDisposable
     lock (_sync)
     {
       return _runningScenarios.Values.FirstOrDefault()?.Context ?? _lastContext;
+    }
+  }
+
+  private ScenarioRunState? GetActiveRun()
+  {
+    lock (_sync)
+    {
+      return _runningScenarios.Values.FirstOrDefault(run => !run.Task.IsCompleted);
     }
   }
 

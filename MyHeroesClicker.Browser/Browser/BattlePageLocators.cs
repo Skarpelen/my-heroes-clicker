@@ -9,7 +9,7 @@ public static class BattlePageLocators
   {
     if (location != FarmLocation.Adventure)
     {
-      return page.Locator("a.btn_act[href='/batle1/attack10'], a.btn_act[href='/battle1/attack10']");
+      return page.Locator("a.btn_act[href='/batle1/attack10']");
     }
 
     var attack10Button = page.Locator("a.btn_act[href='/domp1/attack10']").First;
@@ -64,7 +64,7 @@ public static class BattlePageLocators
       });
     }
 
-    return page.Locator("a.btn_use.fltl.btn_gspace[href='/batle1'], a.btn_use.fltl.btn_gspace[href='/battle1']").Filter(new()
+    return page.Locator("a.btn_use.fltl.btn_gspace[href='/batle1']").Filter(new()
     {
       HasTextString = "поиск"
     });

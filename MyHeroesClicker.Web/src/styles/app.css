@@ -117,12 +117,37 @@
 
 .status-error,
 .pause-warning,
+.status-details,
 .panel-error {
   grid-column: 1 / -1;
 }
 
 .pause-warning {
   color: var(--accent-strong);
+}
+
+.status-details {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.status-details div {
+  min-width: 0;
+}
+
+.status-details dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.status-details dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 900;
 }
 
 .scenario-card {
@@ -318,6 +343,10 @@
 }
 
 @media (max-width: 900px) {
+  .status-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .option-grid-compact {
     grid-template-columns: 1fr;
   }
@@ -331,6 +360,7 @@
 
   .hero-section,
   .status-bar,
+  .status-details,
   .scenario-header,
   .form-grid,
   .farm-starts,

@@ -6,6 +6,8 @@ public interface IPauseService
 
   string? PauseReason { get; }
 
+  DateTimeOffset? PauseRequestedAt { get; }
+
   void Request(string reason);
 
   void Reset();

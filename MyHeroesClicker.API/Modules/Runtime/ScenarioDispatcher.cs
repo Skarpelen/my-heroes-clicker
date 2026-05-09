@@ -5,18 +5,37 @@ namespace MyHeroesClicker.API.Modules.Runtime;
 public sealed class ScenarioDispatcher : IDisposable
 {
   private readonly Dictionary<ScenarioBrowserTabKind, SemaphoreSlim> _tabLocks = new();
+  private readonly Dictionary<ScenarioConcurrencyGroup, SemaphoreSlim> _groupLocks = new();
   private readonly object _sync = new();
 
   public ScenarioDispatchLease TryAcquire(ScenarioCatalogEntry entry)
   {
-    var semaphore = GetSemaphore(entry.BrowserTabKind);
+    var tabSemaphore = GetSemaphore(entry.BrowserTabKind);
 
-    if (!semaphore.Wait(0))
+    if (!tabSemaphore.Wait(0))
     {
       throw new InvalidOperationException($"Вкладка \"{entry.BrowserTabName}\" уже занята другим сценарием.");
     }
 
-    return new ScenarioDispatchLease(entry.BrowserTabKind, entry.BrowserTabName, semaphore);
+    SemaphoreSlim? groupSemaphore = null;
+
+    if (entry.ConcurrencyGroup is not null)
+    {
+      groupSemaphore = GetSemaphore(entry.ConcurrencyGroup.Value);
+
+      if (!groupSemaphore.Wait(0))
+      {
+        tabSemaphore.Release();
+
+        throw new InvalidOperationException(FormatBusyGroupMessage(entry.ConcurrencyGroup.Value));
+      }
+    }
+
+    return new ScenarioDispatchLease(
+      entry.BrowserTabKind,
+      entry.BrowserTabName,
+      tabSemaphore,
+      groupSemaphore);
   }
 
   public void Dispose()
@@ -28,7 +47,13 @@ public sealed class ScenarioDispatcher : IDisposable
         semaphore.Dispose();
       }
 
+      foreach (var semaphore in _groupLocks.Values)
+      {
+        semaphore.Dispose();
+      }
+
       _tabLocks.Clear();
+      _groupLocks.Clear();
     }
   }
 
@@ -45,6 +70,29 @@ public sealed class ScenarioDispatcher : IDisposable
       return semaphore;
     }
   }
+
+  private SemaphoreSlim GetSemaphore(ScenarioConcurrencyGroup group)
+  {
+    lock (_sync)
+    {
+      if (!_groupLocks.TryGetValue(group, out var semaphore))
+      {
+        semaphore = new SemaphoreSlim(1, 1);
+        _groupLocks.Add(group, semaphore);
+      }
+
+      return semaphore;
+    }
+  }
+
+  private static string FormatBusyGroupMessage(ScenarioConcurrencyGroup group)
+  {
+    return group switch
+    {
+      ScenarioConcurrencyGroup.Farm => "Фарм уже выполняется. Сейчас нельзя одновременно запускать драку и приключения.",
+      _ => "Группа сценариев уже занята другим запуском."
+    };
+  }
 }
 
 public sealed class ScenarioDispatchLease : IDisposable
@@ -55,16 +103,20 @@ public sealed class ScenarioDispatchLease : IDisposable
   public ScenarioDispatchLease(
     ScenarioBrowserTabKind tabKind,
     string tabName,
-    SemaphoreSlim semaphore)
+    SemaphoreSlim tabSemaphore,
+    SemaphoreSlim? groupSemaphore)
   {
     TabKind = tabKind;
     TabName = tabName;
-    _semaphore = semaphore;
+    _semaphore = tabSemaphore;
+    GroupSemaphore = groupSemaphore;
   }
 
   public ScenarioBrowserTabKind TabKind { get; }
 
   public string TabName { get; }
+
+  private SemaphoreSlim? GroupSemaphore { get; }
 
   public void Dispose()
   {
@@ -75,5 +127,6 @@ public sealed class ScenarioDispatchLease : IDisposable
 
     _isDisposed = true;
     _semaphore.Release();
+    GroupSemaphore?.Release();
   }
 }

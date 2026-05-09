@@ -83,7 +83,6 @@ public sealed class AttackStep : IScenarioStep
     return Uri.TryCreate(page.Url, UriKind.Absolute, out var uri)
            && uri.Scheme == "https"
            && uri.Host == "myheroes.ru"
-           && (uri.AbsolutePath.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase)
-               || uri.AbsolutePath.StartsWith("/battle1/log/", StringComparison.OrdinalIgnoreCase));
+           && uri.AbsolutePath.StartsWith("/batle1/log/", StringComparison.OrdinalIgnoreCase);
   }
 }

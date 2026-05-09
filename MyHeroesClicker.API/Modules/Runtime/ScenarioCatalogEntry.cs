@@ -8,4 +8,5 @@ public sealed record ScenarioCatalogEntry(
   IScenario Scenario,
   ScenarioExecutionMode ExecutionMode,
   ScenarioBrowserTabKind BrowserTabKind,
-  string BrowserTabName);
+  string BrowserTabName,
+  ScenarioConcurrencyGroup? ConcurrencyGroup = null);

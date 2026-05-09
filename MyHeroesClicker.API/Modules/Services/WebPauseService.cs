@@ -6,6 +6,7 @@ public sealed class WebPauseService : IPauseService
 {
   private readonly object _sync = new();
   private string? _pauseReason;
+  private DateTimeOffset? _pauseRequestedAt;
 
   public bool IsPauseRequested
   {
@@ -29,10 +30,26 @@ public sealed class WebPauseService : IPauseService
     }
   }
 
+  public DateTimeOffset? PauseRequestedAt
+  {
+    get
+    {
+      lock (_sync)
+      {
+        return _pauseRequestedAt;
+      }
+    }
+  }
+
   public void Request(string reason)
   {
     lock (_sync)
     {
+      if (_pauseReason is null)
+      {
+        _pauseRequestedAt = DateTimeOffset.UtcNow;
+      }
+
       _pauseReason = reason;
     }
   }
@@ -42,6 +59,7 @@ public sealed class WebPauseService : IPauseService
     lock (_sync)
     {
       _pauseReason = null;
+      _pauseRequestedAt = null;
     }
   }
 }

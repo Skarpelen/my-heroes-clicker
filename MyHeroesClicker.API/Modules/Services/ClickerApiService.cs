@@ -16,6 +16,8 @@ public sealed class ClickerApiService : IAsyncDisposable
   private ClickerRuntime? _runtime;
   private ClickerApplication? _application;
   private string? _lastError;
+  private string? _lastUserEvent;
+  private DateTimeOffset? _lastUserEventAt;
 
   public ClickerApiService(
     ClickerOptions options,
@@ -37,7 +39,13 @@ public sealed class ClickerApiService : IAsyncDisposable
         false,
         false,
         _pauseService.IsPauseRequested,
+        null,
+        null,
+        null,
         _pauseService.PauseReason,
+        _pauseService.PauseRequestedAt,
+        _lastUserEvent,
+        _lastUserEventAt,
         null,
         null,
         null,
@@ -48,7 +56,13 @@ public sealed class ClickerApiService : IAsyncDisposable
       true,
       _application.IsRunning,
       _pauseService.IsPauseRequested,
+      _application.ActiveScenarioKey,
+      _application.ActiveScenarioName,
+      _application.BrowserTabName,
       _pauseService.PauseReason,
+      _pauseService.PauseRequestedAt,
+      _lastUserEvent,
+      _lastUserEventAt,
       _application.TargetIterations,
       _application.CompletedIterations,
       _application.MaxHealth,
@@ -99,13 +113,21 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   public void Stop()
   {
+    SetLastUserEvent("Остановка сценариев");
     _pauseService.Reset();
     _application?.StopCurrentScenario();
   }
 
   public void Resume()
   {
+    SetLastUserEvent("Продолжение после паузы");
     _pauseService.Reset();
+  }
+
+  public void SetLastUserEvent(string eventName)
+  {
+    _lastUserEvent = eventName;
+    _lastUserEventAt = DateTimeOffset.UtcNow;
   }
 
   public void ClearLastError()

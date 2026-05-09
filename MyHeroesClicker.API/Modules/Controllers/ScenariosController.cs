@@ -53,6 +53,7 @@ public sealed class ScenariosController : ControllerBase
     return await StartRunAsync(
       request,
       application => application.Scenarios.FarmCycle,
+      "Запуск фарма в драке",
       "Farm scenario start rejected.",
       cancellationToken);
   }
@@ -65,6 +66,7 @@ public sealed class ScenariosController : ControllerBase
     return await StartRunAsync(
       request,
       application => application.Scenarios.AdventureFarmCycle,
+      "Запуск фарма в приключениях",
       "Adventure farm scenario start rejected.",
       cancellationToken);
   }
@@ -72,6 +74,7 @@ public sealed class ScenariosController : ControllerBase
   private async Task<IActionResult> StartRunAsync(
     ScenarioRunRequest request,
     Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
+    string userEvent,
     string rejectionLogMessage,
     CancellationToken cancellationToken)
   {
@@ -82,11 +85,15 @@ public sealed class ScenariosController : ControllerBase
 
     try
     {
-      _clicker.ResetPause();
-
       var application = await _clicker.GetApplicationAsync(request.Iterations, cancellationToken);
 
+      if (!application.IsRunning)
+      {
+        _clicker.ResetPause();
+      }
+
       await application.StartScenarioAsync(selectScenario(application), request.Iterations, cancellationToken);
+      _clicker.SetLastUserEvent(userEvent);
       _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));
@@ -110,6 +117,7 @@ public sealed class ScenariosController : ControllerBase
   {
     return await StartScenarioAsync(
       application => application.Scenarios.FarmPreparation,
+      "Подготовка фарм-сета",
       "Farm preparation scenario start rejected.",
       cancellationToken);
   }
@@ -119,6 +127,7 @@ public sealed class ScenariosController : ControllerBase
   {
     return await StartScenarioAsync(
       application => application.Scenarios.CombatPreparation,
+      "Подготовка боевого сета",
       "Combat preparation scenario start rejected.",
       cancellationToken);
   }
@@ -141,19 +150,24 @@ public sealed class ScenariosController : ControllerBase
 
   private async Task<IActionResult> StartScenarioAsync(
     Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
+    string userEvent,
     string rejectionLogMessage,
     CancellationToken cancellationToken)
   {
     try
     {
-      _clicker.ResetPause();
-
       var application = await _clicker.GetApplicationAsync(DefaultPreparationIterations, cancellationToken);
+
+      if (!application.IsRunning)
+      {
+        _clicker.ResetPause();
+      }
 
       await application.StartScenarioAsync(
         selectScenario(application),
         DefaultPreparationIterations,
         cancellationToken);
+      _clicker.SetLastUserEvent(userEvent);
       _clicker.ClearLastError();
 
       return AcceptedAtAction(nameof(GetStatus));

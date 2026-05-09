@@ -36,19 +36,22 @@ public sealed class ScenarioCatalog
       farmBattle,
       ScenarioExecutionMode.Playwright,
       ScenarioBrowserTabKind.BattleFarm,
-      "Фарм боев");
+      "Фарм боев",
+      ScenarioConcurrencyGroup.Farm);
     FarmCycle = new ScenarioCatalogEntry(
       "farmCycle",
       farmCycle,
       ScenarioExecutionMode.Mixed,
       ScenarioBrowserTabKind.BattleFarm,
-      "Фарм боев");
+      "Фарм боев",
+      ScenarioConcurrencyGroup.Farm);
     AdventureFarmCycle = new ScenarioCatalogEntry(
       "adventureFarmCycle",
       adventureFarmCycle,
       ScenarioExecutionMode.Mixed,
       ScenarioBrowserTabKind.AdventureFarm,
-      "Фарм приключений");
+      "Фарм приключений",
+      ScenarioConcurrencyGroup.Farm);
   }
 
   public ScenarioCatalogEntry Authentication { get; }
