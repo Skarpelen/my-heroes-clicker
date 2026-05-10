@@ -5,12 +5,12 @@ type ScenarioStatusBarProps = {
 }
 
 export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
-  const targetIterations = status?.targetIterations ?? 0
+  const iterationLimit = status?.iterationLimit ?? 0
   const completedIterations = status?.completedIterations ?? 0
   const pauseRequestedAt = formatDateTime(status?.pauseRequestedAt ?? null)
   const lastUserEventAt = formatDateTime(status?.lastUserEventAt ?? null)
-  const progress = targetIterations > 0
-    ? Math.min(100, Math.round((completedIterations / targetIterations) * 100))
+  const progress = iterationLimit > 0
+    ? Math.min(100, Math.round((completedIterations / iterationLimit) * 100))
     : 0
 
   return (
@@ -26,7 +26,7 @@ export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
         </div>
 
         <span>
-          {completedIterations} / {targetIterations}
+          {completedIterations} / {iterationLimit}
         </span>
       </div>
 

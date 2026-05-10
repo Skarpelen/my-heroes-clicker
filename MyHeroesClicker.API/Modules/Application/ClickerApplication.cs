@@ -1,10 +1,11 @@
 ﻿using MyHeroesClicker.API.Modules.Runtime;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Models.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Application;
 
-public sealed class ClickerApplication : IDisposable
+public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
 {
   private readonly ClickerRuntime _runtime;
   private readonly ScenarioDispatcher _dispatcher = new();
@@ -29,7 +30,7 @@ public sealed class ClickerApplication : IDisposable
     }
   }
 
-  public int TargetIterations => GetStatusContext().TargetIterations;
+  public int? IterationLimit => GetStatusContext().RunOptions.IterationLimit;
 
   public int CompletedIterations => GetStatusContext().CompletedIterations;
 
@@ -38,6 +39,24 @@ public sealed class ClickerApplication : IDisposable
   public string? ActiveScenarioName => GetActiveRun()?.Entry.Scenario.Name;
 
   public string? BrowserTabName => GetActiveRun()?.Entry.BrowserTabName ?? GetStatusContext().BrowserTabName;
+
+  public IReadOnlyCollection<string> RunningScenarioKeys
+  {
+    get
+    {
+      lock (_sync)
+      {
+        return _runningScenarios.Values
+          .Where(run => !run.Task.IsCompleted)
+          .Select(run => run.Entry.Key)
+          .ToArray();
+      }
+    }
+  }
+
+  public string? WarState => GetRunningContext(ScenarioBrowserTabKind.ClanWar)?.StatusMessage;
+
+  public DateTimeOffset? WarNextCheckAt => GetRunningContext(ScenarioBrowserTabKind.ClanWar)?.NextCheckAt;
 
   public int? MaxHealth
   {
@@ -68,12 +87,12 @@ public sealed class ClickerApplication : IDisposable
 
   public async Task StartScenarioAsync(
     ScenarioCatalogEntry entry,
-    int targetIterations,
+    ScenarioRunOptions runOptions,
     CancellationToken cancellationToken)
   {
-    if (targetIterations <= 0)
+    if (runOptions.IterationLimit is <= 0)
     {
-      throw new ArgumentOutOfRangeException(nameof(targetIterations), "Количество атак должно быть положительным.");
+      throw new ArgumentOutOfRangeException(nameof(runOptions), "Количество атак должно быть положительным.");
     }
 
     ScenarioDispatchLease lease;
@@ -92,7 +111,7 @@ public sealed class ClickerApplication : IDisposable
 
     try
     {
-      context = await _runtime.CreateContextAsync(entry, targetIterations, cancellationToken);
+      context = await _runtime.CreateContextAsync(entry, runOptions, this, cancellationToken);
     }
     catch
     {
@@ -117,6 +136,34 @@ public sealed class ClickerApplication : IDisposable
     _dispatcher.Dispose();
   }
 
+  public async Task StopGroupAsync(ScenarioConcurrencyGroup group, CancellationToken cancellationToken)
+  {
+    ScenarioRunState[] runs;
+
+    lock (_sync)
+    {
+      runs = _runningScenarios.Values
+        .Where(run => run.Entry.ConcurrencyGroup == group && !run.Task.IsCompleted)
+        .ToArray();
+
+      foreach (var run in runs)
+      {
+        run.Cancellation.Cancel();
+      }
+    }
+
+    foreach (var run in runs)
+    {
+      try
+      {
+        await run.Task.WaitAsync(cancellationToken);
+      }
+      catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+      {
+      }
+    }
+  }
+
   private async Task ExecuteScenarioAsync(
     ScenarioCatalogEntry entry,
     ScenarioContext context,
@@ -128,6 +175,10 @@ public sealed class ClickerApplication : IDisposable
       LastError = null;
       context.Logger.Log($"Выполняется сценарий: {entry.Scenario.Name} ({FormatExecutionMode(entry.ExecutionMode)}).");
       await entry.Scenario.ExecuteAsync(context, cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+      context.Logger.Warn($"Сценарий остановлен: {entry.Scenario.Name}.");
     }
     catch (Exception exception)
     {
@@ -164,6 +215,16 @@ public sealed class ClickerApplication : IDisposable
     lock (_sync)
     {
       return _runningScenarios.Values.FirstOrDefault(run => !run.Task.IsCompleted);
+    }
+  }
+
+  private ScenarioContext? GetRunningContext(ScenarioBrowserTabKind tabKind)
+  {
+    lock (_sync)
+    {
+      return _runningScenarios.TryGetValue(tabKind, out var run) && !run.Task.IsCompleted
+        ? run.Context
+        : null;
     }
   }
 

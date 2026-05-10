@@ -70,7 +70,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
   public async Task<ScenarioContext> CreateContextAsync(
     ScenarioCatalogEntry entry,
-    int targetIterations,
+    ScenarioRunOptions runOptions,
+    IScenarioCoordinator coordinator,
     CancellationToken cancellationToken)
   {
     var tab = await _tabManager.GetOrCreateAsync(
@@ -88,8 +89,9 @@ public sealed class ClickerRuntime : IAsyncDisposable
       logger,
       AlertService,
       _pauseService,
+      coordinator,
       _options,
-      targetIterations,
+      runOptions,
       characterState,
       tab.Kind,
       tab.Name);
@@ -102,7 +104,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
     IRunLogger logger,
     IAlertService alertService,
     IPauseService pauseService,
-    int targetIterations)
+    ScenarioRunOptions initialRunOptions)
   {
     var failureDumpService = new FailureDumpService();
     var guard = new BrowserGuard(alertService, failureDumpService);
@@ -128,8 +130,9 @@ public sealed class ClickerRuntime : IAsyncDisposable
       logger,
       alertService,
       pauseService,
+      EmptyScenarioCoordinator.Instance,
       options,
-      targetIterations,
+      initialRunOptions,
       characterState,
       ScenarioBrowserTabKind.Main,
       "Основная вкладка");
@@ -147,6 +150,9 @@ public sealed class ClickerRuntime : IAsyncDisposable
     IScenario authenticatedCombatPreparationScenario = new AuthenticatedScenario(authenticationScenario, combatPreparationScenario);
     IScenario farmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario, FarmLocation.Battle);
     IScenario adventureFarmBattleScenario = new FarmBattleScenario(resourcesReader, authenticationScenario, FarmLocation.Adventure);
+    IScenario warRegistrationScenario = new AuthenticatedScenario(
+      authenticationScenario,
+      new WarRegistrationScenario(webClient, combatPreparationScenario, configuration.War));
     IScenario farmCycleScenario = new AuthenticatedScenario(
       authenticationScenario,
       new CompositeScenario("Цикл фарма в драке", [
@@ -166,7 +172,8 @@ public sealed class ClickerRuntime : IAsyncDisposable
       authenticatedCombatPreparationScenario,
       farmBattleScenario,
       farmCycleScenario,
-      adventureFarmCycleScenario);
+      adventureFarmCycleScenario,
+      warRegistrationScenario);
 
     return new ClickerRuntime(
       playwright,

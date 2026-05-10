@@ -285,10 +285,43 @@
   font-weight: 900;
 }
 
+.war-status {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0 0;
+}
+
+.war-status div {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.war-status dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.war-status dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 900;
+}
+
 .scenario-card {
   position: relative;
   overflow: hidden;
+  margin-bottom: 20px;
   padding: 28px;
+}
+
+.scenario-card-compact {
+  padding: 24px;
 }
 
 .settings-panel {
@@ -322,6 +355,10 @@
   letter-spacing: -0.05em;
 }
 
+.scenario-header-compact h2 {
+  font-size: clamp(28px, 4vw, 44px);
+}
+
 .scenario-mark {
   display: grid;
   place-items: center;
@@ -334,6 +371,12 @@
     linear-gradient(135deg, var(--accent), var(--green));
   transform: rotate(8deg);
   box-shadow: 0 24px 48px rgba(158, 63, 29, 0.28);
+}
+
+.scenario-mark-compact {
+  width: 96px;
+  height: 96px;
+  border-radius: 28px;
 }
 
 .settings-panel-header {
@@ -786,6 +829,7 @@
   .hero-section,
   .status-bar,
   .status-details,
+  .war-status,
   .scenario-header,
   .alert-sound-controls,
   .form-grid,

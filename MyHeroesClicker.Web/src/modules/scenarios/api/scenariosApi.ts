@@ -24,6 +24,16 @@ export async function startAdventureFarmScenario(options: FarmScenarioOptions): 
   await startFarmScenario('/api/scenarios/adventure/start', options, 'Не удалось запустить фарм в приключениях.')
 }
 
+export async function startWarRegistrationScenario(): Promise<void> {
+  const response = await fetch('/api/scenarios/war/start', {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(await readError(response, 'Не удалось запустить авто войну.'))
+  }
+}
+
 export async function prepareFarmMode(): Promise<void> {
   const response = await fetch('/api/scenarios/farm/prepare', {
     method: 'POST',

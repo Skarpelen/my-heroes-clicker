@@ -24,8 +24,10 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
   const [isPreparing, setIsPreparing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const isRunning = status?.isRunning ?? false
+  const runningScenarioKeys = status?.runningScenarioKeys ?? []
+  const isFarmRunning = runningScenarioKeys.some((key) => key === 'farmCycle' || key === 'adventureFarmCycle' || key === 'farmBattle')
   const isPaused = status?.isPaused ?? false
-  const canStart = !isRunning
+  const canStart = !isFarmRunning
 
   async function prepareMode(mode: 'farm' | 'combat') {
     setError(null)

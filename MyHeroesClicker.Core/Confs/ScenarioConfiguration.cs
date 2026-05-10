@@ -2,7 +2,8 @@ namespace MyHeroesClicker.Core.Confs;
 
 public sealed record ScenarioConfiguration(
   EquipmentModeConfiguration Equipment,
-  TechniqueModeConfiguration Techniques);
+  TechniqueModeConfiguration Techniques,
+  WarModeConfiguration War);
 
 public sealed record EquipmentModeConfiguration(
   IReadOnlyCollection<EquipmentSlotConfiguration> FarmSlots,
@@ -16,3 +17,7 @@ public sealed record EquipmentSlotConfiguration(
 public sealed record TechniqueModeConfiguration(
   IReadOnlySet<int> FarmEnabledTechniqueIds,
   IReadOnlySet<int> CombatEnabledTechniqueIds);
+
+public sealed record WarModeConfiguration(
+  int CheckIntervalMinutes,
+  int CombatPreparationSecondsBeforeRegistrationEnd);

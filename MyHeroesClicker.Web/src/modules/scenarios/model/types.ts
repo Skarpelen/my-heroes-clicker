@@ -5,13 +5,16 @@ export type ScenarioStatus = {
   activeScenarioKey: string | null
   activeScenarioName: string | null
   browserTabName: string | null
+  runningScenarioKeys: string[]
   pauseReason: string | null
   pauseRequestedAt: string | null
   lastUserEvent: string | null
   lastUserEventAt: string | null
-  targetIterations: number | null
+  iterationLimit: number | null
   completedIterations: number | null
   maxHealth: number | null
+  warState: string | null
+  warNextCheckAt: string | null
   lastError: string | null
 }
 

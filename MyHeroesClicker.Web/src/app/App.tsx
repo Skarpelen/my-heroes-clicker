@@ -8,6 +8,7 @@ import { getAccounts, getAppSettings } from '../modules/configuration/api/config
 import type { Account, AppSettings } from '../modules/configuration/model/types'
 import { FarmScenarioPanel } from '../modules/scenarios/components/FarmScenarioPanel'
 import { ScenarioStatusBar } from '../modules/scenarios/components/ScenarioStatusBar'
+import { WarScenarioPanel } from '../modules/scenarios/components/WarScenarioPanel'
 import { getScenarioStatus } from '../modules/scenarios/api/scenariosApi'
 import type { ScenarioStatus } from '../modules/scenarios/model/types'
 import '../styles/app.css'
@@ -120,6 +121,7 @@ export function App() {
             onTest={testAlertSound}
           />
           <FarmScenarioPanel status={status} onRefreshStatus={refreshStatus} />
+          <WarScenarioPanel status={status} onRefreshStatus={refreshStatus} />
         </>
       )}
 

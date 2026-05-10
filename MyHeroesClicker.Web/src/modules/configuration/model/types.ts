@@ -29,6 +29,8 @@ export type AppSettings = {
   maxStepRetryCount: number
   retryDelayMs: number
   authenticationRetryDelayMs: number
+  warCheckIntervalMinutes: number
+  warCombatPreparationSecondsBeforeRegistrationEnd: number
 }
 
 export type UpdateAppSettingsRequest = Omit<AppSettings, 'id' | 'activeAccountId'>

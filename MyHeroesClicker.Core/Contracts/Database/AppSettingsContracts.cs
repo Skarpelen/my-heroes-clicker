@@ -15,7 +15,9 @@ public sealed record AppSettingsResponse(
   double MaxAttackHealthPercent,
   int MaxStepRetryCount,
   int RetryDelayMs,
-  int AuthenticationRetryDelayMs);
+  int AuthenticationRetryDelayMs,
+  int WarCheckIntervalMinutes,
+  int WarCombatPreparationSecondsBeforeRegistrationEnd);
 
 public sealed record UpdateAppSettingsRequest(
   string BaseUrl,
@@ -30,6 +32,8 @@ public sealed record UpdateAppSettingsRequest(
   double MaxAttackHealthPercent,
   int MaxStepRetryCount,
   int RetryDelayMs,
-  int AuthenticationRetryDelayMs);
+  int AuthenticationRetryDelayMs,
+  int WarCheckIntervalMinutes,
+  int WarCombatPreparationSecondsBeforeRegistrationEnd);
 
 public sealed record SetActiveAccountRequest(long? AccountId);

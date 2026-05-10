@@ -4,5 +4,6 @@ public enum ScenarioBrowserTabKind
 {
   Main = 0,
   BattleFarm = 1,
-  AdventureFarm = 2
+  AdventureFarm = 2,
+  ClanWar = 3
 }

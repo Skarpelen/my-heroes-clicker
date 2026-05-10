@@ -88,6 +88,16 @@ public sealed class AppSettingsController : ControllerBase
       errors.Add(nameof(UpdateAppSettingsRequest.MaxStepRetryCount), ["Количество повторов не должно быть отрицательным."]);
     }
 
+    if (request.WarCheckIntervalMinutes is < 1 or > 60)
+    {
+      errors.Add(nameof(UpdateAppSettingsRequest.WarCheckIntervalMinutes), ["Период проверки войны должен быть от 1 до 60 минут."]);
+    }
+
+    if (request.WarCombatPreparationSecondsBeforeRegistrationEnd is < 0 or > 1200)
+    {
+      errors.Add(nameof(UpdateAppSettingsRequest.WarCombatPreparationSecondsBeforeRegistrationEnd), ["Подготовка к войне должна быть от 0 до 1200 секунд."]);
+    }
+
     validationResult = errors.Count > 0 ? BadRequest(new { errors }) : Ok();
 
     return errors.Count == 0;

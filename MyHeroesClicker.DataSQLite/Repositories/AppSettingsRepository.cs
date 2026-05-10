@@ -33,7 +33,9 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
              max_attack_health_percent,
              max_step_retry_count,
              retry_delay_ms,
-             authentication_retry_delay_ms
+             authentication_retry_delay_ms,
+             war_check_interval_minutes,
+             war_combat_preparation_seconds_before_registration_end
       FROM app_settings
       WHERE id = 1;
       """;
@@ -66,7 +68,9 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
           max_attack_health_percent = @max_attack_health_percent,
           max_step_retry_count = @max_step_retry_count,
           retry_delay_ms = @retry_delay_ms,
-          authentication_retry_delay_ms = @authentication_retry_delay_ms
+          authentication_retry_delay_ms = @authentication_retry_delay_ms,
+          war_check_interval_minutes = @war_check_interval_minutes,
+          war_combat_preparation_seconds_before_registration_end = @war_combat_preparation_seconds_before_registration_end
       WHERE id = 1;
       """;
     FillSettingsParameters(command, request);
@@ -103,6 +107,8 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
     command.Parameters.AddWithValue("@max_step_retry_count", request.MaxStepRetryCount);
     command.Parameters.AddWithValue("@retry_delay_ms", request.RetryDelayMs);
     command.Parameters.AddWithValue("@authentication_retry_delay_ms", request.AuthenticationRetryDelayMs);
+    command.Parameters.AddWithValue("@war_check_interval_minutes", request.WarCheckIntervalMinutes);
+    command.Parameters.AddWithValue("@war_combat_preparation_seconds_before_registration_end", request.WarCombatPreparationSecondsBeforeRegistrationEnd);
   }
 
   private static AppSettingsResponse ReadSettings(SqliteDataReader reader)
@@ -122,7 +128,9 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
       reader.GetDouble(reader.GetOrdinal("max_attack_health_percent")),
       reader.GetInt32(reader.GetOrdinal("max_step_retry_count")),
       reader.GetInt32(reader.GetOrdinal("retry_delay_ms")),
-      reader.GetInt32(reader.GetOrdinal("authentication_retry_delay_ms")));
+      reader.GetInt32(reader.GetOrdinal("authentication_retry_delay_ms")),
+      reader.GetInt32(reader.GetOrdinal("war_check_interval_minutes")),
+      reader.GetInt32(reader.GetOrdinal("war_combat_preparation_seconds_before_registration_end")));
   }
 
   private static long? GetNullableInt64(SqliteDataReader reader, string name)

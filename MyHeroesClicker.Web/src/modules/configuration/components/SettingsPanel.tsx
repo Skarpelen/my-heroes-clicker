@@ -54,6 +54,8 @@ const defaultSettings: UpdateAppSettingsRequest = {
   maxStepRetryCount: 10,
   retryDelayMs: 1000,
   authenticationRetryDelayMs: 60000,
+  warCheckIntervalMinutes: 15,
+  warCombatPreparationSecondsBeforeRegistrationEnd: 60,
 }
 
 const techniqueNames = [
@@ -567,6 +569,18 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               value={settingsForm.authenticationRetryDelayMs}
               onChange={(value) => setSettingsForm((current) => ({ ...current, authenticationRetryDelayMs: value }))}
             />
+            <NumberField
+              label="Проверка войны, мин"
+              description="Как часто проверять страницу войны после окончания войны или при неизвестном состоянии. Больше 20 минут ставить неэффективно: окно регистрации длится 20 минут."
+              value={settingsForm.warCheckIntervalMinutes}
+              onChange={(value) => setSettingsForm((current) => ({ ...current, warCheckIntervalMinutes: value }))}
+            />
+            <NumberField
+              label="Подготовка к войне, сек"
+              description="За сколько секунд до конца регистрации остановить активный фарм и надеть боевой сет."
+              value={settingsForm.warCombatPreparationSecondsBeforeRegistrationEnd}
+              onChange={(value) => setSettingsForm((current) => ({ ...current, warCombatPreparationSecondsBeforeRegistrationEnd: value }))}
+            />
           </div>
 
           <ToggleRow
@@ -729,6 +743,8 @@ function settingsToForm(settings: AppSettings): UpdateAppSettingsRequest {
     maxStepRetryCount: settings.maxStepRetryCount,
     retryDelayMs: settings.retryDelayMs,
     authenticationRetryDelayMs: settings.authenticationRetryDelayMs,
+    warCheckIntervalMinutes: settings.warCheckIntervalMinutes,
+    warCombatPreparationSecondsBeforeRegistrationEnd: settings.warCombatPreparationSecondsBeforeRegistrationEnd,
   }
 }
 

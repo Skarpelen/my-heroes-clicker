@@ -5,6 +5,7 @@ using MyHeroesClicker.Core.Contracts;
 using MyHeroesClicker.Core.Contracts.Database;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Scenarios;
 
 namespace MyHeroesClicker.API.Modules.Services;
 
@@ -47,10 +48,13 @@ public sealed class ClickerApiService : IAsyncDisposable
         null,
         null,
         null,
+        [],
         _pauseService.PauseReason,
         _pauseService.PauseRequestedAt,
         _lastUserEvent,
         _lastUserEventAt,
+        null,
+        null,
         null,
         null,
         null,
@@ -64,18 +68,21 @@ public sealed class ClickerApiService : IAsyncDisposable
       _application.ActiveScenarioKey,
       _application.ActiveScenarioName,
       _application.BrowserTabName,
+      _application.RunningScenarioKeys,
       _pauseService.PauseReason,
       _pauseService.PauseRequestedAt,
       _lastUserEvent,
       _lastUserEventAt,
-      _application.TargetIterations,
+      _application.IterationLimit,
       _application.CompletedIterations,
       _application.MaxHealth,
+      _application.WarState,
+      _application.WarNextCheckAt,
       _application.LastError ?? _lastError);
   }
 
   public async Task<ClickerApplication> GetApplicationAsync(
-    int initialTargetIterations,
+    ScenarioRunOptions initialRunOptions,
     CancellationToken cancellationToken)
   {
     if (_application is not null)
@@ -101,7 +108,7 @@ public sealed class ClickerApiService : IAsyncDisposable
         _logger,
         _alertService,
         _pauseService,
-        initialTargetIterations);
+        initialRunOptions);
 
       _application = new ClickerApplication(_runtime);
 
@@ -180,7 +187,7 @@ public sealed class ClickerApiService : IAsyncDisposable
         _logger,
         _alertService,
         _pauseService,
-        1);
+        ScenarioRunOptions.Empty);
 
       await runtime.Scenarios.Authentication.Scenario.ExecuteAsync(runtime.Context, cancellationToken);
       currentSlots = await runtime.EquipmentReader.ReadAsync(slotNumbers, cancellationToken);
@@ -205,7 +212,8 @@ public sealed class ClickerApiService : IAsyncDisposable
   {
     return new ScenarioConfiguration(
       new EquipmentModeConfiguration([], []),
-      new TechniqueModeConfiguration(new HashSet<int>(), new HashSet<int>()));
+      new TechniqueModeConfiguration(new HashSet<int>(), new HashSet<int>()),
+      new WarModeConfiguration(15, 60));
   }
 
   public async ValueTask DisposeAsync()
@@ -286,8 +294,15 @@ public sealed class ClickerApiService : IAsyncDisposable
     CancellationToken cancellationToken)
   {
     using var scope = _scopeFactory.CreateScope();
+    var settingsRepository = scope.ServiceProvider.GetRequiredService<IAppSettingsRepository>();
     var equipmentSets = scope.ServiceProvider.GetRequiredService<IEquipmentSetRepository>();
     var techniquePresets = scope.ServiceProvider.GetRequiredService<ITechniquePresetRepository>();
+    var settings = await settingsRepository.GetAsync(cancellationToken);
+
+    if (settings is null)
+    {
+      throw new InvalidOperationException("Настройки приложения не найдены. Запустите миграции БД.");
+    }
 
     return new ScenarioConfiguration(
       new EquipmentModeConfiguration(
@@ -295,7 +310,10 @@ public sealed class ClickerApiService : IAsyncDisposable
         await LoadEquipmentSlotsAsync(equipmentSets, accountId, "combat", cancellationToken)),
       new TechniqueModeConfiguration(
         await LoadTechniqueIdsAsync(techniquePresets, accountId, "farm", cancellationToken),
-        await LoadTechniqueIdsAsync(techniquePresets, accountId, "combat", cancellationToken)));
+        await LoadTechniqueIdsAsync(techniquePresets, accountId, "combat", cancellationToken)),
+      new WarModeConfiguration(
+        settings.WarCheckIntervalMinutes,
+        settings.WarCombatPreparationSecondsBeforeRegistrationEnd));
   }
 
   private static async Task<IReadOnlyCollection<EquipmentSlotConfiguration>> LoadEquipmentSlotsAsync(

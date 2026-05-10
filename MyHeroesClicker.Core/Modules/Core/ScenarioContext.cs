@@ -1,6 +1,7 @@
 ﻿using Microsoft.Playwright;
 using MyHeroesClicker.Core.Confs;
 using MyHeroesClicker.Core.Interfaces.Browser;
+using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Models.Scenarios;
 
@@ -16,8 +17,9 @@ public sealed class ScenarioContext
     IRunLogger logger,
     IAlertService alertService,
     IPauseService pauseService,
+    IScenarioCoordinator coordinator,
     ClickerOptions options,
-    int targetIterations,
+    ScenarioRunOptions runOptions,
     CharacterState characterState,
     ScenarioBrowserTabKind browserTabKind = ScenarioBrowserTabKind.Main,
     string browserTabName = "Основная вкладка")
@@ -29,8 +31,9 @@ public sealed class ScenarioContext
     Logger = logger;
     AlertService = alertService;
     PauseService = pauseService;
+    Coordinator = coordinator;
     Options = options;
-    TargetIterations = targetIterations;
+    RunOptions = runOptions;
     CharacterState = characterState;
     BrowserTabKind = browserTabKind;
     BrowserTabName = browserTabName;
@@ -50,9 +53,11 @@ public sealed class ScenarioContext
 
   public IPauseService PauseService { get; }
 
+  public IScenarioCoordinator Coordinator { get; }
+
   public ClickerOptions Options { get; }
 
-  public int TargetIterations { get; private set; }
+  public ScenarioRunOptions RunOptions { get; }
 
   public int CompletedIterations { get; set; }
 
@@ -62,9 +67,13 @@ public sealed class ScenarioContext
 
   public string BrowserTabName { get; }
 
-  public void ResetIterations(int targetIterations)
+  public string? StatusMessage { get; private set; }
+
+  public DateTimeOffset? NextCheckAt { get; private set; }
+
+  public void SetStatus(string statusMessage, DateTimeOffset? nextCheckAt = null)
   {
-    TargetIterations = targetIterations;
-    CompletedIterations = 0;
+    StatusMessage = statusMessage;
+    NextCheckAt = nextCheckAt;
   }
 }

@@ -58,7 +58,8 @@ public sealed class BattleLogStep : IScenarioStep
 
     context.CompletedIterations++;
 
-    if (context.CompletedIterations >= context.TargetIterations)
+    if (context.RunOptions.IterationLimit is not null
+        && context.CompletedIterations >= context.RunOptions.IterationLimit.Value)
     {
       return new StepResult(ScenarioStepType.Stop);
     }

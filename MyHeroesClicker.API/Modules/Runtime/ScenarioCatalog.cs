@@ -11,7 +11,8 @@ public sealed class ScenarioCatalog
     IScenario combatPreparation,
     IScenario farmBattle,
     IScenario farmCycle,
-    IScenario adventureFarmCycle)
+    IScenario adventureFarmCycle,
+    IScenario warRegistration)
   {
     Authentication = new ScenarioCatalogEntry(
       "authentication",
@@ -52,6 +53,12 @@ public sealed class ScenarioCatalog
       ScenarioBrowserTabKind.AdventureFarm,
       "Фарм приключений",
       ScenarioConcurrencyGroup.Farm);
+    WarRegistration = new ScenarioCatalogEntry(
+      "warRegistration",
+      warRegistration,
+      ScenarioExecutionMode.Http,
+      ScenarioBrowserTabKind.ClanWar,
+      "Войны");
   }
 
   public ScenarioCatalogEntry Authentication { get; }
@@ -65,4 +72,6 @@ public sealed class ScenarioCatalog
   public ScenarioCatalogEntry FarmCycle { get; }
 
   public ScenarioCatalogEntry AdventureFarmCycle { get; }
+
+  public ScenarioCatalogEntry WarRegistration { get; }
 }

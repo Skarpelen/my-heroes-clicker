@@ -3,6 +3,7 @@ using MyHeroesClicker.API.Modules.Application;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Contracts;
 using MyHeroesClicker.API.Modules.Runtime;
+using MyHeroesClicker.Core.Models.Scenarios;
 using NLog;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
@@ -11,8 +12,6 @@ namespace MyHeroesClicker.API.Modules.Controllers;
 [Route("api/scenarios")]
 public sealed class ScenariosController : ControllerBase
 {
-  private const int DefaultPreparationIterations = 500;
-
   private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private static readonly string[] ScenarioNames =
   [
@@ -21,7 +20,8 @@ public sealed class ScenariosController : ControllerBase
     "combatPreparation",
     "farmBattle",
     "farmCycle",
-    "adventureFarmCycle"
+    "adventureFarmCycle",
+    "warRegistration"
   ];
 
   private readonly ClickerApiService _clicker;
@@ -69,6 +69,42 @@ public sealed class ScenariosController : ControllerBase
       cancellationToken);
   }
 
+  [HttpPost("war/start")]
+  public async Task<IActionResult> StartWarRegistrationAsync(
+    CancellationToken cancellationToken)
+  {
+    try
+    {
+      var application = await _clicker.GetApplicationAsync(ScenarioRunOptions.Empty, cancellationToken);
+
+      if (!application.IsRunning)
+      {
+        _clicker.ResetPause();
+      }
+
+      await application.StartScenarioAsync(
+        application.Scenarios.WarRegistration,
+        ScenarioRunOptions.Empty,
+        cancellationToken);
+      _clicker.SetLastUserEvent("Запуск авто войны");
+      _clicker.ClearLastError();
+
+      return AcceptedAtAction(nameof(GetStatus));
+    }
+    catch (InvalidOperationException exception)
+    {
+      _clicker.SetLastError(exception.Message);
+      _log.Warn(exception, "War registration scenario start rejected.");
+
+      return Conflict(new { error = exception.Message });
+    }
+    catch (Exception exception)
+    {
+      _clicker.SetLastError(exception.Message);
+      throw;
+    }
+  }
+
   private async Task<IActionResult> StartRunAsync(
     ScenarioRunRequest request,
     Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
@@ -83,14 +119,15 @@ public sealed class ScenariosController : ControllerBase
 
     try
     {
-      var application = await _clicker.GetApplicationAsync(request.Iterations, cancellationToken);
+      var runOptions = new ScenarioRunOptions(request.Iterations);
+      var application = await _clicker.GetApplicationAsync(runOptions, cancellationToken);
 
       if (!application.IsRunning)
       {
         _clicker.ResetPause();
       }
 
-      await application.StartScenarioAsync(selectScenario(application), request.Iterations, cancellationToken);
+      await application.StartScenarioAsync(selectScenario(application), runOptions, cancellationToken);
       _clicker.SetLastUserEvent(userEvent);
       _clicker.ClearLastError();
 
@@ -154,7 +191,7 @@ public sealed class ScenariosController : ControllerBase
   {
     try
     {
-      var application = await _clicker.GetApplicationAsync(DefaultPreparationIterations, cancellationToken);
+      var application = await _clicker.GetApplicationAsync(ScenarioRunOptions.Empty, cancellationToken);
 
       if (!application.IsRunning)
       {
@@ -163,7 +200,7 @@ public sealed class ScenariosController : ControllerBase
 
       await application.StartScenarioAsync(
         selectScenario(application),
-        DefaultPreparationIterations,
+        ScenarioRunOptions.Empty,
         cancellationToken);
       _clicker.SetLastUserEvent(userEvent);
       _clicker.ClearLastError();
