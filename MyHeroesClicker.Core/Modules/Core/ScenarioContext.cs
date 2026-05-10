@@ -14,6 +14,7 @@ public sealed class ScenarioContext
     IPageInteractor pageInteractor,
     IHumanDelayService humanDelay,
     IRunLogger logger,
+    IAlertService alertService,
     IPauseService pauseService,
     ClickerOptions options,
     int targetIterations,
@@ -26,6 +27,7 @@ public sealed class ScenarioContext
     PageInteractor = pageInteractor;
     HumanDelay = humanDelay;
     Logger = logger;
+    AlertService = alertService;
     PauseService = pauseService;
     Options = options;
     TargetIterations = targetIterations;
@@ -43,6 +45,8 @@ public sealed class ScenarioContext
   public IHumanDelayService HumanDelay { get; }
 
   public IRunLogger Logger { get; }
+
+  public IAlertService AlertService { get; }
 
   public IPauseService PauseService { get; }
 

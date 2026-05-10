@@ -7,7 +7,11 @@ public sealed class FailureDumpService
   public async Task SaveAsync(IPage page, string reason, CancellationToken cancellationToken)
   {
     var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-    var directory = Path.Combine("failures", timestamp);
+    var directory = Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+      "MyHeroesClicker",
+      "failures",
+      timestamp);
 
     Directory.CreateDirectory(directory);
 

@@ -42,6 +42,7 @@
 
 .account-card,
 .status-bar,
+.alert-sound-panel,
 .scenario-card,
 .settings-panel {
   border: 1px solid var(--line);
@@ -130,6 +131,96 @@
   align-items: center;
   padding: 22px;
   margin-bottom: 20px;
+}
+
+.alert-sound-panel {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 22px;
+}
+
+.alert-sound-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert-sound-header h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+}
+
+.alert-sound-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+  gap: 12px;
+}
+
+.volume-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 16px;
+  color: var(--muted);
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.volume-row span {
+  display: grid;
+  gap: 4px;
+  min-width: 124px;
+}
+
+.volume-row strong {
+  color: var(--ink);
+}
+
+.volume-row input {
+  width: min(240px, 100%);
+  accent-color: var(--accent);
+}
+
+.alert-last-event {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  margin: 0;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.alert-last-event dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.alert-last-event dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.alert-last-event-captcha {
+  border-color: rgba(183, 53, 53, 0.48);
+  background: rgba(183, 53, 53, 0.12);
+}
+
+.alert-last-event-fatalError {
+  border-color: rgba(216, 111, 44, 0.52);
+  background: rgba(216, 111, 44, 0.12);
+}
+
+.alert-last-event-authenticationRequired {
+  border-color: rgba(79, 125, 63, 0.34);
+  background: rgba(79, 125, 63, 0.1);
 }
 
 .status-bar h2,
@@ -696,6 +787,7 @@
   .status-bar,
   .status-details,
   .scenario-header,
+  .alert-sound-controls,
   .form-grid,
   .farm-starts,
   .option-grid {

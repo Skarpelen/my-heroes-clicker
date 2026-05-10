@@ -99,7 +99,7 @@ public sealed class BrowserGuard : IBrowserGuard
       {
         context.Logger.Error(reason);
         context.PauseService.Request(reason);
-        await _alertService.PlayAsync(cancellationToken);
+        await _alertService.PublishAsync(AlertEventKind.Captcha, reason, cancellationToken);
       }
 
       while (context.PauseService.IsPauseRequested)
@@ -210,11 +210,16 @@ public sealed class BrowserGuard : IBrowserGuard
 
     if (await IsLoginPageAsync(context.Page))
     {
+      await _alertService.PublishAsync(
+        AlertEventKind.AuthenticationRequired,
+        "Сессия не авторизована.",
+        cancellationToken);
+
       throw new AuthenticationRequiredException("Сессия не авторизована.");
     }
 
     await _failureDumpService.SaveAsync(context.Page, message, cancellationToken);
-    await _alertService.PlayAsync(cancellationToken);
+    await _alertService.PublishAsync(AlertEventKind.FatalError, message, cancellationToken);
 
     throw new InvalidOperationException(message);
   }

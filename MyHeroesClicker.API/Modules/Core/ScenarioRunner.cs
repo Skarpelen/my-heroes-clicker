@@ -1,4 +1,5 @@
 ﻿using Microsoft.Playwright;
+using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Models.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
@@ -103,6 +104,11 @@ public sealed class ScenarioRunner
     {
       context.Logger.Log("Обнаружена страница авторизации.");
     }
+
+    await context.AlertService.PublishAsync(
+      AlertEventKind.AuthenticationRequired,
+      "Обнаружена страница авторизации. Выполняю повторный вход.",
+      cancellationToken);
 
     await _authenticationScenario.ExecuteAsync(context, cancellationToken);
 

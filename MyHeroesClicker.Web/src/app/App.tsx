@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { subscribeToAlerts } from '../modules/alerts/api/alertsApi'
+import { AlertSoundPanel } from '../modules/alerts/components/AlertSoundPanel'
+import { isAudibleAlertKind, playAlertSound } from '../modules/alerts/model/sound'
+import type { AlertEvent, AlertSoundSettings } from '../modules/alerts/model/types'
 import { SettingsPanel } from '../modules/configuration/components/SettingsPanel'
 import { getAccounts, getAppSettings } from '../modules/configuration/api/configurationApi'
 import type { Account, AppSettings } from '../modules/configuration/model/types'
@@ -10,12 +14,16 @@ import '../styles/app.css'
 
 type AppPage = 'scenarios' | 'settings'
 
+const alertSoundSettingsKey = 'myHeroesClicker.alertSoundSettings'
+
 export function App() {
   const [page, setPage] = useState<AppPage>('scenarios')
   const [status, setStatus] = useState<ScenarioStatus | null>(null)
   const [statusError, setStatusError] = useState<string | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [lastAlert, setLastAlert] = useState<AlertEvent | null>(null)
+  const [alertSoundSettings, setAlertSoundSettings] = useState<AlertSoundSettings>(() => loadAlertSoundSettings())
   const activeAccount = accounts.find((account) => account.id === settings?.activeAccountId) ?? null
 
   const refreshStatus = useCallback(async () => {
@@ -59,6 +67,24 @@ export function App() {
     }
   }, [refreshConfiguration, refreshStatus])
 
+  useEffect(() => {
+    window.localStorage.setItem(alertSoundSettingsKey, JSON.stringify(alertSoundSettings))
+  }, [alertSoundSettings])
+
+  useEffect(() => {
+    return subscribeToAlerts((alertEvent) => {
+      setLastAlert(alertEvent)
+
+      if (alertSoundSettings.enabled && isAudibleAlertKind(alertEvent.kind)) {
+        void playAlertSound(alertEvent.kind, alertSoundSettings.volume).catch(() => undefined)
+      }
+    })
+  }, [alertSoundSettings])
+
+  const testAlertSound = useCallback(() => {
+    void playAlertSound('captcha', alertSoundSettings.volume).catch(() => undefined)
+  }, [alertSoundSettings.volume])
+
   return (
     <main className="shell">
       <section className="hero-section">
@@ -87,6 +113,12 @@ export function App() {
           {statusError && <p className="global-error">{statusError}</p>}
 
           <ScenarioStatusBar status={status} />
+          <AlertSoundPanel
+            settings={alertSoundSettings}
+            lastAlert={lastAlert}
+            onSettingsChange={setAlertSoundSettings}
+            onTest={testAlertSound}
+          />
           <FarmScenarioPanel status={status} onRefreshStatus={refreshStatus} />
         </>
       )}
@@ -94,4 +126,29 @@ export function App() {
       {page === 'settings' && <SettingsPanel onConfigurationChanged={refreshConfiguration} />}
     </main>
   )
+}
+
+function loadAlertSoundSettings(): AlertSoundSettings {
+  const rawSettings = window.localStorage.getItem(alertSoundSettingsKey)
+
+  if (!rawSettings) {
+    return {
+      enabled: true,
+      volume: 0.55,
+    }
+  }
+
+  try {
+    const settings = JSON.parse(rawSettings) as Partial<AlertSoundSettings>
+
+    return {
+      enabled: settings.enabled ?? true,
+      volume: typeof settings.volume === 'number' ? settings.volume : 0.55,
+    }
+  } catch {
+    return {
+      enabled: true,
+      volume: 0.55,
+    }
+  }
 }
