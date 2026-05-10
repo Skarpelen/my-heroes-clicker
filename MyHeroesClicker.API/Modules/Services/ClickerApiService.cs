@@ -220,7 +220,7 @@ public sealed class ClickerApiService : IAsyncDisposable
     _initializationSync.Dispose();
   }
 
-  private async Task<AccountResponse> ApplyStoredSettingsAsync(CancellationToken cancellationToken)
+  private async Task<AccountCredentialsResponse> ApplyStoredSettingsAsync(CancellationToken cancellationToken)
   {
     using var scope = _scopeFactory.CreateScope();
     var settingsRepository = scope.ServiceProvider.GetRequiredService<IAppSettingsRepository>();
@@ -239,7 +239,7 @@ public sealed class ClickerApiService : IAsyncDisposable
     }
 
     var accountRepository = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
-    var account = await accountRepository.GetByIdAsync(settings.ActiveAccountId.Value, cancellationToken);
+    var account = await accountRepository.GetCredentialsByIdAsync(settings.ActiveAccountId.Value, cancellationToken);
 
     if (account is null)
     {
@@ -251,7 +251,7 @@ public sealed class ClickerApiService : IAsyncDisposable
       throw new InvalidOperationException("Активный аккаунт отключен. Выберите включенный аккаунт в настройках.");
     }
 
-    if (string.IsNullOrWhiteSpace(account.EncryptedPassword))
+    if (string.IsNullOrWhiteSpace(account.Password))
     {
       throw new InvalidOperationException("У активного аккаунта не заполнен пароль.");
     }

@@ -3,11 +3,15 @@ export type ConfigurationKind = 'farm' | 'combat'
 export type Account = {
   id: number
   login: string
-  encryptedPassword: string | null
+  hasPassword: boolean
   isEnabled: boolean
 }
 
-export type AccountPayload = Omit<Account, 'id'>
+export type AccountPayload = {
+  login: string
+  password: string | null
+  isEnabled: boolean
+}
 
 export type AppSettings = {
   id: number

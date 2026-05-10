@@ -8,6 +8,8 @@ public interface IAccountRepository
 
   Task<AccountResponse?> GetByIdAsync(long id, CancellationToken cancellationToken);
 
+  Task<AccountCredentialsResponse?> GetCredentialsByIdAsync(long id, CancellationToken cancellationToken);
+
   Task<long> CreateAsync(CreateAccountRequest request, CancellationToken cancellationToken);
 
   Task<bool> UpdateAsync(long id, UpdateAccountRequest request, CancellationToken cancellationToken);

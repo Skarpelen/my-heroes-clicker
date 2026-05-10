@@ -6,6 +6,7 @@ using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.API.Modules.Middlewares;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Confs;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace MyHeroesClicker.API;
 
@@ -33,6 +34,11 @@ public class Program
     builder.Services.AddSingleton<IRunLogger, ScenarioRunLogger>();
     builder.Services.AddSingleton<IAlertService, WebAlertService>();
     builder.Services.AddSingleton<IPauseService, WebPauseService>();
+    builder.Services
+      .AddDataProtection()
+      .PersistKeysToFileSystem(new DirectoryInfo(GetDataProtectionKeysPath(builder.Configuration)))
+      .SetApplicationName("MyHeroesClicker");
+    builder.Services.AddSingleton<ISecretProtectionService, DataProtectionSecretProtectionService>();
     builder.Services.AddSingleton<ClickerApiService>();
     builder.Services.AddSingleton(serviceProvider =>
     {
@@ -56,5 +62,13 @@ public class Program
     app.MapControllers();
 
     app.Run();
+  }
+
+  private static string GetDataProtectionKeysPath(IConfiguration configuration)
+  {
+    return configuration["DataProtection:KeysPath"] ?? Path.Combine(
+      Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+      "MyHeroesClicker",
+      "keys");
   }
 }

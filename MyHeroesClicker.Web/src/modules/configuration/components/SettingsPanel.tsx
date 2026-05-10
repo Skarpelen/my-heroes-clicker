@@ -36,7 +36,7 @@ type SettingsPanelProps = {
 
 const emptyAccount: AccountPayload = {
   login: '',
-  encryptedPassword: '',
+  password: '',
   isEnabled: true,
 }
 
@@ -140,12 +140,18 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   }, [refreshConfiguration])
 
   useEffect(() => {
-    if (selectedTechniquePreset === null) {
-      setTechniqueSlots({})
-      return
-    }
+    const refreshId = window.setTimeout(() => {
+      if (selectedTechniquePreset === null) {
+        setTechniqueSlots({})
+        return
+      }
 
-    void refreshTechniqueSlots(selectedTechniquePreset.id)
+      void refreshTechniqueSlots(selectedTechniquePreset.id)
+    }, 0)
+
+    return () => {
+      window.clearTimeout(refreshId)
+    }
   }, [selectedTechniquePreset])
 
   function syncSelectedAccount(id: number | null, nextAccounts: Account[], nextSettings: AppSettings) {
@@ -177,7 +183,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
     }
 
     await saveAsync(async () => {
-      await updateAccount(selectedAccountId, accountForm)
+      await updateAccount(selectedAccountId, accountToUpdatePayload(accountForm))
 
       await refreshConfiguration()
       await onConfigurationChanged()
@@ -186,16 +192,15 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
 
   async function createNewAccount() {
     await saveAsync(async () => {
-      const nextAccountForm = newAccountForm
+      const nextAccountForm = accountToCreatePayload(newAccountForm)
       const accountId = await createAccount(nextAccountForm)
 
       setSelectedAccountId(accountId)
-      setAccountForm(nextAccountForm)
+      setAccountForm(emptyAccount)
       setNewAccountForm(emptyAccount)
 
       await refreshConfiguration()
       setSelectedAccountId(accountId)
-      setAccountForm(nextAccountForm)
       await onConfigurationChanged()
     }, 'Аккаунт создан.')
   }
@@ -348,7 +353,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
                   onClick={() => selectAccount(account.id)}>
                   <strong>{account.login}</strong>
                   <span>
-                    {account.id === activeAccount?.id ? 'Активный' : account.isEnabled ? 'Включен' : 'Отключен'}
+                    {getAccountStateLabel(account, activeAccount)}
                   </span>
                 </button>
               ))}
@@ -390,10 +395,10 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
                 Пароль
                 <input
                   type="password"
-                  value={newAccountForm.encryptedPassword ?? ''}
+                  value={newAccountForm.password ?? ''}
                   onChange={(event) => setNewAccountForm((current) => ({
                     ...current,
-                    encryptedPassword: event.target.value,
+                    password: event.target.value,
                   }))}
                 />
               </label>
@@ -425,9 +430,15 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
                 <input
                   type="password"
                   disabled={selectedAccountId === null}
-                  value={accountForm.encryptedPassword ?? ''}
-                  onChange={(event) => setAccountForm((current) => ({ ...current, encryptedPassword: event.target.value }))}
+                  placeholder={selectedAccount?.hasPassword ? 'Пароль сохранен' : ''}
+                  value={accountForm.password ?? ''}
+                  onChange={(event) => setAccountForm((current) => ({ ...current, password: event.target.value }))}
                 />
+                <small>
+                  {selectedAccount?.hasPassword
+                    ? 'Оставьте поле пустым, чтобы сохранить текущий пароль.'
+                    : 'Введите пароль для первичной авторизации.'}
+                </small>
               </label>
             </div>
 
@@ -724,9 +735,30 @@ function settingsToForm(settings: AppSettings): UpdateAppSettingsRequest {
 function accountToForm(account: Account): AccountPayload {
   return {
     login: account.login,
-    encryptedPassword: account.encryptedPassword ?? '',
+    password: '',
     isEnabled: account.isEnabled,
   }
+}
+
+function accountToCreatePayload(account: AccountPayload): AccountPayload {
+  return {
+    ...account,
+    password: account.password?.trim() ? account.password : null,
+  }
+}
+
+function accountToUpdatePayload(account: AccountPayload): AccountPayload {
+  return {
+    ...account,
+    password: account.password?.trim() ? account.password : null,
+  }
+}
+
+function getAccountStateLabel(account: Account, activeAccount: Account | null) {
+  const state = account.id === activeAccount?.id ? 'Активный' : account.isEnabled ? 'Включен' : 'Отключен'
+  const passwordState = account.hasPassword ? 'пароль есть' : 'пароль не задан'
+
+  return `${state}, ${passwordState}`
 }
 
 function getModeName(kind: ConfigurationKind) {

@@ -7,11 +7,11 @@ namespace MyHeroesClicker.API.Modules.Scenarios;
 
 public sealed class AuthenticationScenario : IScenario
 {
-  private readonly AccountResponse _account;
+  private readonly AccountCredentialsResponse _account;
   private readonly MyHeroesWebClient _webClient;
 
   public AuthenticationScenario(
-    AccountResponse account,
+    AccountCredentialsResponse account,
     MyHeroesWebClient webClient)
   {
     _account = account;
@@ -29,7 +29,7 @@ public sealed class AuthenticationScenario : IScenario
       new Dictionary<string, string>
       {
         ["login"] = _account.Login,
-        ["password"] = _account.EncryptedPassword!,
+        ["password"] = _account.Password!,
         ["btn_login"] = "вход"
       },
       cancellationToken);

@@ -96,7 +96,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
 
   public static async Task<ClickerRuntime> StartAsync(
     ClickerOptions options,
-    AccountResponse activeAccount,
+    AccountCredentialsResponse activeAccount,
     ScenarioConfiguration configuration,
     IRunLogger logger,
     IAlertService alertService,
