@@ -9,7 +9,7 @@ import type { Account, AppSettings } from '../modules/configuration/model/types'
 import { FarmScenarioPanel } from '../modules/scenarios/components/FarmScenarioPanel'
 import { ScenarioStatusBar } from '../modules/scenarios/components/ScenarioStatusBar'
 import { WarScenarioPanel } from '../modules/scenarios/components/WarScenarioPanel'
-import { getScenarioStatus } from '../modules/scenarios/api/scenariosApi'
+import { getScenarioStatus, stopScenario } from '../modules/scenarios/api/scenariosApi'
 import type { ScenarioStatus } from '../modules/scenarios/model/types'
 import '../styles/app.css'
 
@@ -36,6 +36,15 @@ export function App() {
       setStatusError(exception instanceof Error ? exception.message : 'Не удалось получить статус.')
     }
   }, [])
+
+  const stopAllScenarios = useCallback(async () => {
+    try {
+      await stopScenario()
+      await refreshStatus()
+    } catch (exception) {
+      setStatusError(exception instanceof Error ? exception.message : 'Не удалось остановить сценарии.')
+    }
+  }, [refreshStatus])
 
   const refreshConfiguration = useCallback(async () => {
     try {
@@ -113,7 +122,7 @@ export function App() {
         <>
           {statusError && <p className="global-error">{statusError}</p>}
 
-          <ScenarioStatusBar status={status} />
+          <ScenarioStatusBar status={status} onStopAll={() => void stopAllScenarios()} />
           <AlertSoundPanel
             settings={alertSoundSettings}
             lastAlert={lastAlert}

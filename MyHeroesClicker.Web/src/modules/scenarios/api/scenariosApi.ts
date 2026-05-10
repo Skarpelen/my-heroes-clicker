@@ -64,6 +64,16 @@ export async function stopScenario(): Promise<void> {
   }
 }
 
+export async function stopScenarioByKey(scenarioKey: string): Promise<void> {
+  const response = await fetch(`/api/scenarios/${scenarioKey}/stop`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(await readError(response, 'Не удалось остановить сценарий.'))
+  }
+}
+
 export async function resumeScenario(): Promise<void> {
   const response = await fetch('/api/scenarios/resume', {
     method: 'POST',

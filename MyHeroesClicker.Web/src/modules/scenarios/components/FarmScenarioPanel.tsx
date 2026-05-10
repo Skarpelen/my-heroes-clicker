@@ -7,7 +7,7 @@ import {
   resumeScenario,
   startAdventureFarmScenario,
   startBattleFarmScenario,
-  stopScenario,
+  stopScenarioByKey,
 } from '../api/scenariosApi'
 import type { FarmScenarioOptions, ScenarioStatus } from '../model/types'
 
@@ -25,7 +25,8 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
   const [error, setError] = useState<string | null>(null)
   const isRunning = status?.isRunning ?? false
   const runningScenarioKeys = status?.runningScenarioKeys ?? []
-  const isFarmRunning = runningScenarioKeys.some((key) => key === 'farmCycle' || key === 'adventureFarmCycle' || key === 'farmBattle')
+  const activeFarmScenarioKey = runningScenarioKeys.find((key) => key === 'farmCycle' || key === 'adventureFarmCycle' || key === 'farmBattle') ?? null
+  const isFarmRunning = activeFarmScenarioKey !== null
   const isPaused = status?.isPaused ?? false
   const canStart = !isFarmRunning
 
@@ -68,7 +69,11 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
     setError(null)
 
     try {
-      await stopScenario()
+      if (activeFarmScenarioKey === null) {
+        return
+      }
+
+      await stopScenarioByKey(activeFarmScenarioKey)
       await onRefreshStatus()
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Не удалось остановить фарм.')
@@ -148,7 +153,7 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
           Продолжить
         </Button>
 
-        <Button variant="danger" disabled={!isRunning} onClick={stopFarm}>
+        <Button variant="danger" disabled={!isFarmRunning} onClick={stopFarm}>
           <Square size={18} />
           Остановить
         </Button>

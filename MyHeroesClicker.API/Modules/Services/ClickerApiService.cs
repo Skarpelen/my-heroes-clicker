@@ -132,6 +132,18 @@ public sealed class ClickerApiService : IAsyncDisposable
     _application?.StopCurrentScenario();
   }
 
+  public bool StopScenario(string scenarioKey)
+  {
+    var stopped = _application?.StopScenario(scenarioKey) ?? false;
+
+    if (stopped)
+    {
+      SetLastUserEvent($"Остановка сценария: {scenarioKey}");
+    }
+
+    return stopped;
+  }
+
   public void Resume()
   {
     SetLastUserEvent("Продолжение после паузы");

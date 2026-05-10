@@ -1,10 +1,13 @@
+import { Square } from 'lucide-react'
+import { Button } from '../../../shared/ui/Button'
 import type { ScenarioStatus } from '../model/types'
 
 type ScenarioStatusBarProps = {
   status: ScenarioStatus | null
+  onStopAll: () => void
 }
 
-export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
+export function ScenarioStatusBar({ status, onStopAll }: ScenarioStatusBarProps) {
   const iterationLimit = status?.iterationLimit ?? 0
   const completedIterations = status?.completedIterations ?? 0
   const pauseRequestedAt = formatDateTime(status?.pauseRequestedAt ?? null)
@@ -17,7 +20,14 @@ export function ScenarioStatusBar({ status }: ScenarioStatusBarProps) {
     <section className="status-bar">
       <div>
         <span className="eyebrow">Статус</span>
-        <h2>{status?.isPaused ? 'Пауза' : status?.isRunning ? 'Фарм запущен' : 'Остановлено'}</h2>
+        <h2>{status?.isPaused ? 'Пауза' : status?.isRunning ? 'Сценарии запущены' : 'Остановлено'}</h2>
+      </div>
+
+      <div className="status-actions">
+        <Button variant="danger" disabled={!status?.isRunning} onClick={onStopAll}>
+          <Square size={18} />
+          Остановить все
+        </Button>
       </div>
 
       <div className="status-progress" aria-label="Прогресс сценария">

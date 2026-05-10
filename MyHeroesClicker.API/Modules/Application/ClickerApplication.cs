@@ -85,6 +85,23 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
     }
   }
 
+  public bool StopScenario(string scenarioKey)
+  {
+    lock (_sync)
+    {
+      var runs = _runningScenarios.Values
+        .Where(run => run.Entry.Key == scenarioKey && !run.Task.IsCompleted)
+        .ToArray();
+
+      foreach (var run in runs)
+      {
+        run.Cancellation.Cancel();
+      }
+
+      return runs.Length > 0;
+    }
+  }
+
   public async Task StartScenarioAsync(
     ScenarioCatalogEntry entry,
     ScenarioRunOptions runOptions,

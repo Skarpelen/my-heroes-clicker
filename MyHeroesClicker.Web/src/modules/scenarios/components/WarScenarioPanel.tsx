@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { ShieldAlert } from 'lucide-react'
+import { ShieldAlert, Square } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button'
-import { startWarRegistrationScenario } from '../api/scenariosApi'
+import { startWarRegistrationScenario, stopScenarioByKey } from '../api/scenariosApi'
 import type { ScenarioStatus } from '../model/types'
 
 type WarScenarioPanelProps = {
@@ -22,6 +22,17 @@ export function WarScenarioPanel({ status, onRefreshStatus }: WarScenarioPanelPr
       await onRefreshStatus()
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Не удалось запустить авто войну.')
+    }
+  }
+
+  async function stopWarRegistration() {
+    setError(null)
+
+    try {
+      await stopScenarioByKey('warRegistration')
+      await onRefreshStatus()
+    } catch (exception) {
+      setError(exception instanceof Error ? exception.message : 'Не удалось остановить авто войну.')
     }
   }
 
@@ -56,6 +67,11 @@ export function WarScenarioPanel({ status, onRefreshStatus }: WarScenarioPanelPr
         <Button disabled={isWarRunning} onClick={() => void startWarRegistration()}>
           <ShieldAlert size={18} />
           Запустить авто войну
+        </Button>
+
+        <Button variant="danger" disabled={!isWarRunning} onClick={() => void stopWarRegistration()}>
+          <Square size={18} />
+          Остановить
         </Button>
       </div>
     </section>

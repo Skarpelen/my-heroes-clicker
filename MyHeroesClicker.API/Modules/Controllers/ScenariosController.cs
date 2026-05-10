@@ -175,6 +175,14 @@ public sealed class ScenariosController : ControllerBase
     return AcceptedAtAction(nameof(GetStatus));
   }
 
+  [HttpPost("{scenarioKey}/stop")]
+  public IActionResult StopScenario(string scenarioKey)
+  {
+    var stopped = _clicker.StopScenario(scenarioKey);
+
+    return stopped ? AcceptedAtAction(nameof(GetStatus)) : NotFound(new { error = "Сценарий не запущен." });
+  }
+
   [HttpPost("resume")]
   public IActionResult Resume()
   {
