@@ -10,4 +10,4 @@ Set-Location $root
 $env:ASPNETCORE_ENVIRONMENT = "Development"
 
 dotnet run --project $migratorProject -- --database $databasePath --migrations $migrationsPath
-dotnet run --project $apiProject --launch-profile "MyHeroesClicker.API"
+dotnet run --project $apiProject --no-launch-profile

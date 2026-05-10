@@ -3,6 +3,8 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 
 // https://vite.dev/config/
+const apiTarget = process.env.VITE_API_TARGET ?? 'https://localhost:51616'
+
 export default defineConfig({
   plugins: [
     react(),
@@ -11,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://localhost:51616',
+        target: apiTarget,
         changeOrigin: true,
         secure: false,
       },
