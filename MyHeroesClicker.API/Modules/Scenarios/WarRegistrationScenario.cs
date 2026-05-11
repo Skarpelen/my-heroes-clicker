@@ -39,48 +39,45 @@ public sealed partial class WarRegistrationScenario : IScenario
 
       var warDocument = await _webClient.GetDocumentAsync("/clan/war", cancellationToken);
       var state = ReadWarState(warDocument);
-      var now = DateTimeOffset.UtcNow;
+      await ExecuteStateAsync(context, state, checkInterval, cancellationToken);
+    }
+  }
 
-      if (state.HasRegistration)
-      {
-        await PrepareAndRegisterAsync(context, state, cancellationToken);
-        await DelayUntilNextCheckAsync(context, state.WarEndsAt, now + DefaultRegistrationWindow + BattleCooldown, checkInterval, cancellationToken);
-        continue;
-      }
+  private async Task ExecuteStateAsync(
+    ScenarioContext context,
+    WarScenarioState state,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    switch (state.Kind)
+    {
+      case WarScenarioStateKind.RegistrationAvailable:
+        await RegisterAndPrepareForBattleAsync(context, state, checkInterval, cancellationToken);
+        break;
 
-      if (state.NextBattleAt is not null)
-      {
-        context.SetStatus("Кулдаун на сражение", state.NextBattleAt.Value);
-        context.Logger.Log($"Война: кулдаун до {FormatLocalTime(state.NextBattleAt.Value)}.");
-        await DelayUntilNextCheckAsync(context, state.WarEndsAt, state.NextBattleAt.Value, checkInterval, cancellationToken);
-        continue;
-      }
+      case WarScenarioStateKind.BattleCooldown:
+        await WaitForCooldownAsync(context, state, checkInterval, cancellationToken);
+        break;
 
-      if (state.HasFight)
-      {
+      case WarScenarioStateKind.FightPageAvailable:
         await TryRegisterFromFightAsync(context, state.WarEndsAt, checkInterval, cancellationToken);
-        continue;
-      }
+        break;
 
-      if (state.HasAvailableAttack)
-      {
-        context.SetStatus("Атака доступна");
-        context.Logger.Log($"Война: атака доступна, жду фазу регистрации {FormatDuration(checkInterval)}.");
-        await DelayUntilNextCheckAsync(context, state.WarEndsAt, DateTimeOffset.UtcNow + checkInterval, checkInterval, cancellationToken);
-        continue;
-      }
+      case WarScenarioStateKind.AttackAvailable:
+        await WaitForRegistrationPhaseAsync(context, state.WarEndsAt, checkInterval, cancellationToken);
+        break;
 
-      if (state.WarEndsAt is not null && state.WarEndsAt > now)
-      {
-        context.SetStatus("Активная война, состояние не распознано", now + checkInterval);
-        context.Logger.Log("Война активна, но известное состояние не найдено. Проверю позже.");
-        await DelayUntilNextCheckAsync(context, state.WarEndsAt, now + checkInterval, checkInterval, cancellationToken);
-        continue;
-      }
+      case WarScenarioStateKind.ActiveUnknown:
+        await WaitUnknownActiveWarAsync(context, state.WarEndsAt, checkInterval, cancellationToken);
+        break;
 
-      context.SetStatus("Активная война не найдена", now + checkInterval);
-      context.Logger.Log($"Активная война не найдена. Следующая проверка через {FormatDuration(checkInterval)}.");
-      await Task.Delay(checkInterval, cancellationToken);
+      case WarScenarioStateKind.FightInProgress:
+        await WaitFightInProgressAsync(context, checkInterval, cancellationToken);
+        break;
+
+      default:
+        await WaitInactiveWarAsync(context, checkInterval, cancellationToken);
+        break;
     }
   }
 
@@ -93,31 +90,37 @@ public sealed partial class WarRegistrationScenario : IScenario
     var fightDocument = await _webClient.GetDocumentAsync("/clan/fight", cancellationToken);
     var fightState = ReadFightState(fightDocument);
 
-    if (fightState.HasRegistration)
+    if (fightState.Kind == WarScenarioStateKind.RegistrationAvailable)
     {
-      await PrepareAndRegisterAsync(context, fightState, cancellationToken);
-      var nextBattleAt = DateTimeOffset.UtcNow + (fightState.RegistrationStartsIn ?? DefaultRegistrationWindow) + BattleCooldown;
-      await DelayUntilNextCheckAsync(context, warEndsAt, nextBattleAt, checkInterval, cancellationToken);
+      await RegisterAndPrepareForBattleAsync(context, fightState with { WarEndsAt = warEndsAt }, checkInterval, cancellationToken);
 
       return;
     }
 
-    context.SetStatus("Сражение идет или запись недоступна", DateTimeOffset.UtcNow + checkInterval);
-    context.Logger.Log($"Война: сражение уже идет или запись недоступна. Следующая проверка через {FormatDuration(checkInterval)}.");
-    await Task.Delay(checkInterval, cancellationToken);
+    await WaitFightInProgressAsync(context, checkInterval, cancellationToken);
   }
 
-  private async Task PrepareAndRegisterAsync(
+  private async Task RegisterAndPrepareForBattleAsync(
     ScenarioContext context,
-    WarPageState state,
+    WarScenarioState state,
+    TimeSpan checkInterval,
     CancellationToken cancellationToken)
   {
-    context.SetStatus("Подготовка к регистрации");
-    await WaitForCombatPreparationMomentAsync(context, state, cancellationToken);
-    await context.Coordinator.StopGroupAsync(ScenarioConcurrencyGroup.Farm, cancellationToken);
+    var battleStartsAt = DateTimeOffset.UtcNow + (state.BattleStartsIn ?? DefaultRegistrationWindow);
 
-    context.Logger.Log("Война: надеваю боевой сет перед регистрацией.");
-    await _combatPreparationScenario.ExecuteAsync(context, cancellationToken);
+    await RegisterAsync(context, state, cancellationToken);
+    await DelayUntilBattlePreparationAsync(context, battleStartsAt, cancellationToken);
+    await PrepareForBattleAsync(context, cancellationToken);
+    await DelayUntilNextCheckAsync(context, state.WarEndsAt, battleStartsAt + BattleCooldown, checkInterval, cancellationToken);
+  }
+
+  private async Task RegisterAsync(
+    ScenarioContext context,
+    WarScenarioState state,
+    CancellationToken cancellationToken)
+  {
+    context.SetStatus("Регистрация на войну");
+    context.Logger.Log("Война: запись доступна, регистрирую персонажа.");
 
     var response = await _webClient.TryGetExpectedAsync("/clan/regfight", cancellationToken);
 
@@ -128,31 +131,100 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     context.CompletedIterations++;
     context.SetStatus("Персонаж зарегистрирован");
-    var registrationWindow = state.RegistrationStartsIn ?? DefaultRegistrationWindow;
-    context.Logger.Log($"Война: персонаж зарегистрирован. Следующая битва ожидается через {FormatDuration(registrationWindow + BattleCooldown)}.");
+    var battleStartsIn = state.BattleStartsIn ?? DefaultRegistrationWindow;
+    context.Logger.Log($"Война: персонаж зарегистрирован. Битва начнется через {FormatDuration(battleStartsIn)}.");
   }
 
-  private async Task WaitForCombatPreparationMomentAsync(
+  private async Task DelayUntilBattlePreparationAsync(
     ScenarioContext context,
-    WarPageState state,
+    DateTimeOffset battleStartsAt,
     CancellationToken cancellationToken)
   {
-    if (state.RegistrationStartsIn is null)
-    {
-      return;
-    }
-
     var preparationOffset = TimeSpan.FromSeconds(_configuration.CombatPreparationSecondsBeforeRegistrationEnd);
-    var delay = state.RegistrationStartsIn.Value - preparationOffset;
+    var preparationAt = battleStartsAt - preparationOffset;
+    var delay = preparationAt - DateTimeOffset.UtcNow;
 
     if (delay <= TimeSpan.Zero)
     {
       return;
     }
 
-    context.SetStatus("Ожидание подготовки к бою", DateTimeOffset.UtcNow + delay);
-    context.Logger.Log($"Война: запись доступна, подготовка к бою через {FormatDuration(delay)}.");
+    context.SetStatus("Ожидание подготовки к бою", preparationAt);
+    context.Logger.Log($"Война: персонаж записан, подготовка к бою через {FormatDuration(delay)}.");
     await Task.Delay(delay, cancellationToken);
+  }
+
+  private async Task PrepareForBattleAsync(
+    ScenarioContext context,
+    CancellationToken cancellationToken)
+  {
+    context.SetStatus("Подготовка к бою");
+    await context.Coordinator.StopGroupAsync(ScenarioConcurrencyGroup.Farm, cancellationToken);
+
+    context.Logger.Log("Война: надеваю боевой сет перед боем.");
+    await _combatPreparationScenario.ExecuteAsync(context, cancellationToken);
+  }
+
+  private async Task WaitForCooldownAsync(
+    ScenarioContext context,
+    WarScenarioState state,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    if (state.NextBattleAt is null)
+    {
+      await WaitInactiveWarAsync(context, checkInterval, cancellationToken);
+
+      return;
+    }
+
+    context.SetStatus("Кулдаун на сражение", state.NextBattleAt.Value);
+    context.Logger.Log($"Война: кулдаун до {FormatLocalTime(state.NextBattleAt.Value)}.");
+    await DelayUntilNextCheckAsync(context, state.WarEndsAt, state.NextBattleAt.Value, checkInterval, cancellationToken);
+  }
+
+  private static async Task WaitForRegistrationPhaseAsync(
+    ScenarioContext context,
+    DateTimeOffset? warEndsAt,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    context.SetStatus("Атака доступна");
+    context.Logger.Log($"Война: атака доступна, жду фазу регистрации {FormatDuration(checkInterval)}.");
+    await DelayUntilNextCheckAsync(context, warEndsAt, DateTimeOffset.UtcNow + checkInterval, checkInterval, cancellationToken);
+  }
+
+  private static async Task WaitUnknownActiveWarAsync(
+    ScenarioContext context,
+    DateTimeOffset? warEndsAt,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    var nextCheckAt = DateTimeOffset.UtcNow + checkInterval;
+
+    context.SetStatus("Активная война, состояние не распознано", nextCheckAt);
+    context.Logger.Log("Война активна, но известное состояние не найдено. Проверю позже.");
+    await DelayUntilNextCheckAsync(context, warEndsAt, nextCheckAt, checkInterval, cancellationToken);
+  }
+
+  private static async Task WaitFightInProgressAsync(
+    ScenarioContext context,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    context.SetStatus("Сражение идет или запись недоступна", DateTimeOffset.UtcNow + checkInterval);
+    context.Logger.Log($"Война: сражение уже идет или запись недоступна. Следующая проверка через {FormatDuration(checkInterval)}.");
+    await Task.Delay(checkInterval, cancellationToken);
+  }
+
+  private static async Task WaitInactiveWarAsync(
+    ScenarioContext context,
+    TimeSpan checkInterval,
+    CancellationToken cancellationToken)
+  {
+    context.SetStatus("Активная война не найдена", DateTimeOffset.UtcNow + checkInterval);
+    context.Logger.Log($"Активная война не найдена. Следующая проверка через {FormatDuration(checkInterval)}.");
+    await Task.Delay(checkInterval, cancellationToken);
   }
 
   private static async Task DelayUntilNextCheckAsync(
@@ -183,34 +255,55 @@ public sealed partial class WarRegistrationScenario : IScenario
     await Task.Delay(delay, cancellationToken);
   }
 
-  private static WarPageState ReadWarState(string html)
+  private static WarScenarioState ReadWarState(string html)
   {
     var text = ToPlainText(html);
     var warEndsAt = TryReadWarEnd(text);
     var nextBattleAt = TryReadTimer(text, "До следующей битвы") is { } nextBattleIn
       ? DateTimeOffset.UtcNow + nextBattleIn
       : (DateTimeOffset?)null;
+    var battleStartsIn = TryReadTimer(text, "Начало через");
 
-    return new WarPageState(
-      warEndsAt,
-      nextBattleAt,
-      ContainsHref(html, "/clan/atclan"),
-      ContainsHref(html, "/clan/fight"),
-      ContainsHref(html, "/clan/regfight"),
-      TryReadTimer(text, "Начало через"));
+    if (ContainsHref(html, "/clan/regfight"))
+    {
+      return new WarScenarioState(WarScenarioStateKind.RegistrationAvailable, warEndsAt, BattleStartsIn: battleStartsIn);
+    }
+
+    if (nextBattleAt is not null)
+    {
+      return new WarScenarioState(WarScenarioStateKind.BattleCooldown, warEndsAt, nextBattleAt);
+    }
+
+    if (ContainsHref(html, "/clan/fight"))
+    {
+      return new WarScenarioState(WarScenarioStateKind.FightPageAvailable, warEndsAt);
+    }
+
+    if (ContainsHref(html, "/clan/atclan"))
+    {
+      return new WarScenarioState(WarScenarioStateKind.AttackAvailable, warEndsAt);
+    }
+
+    if (warEndsAt is not null && warEndsAt > DateTimeOffset.UtcNow)
+    {
+      return new WarScenarioState(WarScenarioStateKind.ActiveUnknown, warEndsAt);
+    }
+
+    return new WarScenarioState(WarScenarioStateKind.Inactive);
   }
 
-  private static WarPageState ReadFightState(string html)
+  private static WarScenarioState ReadFightState(string html)
   {
     var text = ToPlainText(html);
 
-    return new WarPageState(
-      null,
-      null,
-      false,
-      true,
-      ContainsHref(html, "/clan/regfight"),
-      TryReadTimer(text, "Начало через"));
+    if (ContainsHref(html, "/clan/regfight"))
+    {
+      return new WarScenarioState(
+        WarScenarioStateKind.RegistrationAvailable,
+        BattleStartsIn: TryReadTimer(text, "Начало через"));
+    }
+
+    return new WarScenarioState(WarScenarioStateKind.FightInProgress);
   }
 
   private static DateTimeOffset? TryReadWarEnd(string text)
@@ -325,10 +418,19 @@ public sealed partial class WarRegistrationScenario : IScenario
   private static partial Regex SpacesRegex();
 }
 
-internal sealed record WarPageState(
-  DateTimeOffset? WarEndsAt,
-  DateTimeOffset? NextBattleAt,
-  bool HasAvailableAttack,
-  bool HasFight,
-  bool HasRegistration,
-  TimeSpan? RegistrationStartsIn);
+internal enum WarScenarioStateKind
+{
+  Inactive,
+  ActiveUnknown,
+  AttackAvailable,
+  BattleCooldown,
+  FightPageAvailable,
+  FightInProgress,
+  RegistrationAvailable
+}
+
+internal sealed record WarScenarioState(
+  WarScenarioStateKind Kind,
+  DateTimeOffset? WarEndsAt = null,
+  DateTimeOffset? NextBattleAt = null,
+  TimeSpan? BattleStartsIn = null);

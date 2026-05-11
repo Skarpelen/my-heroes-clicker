@@ -571,13 +571,13 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
             />
             <NumberField
               label="Проверка войны, мин"
-              description="Как часто проверять страницу войны после окончания войны или при неизвестном состоянии. Больше 20 минут ставить неэффективно: окно регистрации длится 20 минут."
+              description="Как часто проверять страницу войны после окончания войны, при доступной атаке или неизвестном состоянии. Во время кулдауна используется известный таймер до следующей битвы."
               value={settingsForm.warCheckIntervalMinutes}
               onChange={(value) => setSettingsForm((current) => ({ ...current, warCheckIntervalMinutes: value }))}
             />
             <NumberField
               label="Подготовка к войне, сек"
-              description="За сколько секунд до конца регистрации остановить активный фарм и надеть боевой сет."
+              description="За сколько секунд до начала боя остановить активный фарм и надеть боевой сет."
               value={settingsForm.warCombatPreparationSecondsBeforeRegistrationEnd}
               onChange={(value) => setSettingsForm((current) => ({ ...current, warCombatPreparationSecondsBeforeRegistrationEnd: value }))}
             />
