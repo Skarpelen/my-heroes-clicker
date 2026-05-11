@@ -92,11 +92,13 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     if (fightState.Kind == WarScenarioStateKind.RegistrationAvailable)
     {
-      var state = new WarScenarioState(
-        fightState.Kind,
-        warEndsAt,
-        fightState.NextBattleAt,
-        fightState.BattleStartsIn);
+      var state = new WarScenarioState
+      {
+        Kind = fightState.Kind,
+        WarEndsAt = warEndsAt,
+        NextBattleAt = fightState.NextBattleAt,
+        BattleStartsIn = fightState.BattleStartsIn
+      };
 
       await RegisterAndPrepareForBattleAsync(context, state, checkInterval, cancellationToken);
 
@@ -272,30 +274,55 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     if (ContainsHref(html, "/clan/regfight"))
     {
-      return new WarScenarioState(WarScenarioStateKind.RegistrationAvailable, warEndsAt, battleStartsIn: battleStartsIn);
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.RegistrationAvailable,
+        WarEndsAt = warEndsAt,
+        BattleStartsIn = battleStartsIn
+      };
     }
 
     if (nextBattleAt is not null)
     {
-      return new WarScenarioState(WarScenarioStateKind.BattleCooldown, warEndsAt, nextBattleAt);
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.BattleCooldown,
+        WarEndsAt = warEndsAt,
+        NextBattleAt = nextBattleAt
+      };
     }
 
     if (ContainsHref(html, "/clan/fight"))
     {
-      return new WarScenarioState(WarScenarioStateKind.FightPageAvailable, warEndsAt);
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.FightPageAvailable,
+        WarEndsAt = warEndsAt
+      };
     }
 
     if (ContainsHref(html, "/clan/atclan"))
     {
-      return new WarScenarioState(WarScenarioStateKind.AttackAvailable, warEndsAt);
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.AttackAvailable,
+        WarEndsAt = warEndsAt
+      };
     }
 
     if (warEndsAt is not null && warEndsAt > DateTimeOffset.UtcNow)
     {
-      return new WarScenarioState(WarScenarioStateKind.ActiveUnknown, warEndsAt);
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.ActiveUnknown,
+        WarEndsAt = warEndsAt
+      };
     }
 
-    return new WarScenarioState(WarScenarioStateKind.Inactive);
+    return new WarScenarioState
+    {
+      Kind = WarScenarioStateKind.Inactive
+    };
   }
 
   private static WarScenarioState ReadFightState(string html)
@@ -304,12 +331,17 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     if (ContainsHref(html, "/clan/regfight"))
     {
-      return new WarScenarioState(
-        WarScenarioStateKind.RegistrationAvailable,
-        battleStartsIn: TryReadTimer(text, "Начало через"));
+      return new WarScenarioState
+      {
+        Kind = WarScenarioStateKind.RegistrationAvailable,
+        BattleStartsIn = TryReadTimer(text, "Начало через")
+      };
     }
 
-    return new WarScenarioState(WarScenarioStateKind.FightInProgress);
+    return new WarScenarioState
+    {
+      Kind = WarScenarioStateKind.FightInProgress
+    };
   }
 
   private static DateTimeOffset? TryReadWarEnd(string text)

@@ -1,20 +1,12 @@
 namespace MyHeroesClicker.Core.Models.Alert;
 
-public sealed class AlertEvent
+/// <summary>
+/// Событие оповещения, публикуемое внутри приложения.
+/// </summary>
+public sealed class AlertEvent : AlertEventModel
 {
-  public AlertEvent(long id, AlertEventKind kind, string message, DateTimeOffset createdAt)
-  {
-    Id = id;
-    Kind = kind;
-    Message = message;
-    CreatedAt = createdAt;
-  }
-
-  public long Id { get; }
-
-  public AlertEventKind Kind { get; }
-
-  public string Message { get; }
-
-  public DateTimeOffset CreatedAt { get; }
+  /// <summary>
+  /// Тип оповещения.
+  /// </summary>
+  public AlertEventKind Kind { get; init; }
 }

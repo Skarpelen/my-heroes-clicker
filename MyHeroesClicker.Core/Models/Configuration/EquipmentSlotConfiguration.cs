@@ -1,17 +1,22 @@
 namespace MyHeroesClicker.Core.Models.Configuration;
 
+/// <summary>
+/// Конфигурация слота экипировки для режима сценария.
+/// </summary>
 public sealed class EquipmentSlotConfiguration
 {
-  public EquipmentSlotConfiguration(int slotNumber, int? itemId, bool shouldBeEmpty)
-  {
-    SlotNumber = slotNumber;
-    ItemId = itemId;
-    ShouldBeEmpty = shouldBeEmpty;
-  }
+  /// <summary>
+  /// Номер слота экипировки.
+  /// </summary>
+  public int SlotNumber { get; init; }
 
-  public int SlotNumber { get; }
+  /// <summary>
+  /// Идентификатор предмета, ожидаемого в слоте.
+  /// </summary>
+  public int? ItemId { get; init; }
 
-  public int? ItemId { get; }
-
-  public bool ShouldBeEmpty { get; }
+  /// <summary>
+  /// Должен ли слот быть пустым.
+  /// </summary>
+  public bool ShouldBeEmpty { get; init; }
 }

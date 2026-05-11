@@ -1,18 +1,10 @@
+using MyHeroesClicker.Core.Models.Account;
+
 namespace MyHeroesClicker.Core.Models.TechniquePreset;
 
-public sealed class CreateTechniquePresetRequest
+/// <summary>
+/// Запрос на создание пресета приемов.
+/// </summary>
+public sealed class CreateTechniquePresetRequest : AccountConfigurationRequest
 {
-  public CreateTechniquePresetRequest()
-  {
-  }
-
-  public CreateTechniquePresetRequest(long? accountId, string kind)
-  {
-    AccountId = accountId;
-    Kind = kind;
-  }
-
-  public long? AccountId { get; init; }
-
-  public string Kind { get; init; } = string.Empty;
 }

@@ -1,16 +1,17 @@
 namespace MyHeroesClicker.Core.Models.Configuration;
 
+/// <summary>
+/// Конфигурация экипировки для режимов фарма и боя.
+/// </summary>
 public sealed class EquipmentModeConfiguration
 {
-  public EquipmentModeConfiguration(
-    IReadOnlyCollection<EquipmentSlotConfiguration> farmSlots,
-    IReadOnlyCollection<EquipmentSlotConfiguration> combatSlots)
-  {
-    FarmSlots = farmSlots;
-    CombatSlots = combatSlots;
-  }
+  /// <summary>
+  /// Слоты экипировки для фарма.
+  /// </summary>
+  public IReadOnlyCollection<EquipmentSlotConfiguration> FarmSlots { get; init; } = [];
 
-  public IReadOnlyCollection<EquipmentSlotConfiguration> FarmSlots { get; }
-
-  public IReadOnlyCollection<EquipmentSlotConfiguration> CombatSlots { get; }
+  /// <summary>
+  /// Слоты экипировки для боя.
+  /// </summary>
+  public IReadOnlyCollection<EquipmentSlotConfiguration> CombatSlots { get; init; } = [];
 }

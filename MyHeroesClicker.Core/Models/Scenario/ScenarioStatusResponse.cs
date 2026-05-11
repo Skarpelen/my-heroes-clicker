@@ -1,76 +1,92 @@
 namespace MyHeroesClicker.Core.Models.Scenario;
 
+/// <summary>
+/// Текущий статус сценариев кликера, возвращаемый клиентам API.
+/// </summary>
 public sealed class ScenarioStatusResponse
 {
-  public ScenarioStatusResponse(
-    bool isInitialized,
-    bool isRunning,
-    bool isPaused,
-    string? activeScenarioKey,
-    string? activeScenarioName,
-    string? browserTabName,
-    IReadOnlyCollection<string> runningScenarioKeys,
-    string? pauseReason,
-    DateTimeOffset? pauseRequestedAt,
-    string? lastUserEvent,
-    DateTimeOffset? lastUserEventAt,
-    int? iterationLimit,
-    int? completedIterations,
-    int? maxHealth,
-    string? warState,
-    DateTimeOffset? warNextCheckAt,
-    string? lastError)
-  {
-    IsInitialized = isInitialized;
-    IsRunning = isRunning;
-    IsPaused = isPaused;
-    ActiveScenarioKey = activeScenarioKey;
-    ActiveScenarioName = activeScenarioName;
-    BrowserTabName = browserTabName;
-    RunningScenarioKeys = runningScenarioKeys;
-    PauseReason = pauseReason;
-    PauseRequestedAt = pauseRequestedAt;
-    LastUserEvent = lastUserEvent;
-    LastUserEventAt = lastUserEventAt;
-    IterationLimit = iterationLimit;
-    CompletedIterations = completedIterations;
-    MaxHealth = maxHealth;
-    WarState = warState;
-    WarNextCheckAt = warNextCheckAt;
-    LastError = lastError;
-  }
+  /// <summary>
+  /// Инициализирована ли среда выполнения.
+  /// </summary>
+  public bool IsInitialized { get; init; }
 
-  public bool IsInitialized { get; }
+  /// <summary>
+  /// Выполняется ли какой-либо сценарий.
+  /// </summary>
+  public bool IsRunning { get; init; }
 
-  public bool IsRunning { get; }
+  /// <summary>
+  /// Приостановлено ли выполнение.
+  /// </summary>
+  public bool IsPaused { get; init; }
 
-  public bool IsPaused { get; }
+  /// <summary>
+  /// Ключ активного сценария.
+  /// </summary>
+  public string? ActiveScenarioKey { get; init; }
 
-  public string? ActiveScenarioKey { get; }
+  /// <summary>
+  /// Название активного сценария.
+  /// </summary>
+  public string? ActiveScenarioName { get; init; }
 
-  public string? ActiveScenarioName { get; }
+  /// <summary>
+  /// Название активной вкладки браузера.
+  /// </summary>
+  public string? BrowserTabName { get; init; }
 
-  public string? BrowserTabName { get; }
+  /// <summary>
+  /// Ключи всех выполняющихся сценариев.
+  /// </summary>
+  public IReadOnlyCollection<string> RunningScenarioKeys { get; init; } = [];
 
-  public IReadOnlyCollection<string> RunningScenarioKeys { get; }
+  /// <summary>
+  /// Причину паузы.
+  /// </summary>
+  public string? PauseReason { get; init; }
 
-  public string? PauseReason { get; }
+  /// <summary>
+  /// Время запроса паузы.
+  /// </summary>
+  public DateTimeOffset? PauseRequestedAt { get; init; }
 
-  public DateTimeOffset? PauseRequestedAt { get; }
+  /// <summary>
+  /// Название последнего пользовательского события.
+  /// </summary>
+  public string? LastUserEvent { get; init; }
 
-  public string? LastUserEvent { get; }
+  /// <summary>
+  /// Время последнего пользовательского события.
+  /// </summary>
+  public DateTimeOffset? LastUserEventAt { get; init; }
 
-  public DateTimeOffset? LastUserEventAt { get; }
+  /// <summary>
+  /// Ограничение количества итераций.
+  /// </summary>
+  public int? IterationLimit { get; init; }
 
-  public int? IterationLimit { get; }
+  /// <summary>
+  /// Количество завершенных итераций.
+  /// </summary>
+  public int? CompletedIterations { get; init; }
 
-  public int? CompletedIterations { get; }
+  /// <summary>
+  /// Максимальное известное здоровье персонажа.
+  /// </summary>
+  public int? MaxHealth { get; init; }
 
-  public int? MaxHealth { get; }
+  /// <summary>
+  /// Текст состояния сценария войны.
+  /// </summary>
+  public string? WarState { get; init; }
 
-  public string? WarState { get; }
+  /// <summary>
+  /// Время следующей запланированной проверки войны.
+  /// </summary>
+  public DateTimeOffset? WarNextCheckAt { get; init; }
 
-  public DateTimeOffset? WarNextCheckAt { get; }
-
-  public string? LastError { get; }
+  /// <summary>
+  /// Последнюю ошибку времени выполнения.
+  /// </summary>
+  public string? LastError { get; init; }
 }

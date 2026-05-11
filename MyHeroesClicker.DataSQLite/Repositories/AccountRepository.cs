@@ -180,11 +180,13 @@ public sealed class AccountRepository : IAccountRepository
   {
     var encryptedPassword = GetNullableString(reader, "encrypted_password");
 
-    return new AccountResponse(
-      reader.GetInt64(reader.GetOrdinal("id")),
-      reader.GetString(reader.GetOrdinal("login")),
-      !string.IsNullOrWhiteSpace(encryptedPassword),
-      reader.GetBoolean(reader.GetOrdinal("is_enabled")));
+    return new AccountResponse
+    {
+      Id = reader.GetInt64(reader.GetOrdinal("id")),
+      Login = reader.GetString(reader.GetOrdinal("login")),
+      HasPassword = !string.IsNullOrWhiteSpace(encryptedPassword),
+      IsEnabled = reader.GetBoolean(reader.GetOrdinal("is_enabled"))
+    };
   }
 
   private static AccountCredentialsResponse ReadCredentials(
@@ -196,11 +198,13 @@ public sealed class AccountRepository : IAccountRepository
       ? null
       : secretProtection.Unprotect(encryptedPassword);
 
-    return new AccountCredentialsResponse(
-      reader.GetInt64(reader.GetOrdinal("id")),
-      reader.GetString(reader.GetOrdinal("login")),
-      password,
-      reader.GetBoolean(reader.GetOrdinal("is_enabled")));
+    return new AccountCredentialsResponse
+    {
+      Id = reader.GetInt64(reader.GetOrdinal("id")),
+      Login = reader.GetString(reader.GetOrdinal("login")),
+      Password = password,
+      IsEnabled = reader.GetBoolean(reader.GetOrdinal("is_enabled"))
+    };
   }
 
   private static string? GetNullableString(SqliteDataReader reader, string name)

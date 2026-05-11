@@ -1,24 +1,27 @@
 namespace MyHeroesClicker.Core.Models.Scenario;
 
+/// <summary>
+/// Распознанное состояние страницы сценария войны.
+/// </summary>
 public sealed class WarScenarioState
 {
-  public WarScenarioState(
-    WarScenarioStateKind kind,
-    DateTimeOffset? warEndsAt = null,
-    DateTimeOffset? nextBattleAt = null,
-    TimeSpan? battleStartsIn = null)
-  {
-    Kind = kind;
-    WarEndsAt = warEndsAt;
-    NextBattleAt = nextBattleAt;
-    BattleStartsIn = battleStartsIn;
-  }
+  /// <summary>
+  /// Тип состояния.
+  /// </summary>
+  public WarScenarioStateKind Kind { get; init; }
 
-  public WarScenarioStateKind Kind { get; }
+  /// <summary>
+  /// Время окончания текущей войны.
+  /// </summary>
+  public DateTimeOffset? WarEndsAt { get; init; }
 
-  public DateTimeOffset? WarEndsAt { get; }
+  /// <summary>
+  /// Время доступности следующего боя.
+  /// </summary>
+  public DateTimeOffset? NextBattleAt { get; init; }
 
-  public DateTimeOffset? NextBattleAt { get; }
-
-  public TimeSpan? BattleStartsIn { get; }
+  /// <summary>
+  /// Оставшееся время до начала боя.
+  /// </summary>
+  public TimeSpan? BattleStartsIn { get; init; }
 }

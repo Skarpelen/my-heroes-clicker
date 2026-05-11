@@ -52,7 +52,7 @@ public sealed class AttackStep : IScenarioStep
 
     if (IsBattleLogPage(page, _location))
     {
-      return new StepResult(ScenarioStepType.BattleLog);
+      return new StepResult { NextStep = ScenarioStepType.BattleLog };
     }
 
     blockerResult = await _blockerHandler.TryHandleAsync(context, cancellationToken);

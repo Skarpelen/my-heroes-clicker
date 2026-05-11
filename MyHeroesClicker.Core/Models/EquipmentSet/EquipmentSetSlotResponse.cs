@@ -1,28 +1,12 @@
 namespace MyHeroesClicker.Core.Models.EquipmentSet;
 
-public sealed class EquipmentSetSlotResponse
+/// <summary>
+/// Данные слота сета экипировки, возвращаемые клиентам API.
+/// </summary>
+public sealed class EquipmentSetSlotResponse : EquipmentSlotModel
 {
-  public EquipmentSetSlotResponse(
-    long equipmentSetId,
-    int slotNumber,
-    int? itemId,
-    string expectedImageSrc,
-    bool shouldBeEmpty)
-  {
-    EquipmentSetId = equipmentSetId;
-    SlotNumber = slotNumber;
-    ItemId = itemId;
-    ExpectedImageSrc = expectedImageSrc;
-    ShouldBeEmpty = shouldBeEmpty;
-  }
-
-  public long EquipmentSetId { get; }
-
-  public int SlotNumber { get; }
-
-  public int? ItemId { get; }
-
-  public string ExpectedImageSrc { get; }
-
-  public bool ShouldBeEmpty { get; }
+  /// <summary>
+  /// Идентификатор сета экипировки.
+  /// </summary>
+  public long EquipmentSetId { get; init; }
 }

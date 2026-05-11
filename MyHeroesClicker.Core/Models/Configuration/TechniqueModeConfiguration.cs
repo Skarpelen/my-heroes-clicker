@@ -1,16 +1,17 @@
 namespace MyHeroesClicker.Core.Models.Configuration;
 
+/// <summary>
+/// Конфигурация приемов для режимов фарма и боя.
+/// </summary>
 public sealed class TechniqueModeConfiguration
 {
-  public TechniqueModeConfiguration(
-    IReadOnlySet<int> farmEnabledTechniqueIds,
-    IReadOnlySet<int> combatEnabledTechniqueIds)
-  {
-    FarmEnabledTechniqueIds = farmEnabledTechniqueIds;
-    CombatEnabledTechniqueIds = combatEnabledTechniqueIds;
-  }
+  /// <summary>
+  /// Идентификаторы приемов, включенных в режиме фарма.
+  /// </summary>
+  public IReadOnlySet<int> FarmEnabledTechniqueIds { get; init; } = new HashSet<int>();
 
-  public IReadOnlySet<int> FarmEnabledTechniqueIds { get; }
-
-  public IReadOnlySet<int> CombatEnabledTechniqueIds { get; }
+  /// <summary>
+  /// Идентификаторы приемов, включенных в режиме боя.
+  /// </summary>
+  public IReadOnlySet<int> CombatEnabledTechniqueIds { get; init; } = new HashSet<int>();
 }

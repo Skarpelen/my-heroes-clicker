@@ -1,17 +1,10 @@
+using MyHeroesClicker.Core.Models.Account;
+
 namespace MyHeroesClicker.Core.Models.EquipmentSet;
 
-public sealed class EquipmentSetResponse
+/// <summary>
+/// Данные сета экипировки, возвращаемые клиентам API.
+/// </summary>
+public sealed class EquipmentSetResponse : AccountConfigurationModel
 {
-  public EquipmentSetResponse(long id, long? accountId, string kind)
-  {
-    Id = id;
-    AccountId = accountId;
-    Kind = kind;
-  }
-
-  public long Id { get; }
-
-  public long? AccountId { get; }
-
-  public string Kind { get; }
 }

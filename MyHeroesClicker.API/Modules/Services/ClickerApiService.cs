@@ -43,44 +43,40 @@ public sealed class ClickerApiService : IAsyncDisposable
   {
     if (_application is null)
     {
-      return new ScenarioStatusResponse(
-        false,
-        false,
-        _pauseService.IsPauseRequested,
-        null,
-        null,
-        null,
-        [],
-        _pauseService.PauseReason,
-        _pauseService.PauseRequestedAt,
-        _lastUserEvent,
-        _lastUserEventAt,
-        null,
-        null,
-        null,
-        null,
-        null,
-        _lastError);
+      return new ScenarioStatusResponse
+      {
+        IsInitialized = false,
+        IsRunning = false,
+        IsPaused = _pauseService.IsPauseRequested,
+        RunningScenarioKeys = [],
+        PauseReason = _pauseService.PauseReason,
+        PauseRequestedAt = _pauseService.PauseRequestedAt,
+        LastUserEvent = _lastUserEvent,
+        LastUserEventAt = _lastUserEventAt,
+        LastError = _lastError
+      };
     }
 
-    return new ScenarioStatusResponse(
-      true,
-      _application.IsRunning,
-      _pauseService.IsPauseRequested,
-      _application.ActiveScenarioKey,
-      _application.ActiveScenarioName,
-      _application.BrowserTabName,
-      _application.RunningScenarioKeys,
-      _pauseService.PauseReason,
-      _pauseService.PauseRequestedAt,
-      _lastUserEvent,
-      _lastUserEventAt,
-      _application.IterationLimit,
-      _application.CompletedIterations,
-      _application.MaxHealth,
-      _application.WarState,
-      _application.WarNextCheckAt,
-      _application.LastError ?? _lastError);
+    return new ScenarioStatusResponse
+    {
+      IsInitialized = true,
+      IsRunning = _application.IsRunning,
+      IsPaused = _pauseService.IsPauseRequested,
+      ActiveScenarioKey = _application.ActiveScenarioKey,
+      ActiveScenarioName = _application.ActiveScenarioName,
+      BrowserTabName = _application.BrowserTabName,
+      RunningScenarioKeys = _application.RunningScenarioKeys,
+      PauseReason = _pauseService.PauseReason,
+      PauseRequestedAt = _pauseService.PauseRequestedAt,
+      LastUserEvent = _lastUserEvent,
+      LastUserEventAt = _lastUserEventAt,
+      IterationLimit = _application.IterationLimit,
+      CompletedIterations = _application.CompletedIterations,
+      MaxHealth = _application.MaxHealth,
+      WarState = _application.WarState,
+      WarNextCheckAt = _application.WarNextCheckAt,
+      LastError = _application.LastError ?? _lastError
+    };
   }
 
   public async Task<ClickerApplication> GetApplicationAsync(
@@ -215,7 +211,12 @@ public sealed class ClickerApiService : IAsyncDisposable
       await equipmentSets.UpsertSlotAsync(
         equipmentSetId,
         slot.SlotNumber,
-        new UpsertEquipmentSetSlotRequest(slot.ItemId, slot.ExpectedImageSrc, slot.ShouldBeEmpty),
+        new UpsertEquipmentSetSlotRequest
+        {
+          ItemId = slot.ItemId,
+          ExpectedImageSrc = slot.ExpectedImageSrc,
+          ShouldBeEmpty = slot.ShouldBeEmpty
+        },
         cancellationToken);
     }
 
@@ -224,10 +225,24 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   private static ScenarioConfiguration CreateEmptyScenarioConfiguration()
   {
-    return new ScenarioConfiguration(
-      new EquipmentModeConfiguration([], []),
-      new TechniqueModeConfiguration(new HashSet<int>(), new HashSet<int>()),
-      new WarModeConfiguration(15, 60));
+    return new ScenarioConfiguration
+    {
+      Equipment = new EquipmentModeConfiguration
+      {
+        FarmSlots = [],
+        CombatSlots = []
+      },
+      Techniques = new TechniqueModeConfiguration
+      {
+        FarmEnabledTechniqueIds = new HashSet<int>(),
+        CombatEnabledTechniqueIds = new HashSet<int>()
+      },
+      War = new WarModeConfiguration
+      {
+        CheckIntervalMinutes = 15,
+        CombatPreparationSecondsBeforeRegistrationEnd = 60
+      }
+    };
   }
 
   public async ValueTask DisposeAsync()
@@ -318,16 +333,24 @@ public sealed class ClickerApiService : IAsyncDisposable
       throw new InvalidOperationException("Настройки приложения не найдены. Запустите миграции БД.");
     }
 
-    return new ScenarioConfiguration(
-      new EquipmentModeConfiguration(
-        await LoadEquipmentSlotsAsync(equipmentSets, accountId, "farm", cancellationToken),
-        await LoadEquipmentSlotsAsync(equipmentSets, accountId, "combat", cancellationToken)),
-      new TechniqueModeConfiguration(
-        await LoadTechniqueIdsAsync(techniquePresets, accountId, "farm", cancellationToken),
-        await LoadTechniqueIdsAsync(techniquePresets, accountId, "combat", cancellationToken)),
-      new WarModeConfiguration(
-        settings.WarCheckIntervalMinutes,
-        settings.WarCombatPreparationSecondsBeforeRegistrationEnd));
+    return new ScenarioConfiguration
+    {
+      Equipment = new EquipmentModeConfiguration
+      {
+        FarmSlots = await LoadEquipmentSlotsAsync(equipmentSets, accountId, "farm", cancellationToken),
+        CombatSlots = await LoadEquipmentSlotsAsync(equipmentSets, accountId, "combat", cancellationToken)
+      },
+      Techniques = new TechniqueModeConfiguration
+      {
+        FarmEnabledTechniqueIds = await LoadTechniqueIdsAsync(techniquePresets, accountId, "farm", cancellationToken),
+        CombatEnabledTechniqueIds = await LoadTechniqueIdsAsync(techniquePresets, accountId, "combat", cancellationToken)
+      },
+      War = new WarModeConfiguration
+      {
+        CheckIntervalMinutes = settings.WarCheckIntervalMinutes,
+        CombatPreparationSecondsBeforeRegistrationEnd = settings.WarCombatPreparationSecondsBeforeRegistrationEnd
+      }
+    };
   }
 
   private static async Task<IReadOnlyCollection<EquipmentSlotConfiguration>> LoadEquipmentSlotsAsync(
@@ -356,10 +379,12 @@ public sealed class ClickerApiService : IAsyncDisposable
     }
 
     return slots
-      .Select(slot => new EquipmentSlotConfiguration(
-        slot.SlotNumber,
-        slot.ItemId,
-        slot.ShouldBeEmpty))
+      .Select(slot => new EquipmentSlotConfiguration
+      {
+        SlotNumber = slot.SlotNumber,
+        ItemId = slot.ItemId,
+        ShouldBeEmpty = slot.ShouldBeEmpty
+      })
       .ToArray();
   }
 

@@ -1,20 +1,12 @@
 namespace MyHeroesClicker.Core.Models.Account;
 
-public sealed class AccountCredentialsResponse
+/// <summary>
+/// Данные аккаунта с расшифрованными учетными данными для внутреннего использования во время выполнения.
+/// </summary>
+public sealed class AccountCredentialsResponse : AccountModel
 {
-  public AccountCredentialsResponse(long id, string login, string? password, bool isEnabled)
-  {
-    Id = id;
-    Login = login;
-    Password = password;
-    IsEnabled = isEnabled;
-  }
-
-  public long Id { get; }
-
-  public string Login { get; }
-
-  public string? Password { get; }
-
-  public bool IsEnabled { get; }
+  /// <summary>
+  /// Расшифрованный пароль аккаунта.
+  /// </summary>
+  public string? Password { get; init; }
 }

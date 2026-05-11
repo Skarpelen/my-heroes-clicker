@@ -29,11 +29,13 @@ public sealed class AlertsController : ControllerBase
     {
       await foreach (var alertEvent in reader.ReadAllAsync(cancellationToken))
       {
-        var response = new AlertEventResponse(
-          alertEvent.Id,
-          FormatKind(alertEvent.Kind),
-          alertEvent.Message,
-          alertEvent.CreatedAt);
+        var response = new AlertEventResponse
+        {
+          Id = alertEvent.Id,
+          Kind = FormatKind(alertEvent.Kind),
+          Message = alertEvent.Message,
+          CreatedAt = alertEvent.CreatedAt
+        };
 
         await Response.WriteAsync($"id: {alertEvent.Id}\n", cancellationToken);
         await Response.WriteAsync("event: alert\n", cancellationToken);

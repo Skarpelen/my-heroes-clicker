@@ -50,7 +50,11 @@ public sealed class MyHeroesWebClient
   {
     using var response = await GetAsync(path, cancellationToken);
 
-    return new CommandResponse((int)response.StatusCode, IsExpectedStatusCode(response));
+    return new CommandResponse
+    {
+      StatusCode = (int)response.StatusCode,
+      IsExpected = IsExpectedStatusCode(response)
+    };
   }
 
   public async Task PostFormExpectedAsync(

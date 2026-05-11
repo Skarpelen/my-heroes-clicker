@@ -1,12 +1,17 @@
 namespace MyHeroesClicker.Core.Models.EquipmentSet;
 
 /// <summary>
-/// Запрос на создание или обновление слота сета экипировки.
+/// Базовая модель слота экипировки.
 /// </summary>
-public sealed class UpsertEquipmentSetSlotRequest
+public abstract class EquipmentSlotModel
 {
   /// <summary>
-  /// Идентификатор предмета, ожидаемого в слоте.
+  /// Номер слота экипировки.
+  /// </summary>
+  public int SlotNumber { get; init; }
+
+  /// <summary>
+  /// Идентификатор предмета в слоте.
   /// </summary>
   public int? ItemId { get; init; }
 

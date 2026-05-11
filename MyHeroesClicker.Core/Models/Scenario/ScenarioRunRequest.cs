@@ -1,15 +1,12 @@
 namespace MyHeroesClicker.Core.Models.Scenario;
 
+/// <summary>
+/// Запрос на запуск сценария.
+/// </summary>
 public sealed class ScenarioRunRequest
 {
-  public ScenarioRunRequest()
-  {
-  }
-
-  public ScenarioRunRequest(int iterations)
-  {
-    Iterations = iterations;
-  }
-
+  /// <summary>
+  /// Запрошенное количество итераций.
+  /// </summary>
   public int Iterations { get; init; }
 }

@@ -1,13 +1,17 @@
 namespace MyHeroesClicker.Core.Models.Scenario;
 
+/// <summary>
+/// Параметры запуска сценария.
+/// </summary>
 public sealed class ScenarioRunOptions
 {
-  public ScenarioRunOptions(int? iterationLimit = null)
-  {
-    IterationLimit = iterationLimit;
-  }
+  /// <summary>
+  /// Пустые параметры запуска.
+  /// </summary>
+  public static ScenarioRunOptions Empty { get; } = new ScenarioRunOptions { };
 
-  public static ScenarioRunOptions Empty { get; } = new();
-
-  public int? IterationLimit { get; }
+  /// <summary>
+  /// Ограничение количества итераций.
+  /// </summary>
+  public int? IterationLimit { get; init; }
 }

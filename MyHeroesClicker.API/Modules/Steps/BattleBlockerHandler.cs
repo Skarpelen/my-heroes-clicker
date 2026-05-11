@@ -28,26 +28,26 @@ public sealed class BattleBlockerHandler
   {
     if (await context.Guard.TryRecoverExpiredActionAsync(context, cancellationToken))
     {
-      return new StepResult(ScenarioStepType.Attack);
+      return new StepResult { NextStep = ScenarioStepType.Attack };
     }
 
     if (await TryHandleTooFastWarningAsync(context, cancellationToken))
     {
-      return new StepResult(ScenarioStepType.Attack);
+      return new StepResult { NextStep = ScenarioStepType.Attack };
     }
 
     if (await IsLowHealthAsync(context))
     {
       await WaitForHealthRecoveryAsync(context, cancellationToken);
 
-      return new StepResult(ScenarioStepType.Attack);
+      return new StepResult { NextStep = ScenarioStepType.Attack };
     }
 
     if (await IsLowZealAsync(context))
     {
       await WaitForZealRecoveryAsync(context, cancellationToken);
 
-      return new StepResult(ScenarioStepType.Attack);
+      return new StepResult { NextStep = ScenarioStepType.Attack };
     }
 
     return null;

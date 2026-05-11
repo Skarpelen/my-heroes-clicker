@@ -179,20 +179,24 @@ public sealed class EquipmentSetRepository : IEquipmentSetRepository
 
   private static EquipmentSetResponse ReadSet(SqliteDataReader reader)
   {
-    return new EquipmentSetResponse(
-      reader.GetInt64(reader.GetOrdinal("id")),
-      GetNullableInt64(reader, "account_id"),
-      reader.GetString(reader.GetOrdinal("kind")));
+    return new EquipmentSetResponse
+    {
+      Id = reader.GetInt64(reader.GetOrdinal("id")),
+      AccountId = GetNullableInt64(reader, "account_id"),
+      Kind = reader.GetString(reader.GetOrdinal("kind"))
+    };
   }
 
   private static EquipmentSetSlotResponse ReadSlot(SqliteDataReader reader)
   {
-    return new EquipmentSetSlotResponse(
-      reader.GetInt64(reader.GetOrdinal("equipment_set_id")),
-      reader.GetInt32(reader.GetOrdinal("slot_number")),
-      GetNullableInt32(reader, "item_id"),
-      reader.GetString(reader.GetOrdinal("expected_image_src")),
-      reader.GetBoolean(reader.GetOrdinal("should_be_empty")));
+    return new EquipmentSetSlotResponse
+    {
+      EquipmentSetId = reader.GetInt64(reader.GetOrdinal("equipment_set_id")),
+      SlotNumber = reader.GetInt32(reader.GetOrdinal("slot_number")),
+      ItemId = GetNullableInt32(reader, "item_id"),
+      ExpectedImageSrc = reader.GetString(reader.GetOrdinal("expected_image_src")),
+      ShouldBeEmpty = reader.GetBoolean(reader.GetOrdinal("should_be_empty"))
+    };
   }
 
   private static int? GetNullableInt32(SqliteDataReader reader, string name)

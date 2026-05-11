@@ -118,7 +118,10 @@ public sealed class ScenariosController : ControllerBase
 
     try
     {
-      var runOptions = new ScenarioRunOptions(request.Iterations);
+      var runOptions = new ScenarioRunOptions
+      {
+        IterationLimit = request.Iterations
+      };
       var application = await _clicker.GetApplicationAsync(runOptions, cancellationToken);
 
       if (!application.IsRunning)

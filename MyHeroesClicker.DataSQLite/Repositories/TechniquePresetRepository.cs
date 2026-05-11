@@ -177,19 +177,23 @@ public sealed class TechniquePresetRepository : ITechniquePresetRepository
 
   private static TechniquePresetResponse ReadPreset(SqliteDataReader reader)
   {
-    return new TechniquePresetResponse(
-      reader.GetInt64(reader.GetOrdinal("id")),
-      GetNullableInt64(reader, "account_id"),
-      reader.GetString(reader.GetOrdinal("kind")));
+    return new TechniquePresetResponse
+    {
+      Id = reader.GetInt64(reader.GetOrdinal("id")),
+      AccountId = GetNullableInt64(reader, "account_id"),
+      Kind = reader.GetString(reader.GetOrdinal("kind"))
+    };
   }
 
   private static TechniquePresetSlotResponse ReadSlot(SqliteDataReader reader)
   {
-    return new TechniquePresetSlotResponse(
-      reader.GetInt64(reader.GetOrdinal("technique_preset_id")),
-      reader.GetInt32(reader.GetOrdinal("technique_number")),
-      reader.GetString(reader.GetOrdinal("technique_name")),
-      reader.GetBoolean(reader.GetOrdinal("is_enabled")));
+    return new TechniquePresetSlotResponse
+    {
+      TechniquePresetId = reader.GetInt64(reader.GetOrdinal("technique_preset_id")),
+      TechniqueNumber = reader.GetInt32(reader.GetOrdinal("technique_number")),
+      TechniqueName = reader.GetString(reader.GetOrdinal("technique_name")),
+      IsEnabled = reader.GetBoolean(reader.GetOrdinal("is_enabled"))
+    };
   }
 
   private static long? GetNullableInt64(SqliteDataReader reader, string name)

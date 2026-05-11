@@ -1,76 +1,92 @@
 namespace MyHeroesClicker.Core.Models.AppSetting;
 
+/// <summary>
+/// Настройки приложения, возвращаемые клиентам API и службам времени выполнения.
+/// </summary>
 public sealed class AppSettingsResponse
 {
-  public AppSettingsResponse(
-    long id,
-    long? activeAccountId,
-    string baseUrl,
-    string browserKind,
-    bool headless,
-    string? userDataDir,
-    int minDelayMs,
-    int maxDelayMs,
-    int defaultTimeoutMs,
-    int hpRecoveryDelayMultiplier,
-    double minAttackHealthPercent,
-    double maxAttackHealthPercent,
-    int maxStepRetryCount,
-    int retryDelayMs,
-    int authenticationRetryDelayMs,
-    int warCheckIntervalMinutes,
-    int warCombatPreparationSecondsBeforeRegistrationEnd)
-  {
-    Id = id;
-    ActiveAccountId = activeAccountId;
-    BaseUrl = baseUrl;
-    BrowserKind = browserKind;
-    Headless = headless;
-    UserDataDir = userDataDir;
-    MinDelayMs = minDelayMs;
-    MaxDelayMs = maxDelayMs;
-    DefaultTimeoutMs = defaultTimeoutMs;
-    HpRecoveryDelayMultiplier = hpRecoveryDelayMultiplier;
-    MinAttackHealthPercent = minAttackHealthPercent;
-    MaxAttackHealthPercent = maxAttackHealthPercent;
-    MaxStepRetryCount = maxStepRetryCount;
-    RetryDelayMs = retryDelayMs;
-    AuthenticationRetryDelayMs = authenticationRetryDelayMs;
-    WarCheckIntervalMinutes = warCheckIntervalMinutes;
-    WarCombatPreparationSecondsBeforeRegistrationEnd = warCombatPreparationSecondsBeforeRegistrationEnd;
-  }
+  /// <summary>
+  /// Идентификатор настроек.
+  /// </summary>
+  public long Id { get; init; }
 
-  public long Id { get; }
+  /// <summary>
+  /// Идентификатор активного аккаунта.
+  /// </summary>
+  public long? ActiveAccountId { get; init; }
 
-  public long? ActiveAccountId { get; }
+  /// <summary>
+  /// Базовый URL игры.
+  /// </summary>
+  public string BaseUrl { get; init; } = string.Empty;
 
-  public string BaseUrl { get; }
+  /// <summary>
+  /// Тип браузера.
+  /// </summary>
+  public string BrowserKind { get; init; } = string.Empty;
 
-  public string BrowserKind { get; }
+  /// <summary>
+  /// Запускается ли браузер в headless-режиме.
+  /// </summary>
+  public bool Headless { get; init; }
 
-  public bool Headless { get; }
+  /// <summary>
+  /// Каталог пользовательских данных браузера.
+  /// </summary>
+  public string? UserDataDir { get; init; }
 
-  public string? UserDataDir { get; }
+  /// <summary>
+  /// Минимальную пользовательскую задержку в миллисекундах.
+  /// </summary>
+  public int MinDelayMs { get; init; }
 
-  public int MinDelayMs { get; }
+  /// <summary>
+  /// Максимальную пользовательскую задержку в миллисекундах.
+  /// </summary>
+  public int MaxDelayMs { get; init; }
 
-  public int MaxDelayMs { get; }
+  /// <summary>
+  /// Таймаут операции по умолчанию в миллисекундах.
+  /// </summary>
+  public int DefaultTimeoutMs { get; init; }
 
-  public int DefaultTimeoutMs { get; }
+  /// <summary>
+  /// Множитель задержки восстановления здоровья.
+  /// </summary>
+  public int HpRecoveryDelayMultiplier { get; init; }
 
-  public int HpRecoveryDelayMultiplier { get; }
+  /// <summary>
+  /// Минимальный допустимый процент здоровья перед атакой.
+  /// </summary>
+  public double MinAttackHealthPercent { get; init; }
 
-  public double MinAttackHealthPercent { get; }
+  /// <summary>
+  /// Максимальный допустимый процент здоровья перед атакой.
+  /// </summary>
+  public double MaxAttackHealthPercent { get; init; }
 
-  public double MaxAttackHealthPercent { get; }
+  /// <summary>
+  /// Максимальное количество повторов шага.
+  /// </summary>
+  public int MaxStepRetryCount { get; init; }
 
-  public int MaxStepRetryCount { get; }
+  /// <summary>
+  /// Задержку перед повтором в миллисекундах.
+  /// </summary>
+  public int RetryDelayMs { get; init; }
 
-  public int RetryDelayMs { get; }
+  /// <summary>
+  /// Задержку перед повторной авторизацией в миллисекундах.
+  /// </summary>
+  public int AuthenticationRetryDelayMs { get; init; }
 
-  public int AuthenticationRetryDelayMs { get; }
+  /// <summary>
+  /// Интервал проверки войны в минутах.
+  /// </summary>
+  public int WarCheckIntervalMinutes { get; init; }
 
-  public int WarCheckIntervalMinutes { get; }
-
-  public int WarCombatPreparationSecondsBeforeRegistrationEnd { get; }
+  /// <summary>
+  /// Смещение подготовки к бою до окончания регистрации на войну в секундах.
+  /// </summary>
+  public int WarCombatPreparationSecondsBeforeRegistrationEnd { get; init; }
 }

@@ -1,20 +1,22 @@
 namespace MyHeroesClicker.Core.Models.Configuration;
 
+/// <summary>
+/// Конфигурация выполнения сценариев.
+/// </summary>
 public sealed class ScenarioConfiguration
 {
-  public ScenarioConfiguration(
-    EquipmentModeConfiguration equipment,
-    TechniqueModeConfiguration techniques,
-    WarModeConfiguration war)
-  {
-    Equipment = equipment;
-    Techniques = techniques;
-    War = war;
-  }
+  /// <summary>
+  /// Конфигурацию режимов экипировки.
+  /// </summary>
+  public EquipmentModeConfiguration Equipment { get; init; } = new EquipmentModeConfiguration { };
 
-  public EquipmentModeConfiguration Equipment { get; }
+  /// <summary>
+  /// Конфигурацию режимов приемов.
+  /// </summary>
+  public TechniqueModeConfiguration Techniques { get; init; } = new TechniqueModeConfiguration { };
 
-  public TechniqueModeConfiguration Techniques { get; }
-
-  public WarModeConfiguration War { get; }
+  /// <summary>
+  /// Конфигурацию режима войны.
+  /// </summary>
+  public WarModeConfiguration War { get; init; } = new WarModeConfiguration { };
 }

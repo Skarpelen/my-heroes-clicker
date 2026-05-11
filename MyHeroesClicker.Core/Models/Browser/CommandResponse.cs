@@ -1,14 +1,17 @@
 namespace MyHeroesClicker.Core.Models.Browser;
 
+/// <summary>
+/// Результат HTTP-команды, отправленной в игру.
+/// </summary>
 public sealed class CommandResponse
 {
-  public CommandResponse(int statusCode, bool isExpected)
-  {
-    StatusCode = statusCode;
-    IsExpected = isExpected;
-  }
+  /// <summary>
+  /// HTTP-код состояния.
+  /// </summary>
+  public int StatusCode { get; init; }
 
-  public int StatusCode { get; }
-
-  public bool IsExpected { get; }
+  /// <summary>
+  /// Вернула ли команда ожидаемый код состояния.
+  /// </summary>
+  public bool IsExpected { get; init; }
 }

@@ -42,7 +42,7 @@ public sealed class BattleLogStep : IScenarioStep
 
       await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-      return new StepResult(ScenarioStepType.Attack);
+      return new StepResult { NextStep = ScenarioStepType.Attack };
     }
 
     await context.Guard.ExpectBattleLogPageAsync(context, _location, cancellationToken);
@@ -61,9 +61,9 @@ public sealed class BattleLogStep : IScenarioStep
     if (context.RunOptions.IterationLimit is not null
         && context.CompletedIterations >= context.RunOptions.IterationLimit.Value)
     {
-      return new StepResult(ScenarioStepType.Stop);
+      return new StepResult { NextStep = ScenarioStepType.Stop };
     }
 
-    return new StepResult(ScenarioStepType.Attack);
+    return new StepResult { NextStep = ScenarioStepType.Attack };
   }
 }

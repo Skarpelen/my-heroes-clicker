@@ -15,11 +15,13 @@ public sealed class WebAlertService : IAlertService
     string message,
     CancellationToken cancellationToken)
   {
-    var alertEvent = new AlertEvent(
-      Interlocked.Increment(ref _lastEventId),
-      kind,
-      message,
-      DateTimeOffset.UtcNow);
+    var alertEvent = new AlertEvent
+    {
+      Id = Interlocked.Increment(ref _lastEventId),
+      Kind = kind,
+      Message = message,
+      CreatedAt = DateTimeOffset.UtcNow
+    };
 
     Channel<AlertEvent>[] subscribers;
 

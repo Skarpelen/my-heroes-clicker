@@ -1,16 +1,17 @@
 namespace MyHeroesClicker.Core.Models.Configuration;
 
+/// <summary>
+/// Конфигурация сценария войны.
+/// </summary>
 public sealed class WarModeConfiguration
 {
-  public WarModeConfiguration(
-    int checkIntervalMinutes,
-    int combatPreparationSecondsBeforeRegistrationEnd)
-  {
-    CheckIntervalMinutes = checkIntervalMinutes;
-    CombatPreparationSecondsBeforeRegistrationEnd = combatPreparationSecondsBeforeRegistrationEnd;
-  }
+  /// <summary>
+  /// Интервал проверки войны в минутах.
+  /// </summary>
+  public int CheckIntervalMinutes { get; init; }
 
-  public int CheckIntervalMinutes { get; }
-
-  public int CombatPreparationSecondsBeforeRegistrationEnd { get; }
+  /// <summary>
+  /// Смещение подготовки к бою до окончания регистрации в секундах.
+  /// </summary>
+  public int CombatPreparationSecondsBeforeRegistrationEnd { get; init; }
 }

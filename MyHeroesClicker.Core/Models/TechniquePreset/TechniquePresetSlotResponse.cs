@@ -1,24 +1,27 @@
 namespace MyHeroesClicker.Core.Models.TechniquePreset;
 
+/// <summary>
+/// Данные слота пресета приемов, возвращаемые клиентам API.
+/// </summary>
 public sealed class TechniquePresetSlotResponse
 {
-  public TechniquePresetSlotResponse(
-    long techniquePresetId,
-    int techniqueNumber,
-    string techniqueName,
-    bool isEnabled)
-  {
-    TechniquePresetId = techniquePresetId;
-    TechniqueNumber = techniqueNumber;
-    TechniqueName = techniqueName;
-    IsEnabled = isEnabled;
-  }
+  /// <summary>
+  /// Идентификатор пресета приемов.
+  /// </summary>
+  public long TechniquePresetId { get; init; }
 
-  public long TechniquePresetId { get; }
+  /// <summary>
+  /// Номер приема.
+  /// </summary>
+  public int TechniqueNumber { get; init; }
 
-  public int TechniqueNumber { get; }
+  /// <summary>
+  /// Название приема.
+  /// </summary>
+  public string TechniqueName { get; init; } = string.Empty;
 
-  public string TechniqueName { get; }
-
-  public bool IsEnabled { get; }
+  /// <summary>
+  /// Включен ли прием.
+  /// </summary>
+  public bool IsEnabled { get; init; }
 }

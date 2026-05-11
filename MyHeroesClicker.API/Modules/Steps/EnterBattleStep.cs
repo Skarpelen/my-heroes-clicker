@@ -43,7 +43,7 @@ public sealed class EnterBattleStep : IScenarioStep
 
     await context.Guard.ExpectBattlePageAsync(context, _location, cancellationToken);
 
-    return new StepResult(ScenarioStepType.Attack);
+    return new StepResult { NextStep = ScenarioStepType.Attack };
   }
 
   private static async Task GoToBattleAsync(ScenarioContext context, string path)

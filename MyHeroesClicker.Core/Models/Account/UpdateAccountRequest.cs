@@ -1,21 +1,8 @@
 namespace MyHeroesClicker.Core.Models.Account;
 
-public sealed class UpdateAccountRequest
+/// <summary>
+/// Запрос на обновление аккаунта.
+/// </summary>
+public sealed class UpdateAccountRequest : AccountRequest
 {
-  public UpdateAccountRequest()
-  {
-  }
-
-  public UpdateAccountRequest(string login, string? password, bool isEnabled)
-  {
-    Login = login;
-    Password = password;
-    IsEnabled = isEnabled;
-  }
-
-  public string Login { get; init; } = string.Empty;
-
-  public string? Password { get; init; }
-
-  public bool IsEnabled { get; init; }
 }

@@ -1,20 +1,12 @@
 namespace MyHeroesClicker.Core.Models.Account;
 
-public sealed class AccountResponse
+/// <summary>
+/// Данные аккаунта, возвращаемые клиентам API.
+/// </summary>
+public sealed class AccountResponse : AccountModel
 {
-  public AccountResponse(long id, string login, bool hasPassword, bool isEnabled)
-  {
-    Id = id;
-    Login = login;
-    HasPassword = hasPassword;
-    IsEnabled = isEnabled;
-  }
-
-  public long Id { get; }
-
-  public string Login { get; }
-
-  public bool HasPassword { get; }
-
-  public bool IsEnabled { get; }
+  /// <summary>
+  /// Сохранен ли пароль для аккаунта.
+  /// </summary>
+  public bool HasPassword { get; init; }
 }

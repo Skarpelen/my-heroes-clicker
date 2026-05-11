@@ -60,7 +60,12 @@ public sealed class CurrentEquipmentReader
 
     if (!itemMatch.Success)
     {
-      return new CurrentEquipmentSlotResponse(slotNumber, null, string.Empty, true);
+      return new CurrentEquipmentSlotResponse
+      {
+        SlotNumber = slotNumber,
+        ExpectedImageSrc = string.Empty,
+        ShouldBeEmpty = true
+      };
     }
 
     var itemHtml = itemMatch.Groups["item"].Value;
@@ -69,9 +74,20 @@ public sealed class CurrentEquipmentReader
 
     if (!undressLink.Success || !int.TryParse(undressLink.Groups["id"].Value, out var itemId))
     {
-      return new CurrentEquipmentSlotResponse(slotNumber, null, imageSrc, true);
+      return new CurrentEquipmentSlotResponse
+      {
+        SlotNumber = slotNumber,
+        ExpectedImageSrc = imageSrc,
+        ShouldBeEmpty = true
+      };
     }
 
-    return new CurrentEquipmentSlotResponse(slotNumber, itemId, imageSrc, false);
+    return new CurrentEquipmentSlotResponse
+    {
+      SlotNumber = slotNumber,
+      ItemId = itemId,
+      ExpectedImageSrc = imageSrc,
+      ShouldBeEmpty = false
+    };
   }
 }

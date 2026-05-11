@@ -113,24 +113,26 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
 
   private static AppSettingsResponse ReadSettings(SqliteDataReader reader)
   {
-    return new AppSettingsResponse(
-      reader.GetInt64(reader.GetOrdinal("id")),
-      GetNullableInt64(reader, "active_account_id"),
-      reader.GetString(reader.GetOrdinal("base_url")),
-      reader.GetString(reader.GetOrdinal("browser_kind")),
-      reader.GetBoolean(reader.GetOrdinal("headless")),
-      GetNullableString(reader, "user_data_dir"),
-      reader.GetInt32(reader.GetOrdinal("min_delay_ms")),
-      reader.GetInt32(reader.GetOrdinal("max_delay_ms")),
-      reader.GetInt32(reader.GetOrdinal("default_timeout_ms")),
-      reader.GetInt32(reader.GetOrdinal("hp_recovery_delay_multiplier")),
-      reader.GetDouble(reader.GetOrdinal("min_attack_health_percent")),
-      reader.GetDouble(reader.GetOrdinal("max_attack_health_percent")),
-      reader.GetInt32(reader.GetOrdinal("max_step_retry_count")),
-      reader.GetInt32(reader.GetOrdinal("retry_delay_ms")),
-      reader.GetInt32(reader.GetOrdinal("authentication_retry_delay_ms")),
-      reader.GetInt32(reader.GetOrdinal("war_check_interval_minutes")),
-      reader.GetInt32(reader.GetOrdinal("war_combat_preparation_seconds_before_registration_end")));
+    return new AppSettingsResponse
+    {
+      Id = reader.GetInt64(reader.GetOrdinal("id")),
+      ActiveAccountId = GetNullableInt64(reader, "active_account_id"),
+      BaseUrl = reader.GetString(reader.GetOrdinal("base_url")),
+      BrowserKind = reader.GetString(reader.GetOrdinal("browser_kind")),
+      Headless = reader.GetBoolean(reader.GetOrdinal("headless")),
+      UserDataDir = GetNullableString(reader, "user_data_dir"),
+      MinDelayMs = reader.GetInt32(reader.GetOrdinal("min_delay_ms")),
+      MaxDelayMs = reader.GetInt32(reader.GetOrdinal("max_delay_ms")),
+      DefaultTimeoutMs = reader.GetInt32(reader.GetOrdinal("default_timeout_ms")),
+      HpRecoveryDelayMultiplier = reader.GetInt32(reader.GetOrdinal("hp_recovery_delay_multiplier")),
+      MinAttackHealthPercent = reader.GetDouble(reader.GetOrdinal("min_attack_health_percent")),
+      MaxAttackHealthPercent = reader.GetDouble(reader.GetOrdinal("max_attack_health_percent")),
+      MaxStepRetryCount = reader.GetInt32(reader.GetOrdinal("max_step_retry_count")),
+      RetryDelayMs = reader.GetInt32(reader.GetOrdinal("retry_delay_ms")),
+      AuthenticationRetryDelayMs = reader.GetInt32(reader.GetOrdinal("authentication_retry_delay_ms")),
+      WarCheckIntervalMinutes = reader.GetInt32(reader.GetOrdinal("war_check_interval_minutes")),
+      WarCombatPreparationSecondsBeforeRegistrationEnd = reader.GetInt32(reader.GetOrdinal("war_combat_preparation_seconds_before_registration_end"))
+    };
   }
 
   private static long? GetNullableInt64(SqliteDataReader reader, string name)
