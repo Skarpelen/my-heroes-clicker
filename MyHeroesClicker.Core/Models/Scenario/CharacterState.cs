@@ -1,4 +1,4 @@
-﻿namespace MyHeroesClicker.Core.Models.Scenarios;
+namespace MyHeroesClicker.Core.Models.Scenario;
 
 public sealed class CharacterState
 {

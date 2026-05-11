@@ -2,9 +2,9 @@ using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using MyHeroesClicker.Browser.Browser;
-using MyHeroesClicker.Core.Confs;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Configuration;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Scenarios;
@@ -92,7 +92,13 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     if (fightState.Kind == WarScenarioStateKind.RegistrationAvailable)
     {
-      await RegisterAndPrepareForBattleAsync(context, fightState with { WarEndsAt = warEndsAt }, checkInterval, cancellationToken);
+      var state = new WarScenarioState(
+        fightState.Kind,
+        warEndsAt,
+        fightState.NextBattleAt,
+        fightState.BattleStartsIn);
+
+      await RegisterAndPrepareForBattleAsync(context, state, checkInterval, cancellationToken);
 
       return;
     }
@@ -266,7 +272,7 @@ public sealed partial class WarRegistrationScenario : IScenario
 
     if (ContainsHref(html, "/clan/regfight"))
     {
-      return new WarScenarioState(WarScenarioStateKind.RegistrationAvailable, warEndsAt, BattleStartsIn: battleStartsIn);
+      return new WarScenarioState(WarScenarioStateKind.RegistrationAvailable, warEndsAt, battleStartsIn: battleStartsIn);
     }
 
     if (nextBattleAt is not null)
@@ -300,7 +306,7 @@ public sealed partial class WarRegistrationScenario : IScenario
     {
       return new WarScenarioState(
         WarScenarioStateKind.RegistrationAvailable,
-        BattleStartsIn: TryReadTimer(text, "Начало через"));
+        battleStartsIn: TryReadTimer(text, "Начало через"));
     }
 
     return new WarScenarioState(WarScenarioStateKind.FightInProgress);
@@ -417,20 +423,3 @@ public sealed partial class WarRegistrationScenario : IScenario
   [GeneratedRegex(@"\s+")]
   private static partial Regex SpacesRegex();
 }
-
-internal enum WarScenarioStateKind
-{
-  Inactive,
-  ActiveUnknown,
-  AttackAvailable,
-  BattleCooldown,
-  FightPageAvailable,
-  FightInProgress,
-  RegistrationAvailable
-}
-
-internal sealed record WarScenarioState(
-  WarScenarioStateKind Kind,
-  DateTimeOffset? WarEndsAt = null,
-  DateTimeOffset? NextBattleAt = null,
-  TimeSpan? BattleStartsIn = null);

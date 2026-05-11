@@ -1,5 +1,6 @@
 ﻿using Microsoft.Playwright;
 using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Models.Browser;
 
 namespace MyHeroesClicker.Browser.Browser;
 
@@ -174,5 +175,3 @@ public sealed class MyHeroesWebClient
            || (int)response.StatusCode is >= 300 and < 400;
   }
 }
-
-public sealed record CommandResponse(int StatusCode, bool IsExpected);

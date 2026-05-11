@@ -1,5 +1,5 @@
 using MyHeroesClicker.Core.Interfaces.Scenarios;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 
 namespace MyHeroesClicker.API.Modules.Runtime;
 

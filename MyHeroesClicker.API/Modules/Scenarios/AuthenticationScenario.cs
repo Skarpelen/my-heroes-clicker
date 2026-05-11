@@ -1,5 +1,5 @@
 using MyHeroesClicker.Browser.Browser;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Account;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Modules.Core;
 

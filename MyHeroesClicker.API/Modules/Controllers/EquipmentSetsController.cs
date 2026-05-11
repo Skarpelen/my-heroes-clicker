@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.API.Modules.Services;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.EquipmentSet;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using NLog;
 

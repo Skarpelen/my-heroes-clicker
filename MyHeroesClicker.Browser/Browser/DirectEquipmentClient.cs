@@ -1,5 +1,5 @@
-using MyHeroesClicker.Core.Confs;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Configuration;
+using MyHeroesClicker.Core.Models.EquipmentSet;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;

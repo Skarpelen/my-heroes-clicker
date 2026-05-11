@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Account;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using NLog;
 

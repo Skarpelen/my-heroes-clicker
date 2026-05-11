@@ -1,5 +1,6 @@
 ﻿using System.Threading.Channels;
 using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Alert;
 
 namespace MyHeroesClicker.API.Modules.Services;
 

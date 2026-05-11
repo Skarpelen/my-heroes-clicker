@@ -205,28 +205,4 @@ public static class Program
     await command.ExecuteNonQueryAsync();
   }
 
-  private sealed record MigrationFile(int Version, string Name, string Path)
-  {
-    public static MigrationFile Parse(string path)
-    {
-      var fileName = System.IO.Path.GetFileNameWithoutExtension(path);
-      var separatorIndex = fileName.IndexOf('_', StringComparison.Ordinal);
-
-      if (separatorIndex < 2 || fileName[0] != 'v')
-      {
-        throw new InvalidOperationException($"Invalid migration file name: {fileName}");
-      }
-
-      var versionText = fileName[1..separatorIndex];
-
-      if (!int.TryParse(versionText, out var version))
-      {
-        throw new InvalidOperationException($"Invalid migration version: {fileName}");
-      }
-
-      var name = fileName[(separatorIndex + 1)..];
-
-      return new MigrationFile(version, name, path);
-    }
-  }
 }

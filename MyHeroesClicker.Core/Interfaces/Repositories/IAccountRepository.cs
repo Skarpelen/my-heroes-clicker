@@ -1,4 +1,4 @@
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Account;
 
 namespace MyHeroesClicker.Core.Interfaces.Repositories;
 

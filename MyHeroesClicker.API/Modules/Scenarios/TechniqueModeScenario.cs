@@ -1,5 +1,6 @@
 ﻿using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Scenarios;
@@ -30,9 +31,4 @@ public sealed class TechniqueModeScenario : IScenario
 
     return _techniqueClient.ApplyCombatModeAsync(context, cancellationToken);
   }
-}
-public enum TechniqueMode
-{
-  Farm,
-  Combat
 }

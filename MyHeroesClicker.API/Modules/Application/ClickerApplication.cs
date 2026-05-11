@@ -1,6 +1,6 @@
 ﻿using MyHeroesClicker.API.Modules.Runtime;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Application;
@@ -255,25 +255,4 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
       _ => mode.ToString()
     };
   }
-}
-
-internal sealed class ScenarioRunState
-{
-  public ScenarioRunState(
-    ScenarioCatalogEntry entry,
-    ScenarioContext context,
-    CancellationTokenSource cancellation)
-  {
-    Entry = entry;
-    Context = context;
-    Cancellation = cancellation;
-  }
-
-  public ScenarioCatalogEntry Entry { get; }
-
-  public ScenarioContext Context { get; }
-
-  public CancellationTokenSource Cancellation { get; }
-
-  public Task Task { get; set; } = Task.CompletedTask;
 }

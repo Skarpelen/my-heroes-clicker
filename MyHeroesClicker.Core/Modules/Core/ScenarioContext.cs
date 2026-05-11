@@ -3,7 +3,7 @@ using MyHeroesClicker.Core.Confs;
 using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 
 namespace MyHeroesClicker.Core.Modules.Core;
 

@@ -1,5 +1,5 @@
 using System.Text.RegularExpressions;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.EquipmentSet;
 
 namespace MyHeroesClicker.Browser.Browser;
 

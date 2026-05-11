@@ -1,4 +1,4 @@
-﻿using MyHeroesClicker.Core.Models.Scenarios;
+﻿using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Core.Interfaces.Scenarios;

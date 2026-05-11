@@ -2,7 +2,8 @@
 using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Services;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Alert;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;

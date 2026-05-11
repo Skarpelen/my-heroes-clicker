@@ -1,7 +1,7 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Core.Interfaces.Services;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Alert;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Core;

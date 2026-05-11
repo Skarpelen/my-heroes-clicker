@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using MyHeroesClicker.API.Modules.Services;
-using MyHeroesClicker.Core.Interfaces.Services;
+using MyHeroesClicker.Core.Models.Alert;
 
 namespace MyHeroesClicker.API.Modules.Controllers;
 
@@ -57,9 +57,3 @@ public sealed class AlertsController : ControllerBase
     };
   }
 }
-
-public sealed record AlertEventResponse(
-  long Id,
-  string Kind,
-  string Message,
-  DateTimeOffset CreatedAt);

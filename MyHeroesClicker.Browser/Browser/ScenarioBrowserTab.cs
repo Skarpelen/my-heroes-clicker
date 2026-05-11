@@ -1,5 +1,5 @@
 ﻿using Microsoft.Playwright;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 
 namespace MyHeroesClicker.Browser.Browser;
 

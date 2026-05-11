@@ -1,11 +1,13 @@
 using MyHeroesClicker.API.Modules.Application;
 using MyHeroesClicker.API.Modules.Runtime;
 using MyHeroesClicker.Core.Confs;
-using MyHeroesClicker.Core.Contracts;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Account;
+using MyHeroesClicker.Core.Models.AppSetting;
+using MyHeroesClicker.Core.Models.Configuration;
+using MyHeroesClicker.Core.Models.EquipmentSet;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using MyHeroesClicker.Core.Interfaces.Services;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 
 namespace MyHeroesClicker.API.Modules.Services;
 

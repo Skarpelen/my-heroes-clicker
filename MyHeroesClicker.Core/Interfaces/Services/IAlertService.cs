@@ -1,3 +1,5 @@
+using MyHeroesClicker.Core.Models.Alert;
+
 namespace MyHeroesClicker.Core.Interfaces.Services;
 
 public interface IAlertService
@@ -7,16 +9,3 @@ public interface IAlertService
     string message,
     CancellationToken cancellationToken);
 }
-
-public enum AlertEventKind
-{
-  Captcha,
-  AuthenticationRequired,
-  FatalError
-}
-
-public sealed record AlertEvent(
-  long Id,
-  AlertEventKind Kind,
-  string Message,
-  DateTimeOffset CreatedAt);

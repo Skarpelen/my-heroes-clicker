@@ -1,5 +1,5 @@
 using Microsoft.Data.Sqlite;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.AppSetting;
 using MyHeroesClicker.Core.Interfaces.Repositories;
 using MyHeroesClicker.DataSQLite.Toolkit;
 

@@ -1,4 +1,4 @@
-using MyHeroesClicker.Core.Confs;
+using MyHeroesClicker.Core.Models.Configuration;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.Browser.Browser;

@@ -5,11 +5,12 @@ using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Browser.Browser;
 using MyHeroesClicker.Browser.Diagnostics;
 using MyHeroesClicker.Core.Confs;
-using MyHeroesClicker.Core.Contracts.Database;
+using MyHeroesClicker.Core.Models.Account;
+using MyHeroesClicker.Core.Models.Configuration;
 using MyHeroesClicker.Core.Interfaces.Browser;
 using MyHeroesClicker.Core.Interfaces.Scenarios;
 using MyHeroesClicker.Core.Interfaces.Services;
-using MyHeroesClicker.Core.Models.Scenarios;
+using MyHeroesClicker.Core.Models.Scenario;
 using MyHeroesClicker.Core.Modules.Core;
 
 namespace MyHeroesClicker.API.Modules.Runtime;
