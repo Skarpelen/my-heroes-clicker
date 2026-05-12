@@ -8,8 +8,8 @@ using NLog;
 namespace MyHeroesClicker.API.Modules.Controllers;
 
 [ApiController]
-[Route("api/scenarios")]
-public sealed class ScenariosController : ControllerBase
+[Route("api/scenario")]
+public sealed class ScenarioController : ControllerBase
 {
   private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private static readonly string[] ScenarioNames =
@@ -25,7 +25,7 @@ public sealed class ScenariosController : ControllerBase
 
   private readonly ClickerApiService _clicker;
 
-  public ScenariosController(ClickerApiService clicker)
+  public ScenarioController(ClickerApiService clicker)
   {
     _clicker = clicker;
   }

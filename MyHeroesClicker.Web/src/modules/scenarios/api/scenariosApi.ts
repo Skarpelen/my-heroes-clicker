@@ -7,7 +7,7 @@ async function readError(response: Response, fallback: string) {
 }
 
 export async function getScenarioStatus(): Promise<ScenarioStatus> {
-  const response = await fetch('/api/scenarios/status')
+  const response = await fetch('/api/scenario/status')
 
   if (!response.ok) {
     throw new Error(await readError(response, 'Не удалось получить статус сценария.'))
@@ -17,15 +17,15 @@ export async function getScenarioStatus(): Promise<ScenarioStatus> {
 }
 
 export async function startBattleFarmScenario(options: FarmScenarioOptions): Promise<void> {
-  await startFarmScenario('/api/scenarios/farm/start', options, 'Не удалось запустить фарм в драке.')
+  await startFarmScenario('/api/scenario/farm/start', options, 'Не удалось запустить фарм в драке.')
 }
 
 export async function startAdventureFarmScenario(options: FarmScenarioOptions): Promise<void> {
-  await startFarmScenario('/api/scenarios/adventure/start', options, 'Не удалось запустить фарм в приключениях.')
+  await startFarmScenario('/api/scenario/adventure/start', options, 'Не удалось запустить фарм в приключениях.')
 }
 
 export async function startWarRegistrationScenario(): Promise<void> {
-  const response = await fetch('/api/scenarios/war/start', {
+  const response = await fetch('/api/scenario/war/start', {
     method: 'POST',
   })
 
@@ -35,7 +35,7 @@ export async function startWarRegistrationScenario(): Promise<void> {
 }
 
 export async function prepareFarmMode(): Promise<void> {
-  const response = await fetch('/api/scenarios/farm/prepare', {
+  const response = await fetch('/api/scenario/farm/prepare', {
     method: 'POST',
   })
 
@@ -45,7 +45,7 @@ export async function prepareFarmMode(): Promise<void> {
 }
 
 export async function prepareCombatMode(): Promise<void> {
-  const response = await fetch('/api/scenarios/combat/prepare', {
+  const response = await fetch('/api/scenario/combat/prepare', {
     method: 'POST',
   })
 
@@ -55,7 +55,7 @@ export async function prepareCombatMode(): Promise<void> {
 }
 
 export async function stopScenario(): Promise<void> {
-  const response = await fetch('/api/scenarios/stop', {
+  const response = await fetch('/api/scenario/stop', {
     method: 'POST',
   })
 
@@ -65,7 +65,7 @@ export async function stopScenario(): Promise<void> {
 }
 
 export async function stopScenarioByKey(scenarioKey: string): Promise<void> {
-  const response = await fetch(`/api/scenarios/${scenarioKey}/stop`, {
+  const response = await fetch(`/api/scenario/${scenarioKey}/stop`, {
     method: 'POST',
   })
 
@@ -75,7 +75,7 @@ export async function stopScenarioByKey(scenarioKey: string): Promise<void> {
 }
 
 export async function resumeScenario(): Promise<void> {
-  const response = await fetch('/api/scenarios/resume', {
+  const response = await fetch('/api/scenario/resume', {
     method: 'POST',
   })
 

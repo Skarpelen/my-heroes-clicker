@@ -7,8 +7,8 @@ using NLog;
 namespace MyHeroesClicker.API.Modules.Controllers;
 
 [ApiController]
-[Route("api/equipment-sets")]
-public sealed class EquipmentSetsController : ControllerBase
+[Route("api/equipment-set")]
+public sealed class EquipmentSetController : ControllerBase
 {
   private static readonly int[] DefaultEquipmentSlotNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -16,7 +16,7 @@ public sealed class EquipmentSetsController : ControllerBase
   private readonly IEquipmentSetRepository _equipmentSets;
   private readonly ClickerApiService _clicker;
 
-  public EquipmentSetsController(
+  public EquipmentSetController(
     IEquipmentSetRepository equipmentSets,
     ClickerApiService clicker)
   {

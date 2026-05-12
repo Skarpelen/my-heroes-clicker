@@ -6,13 +6,13 @@ using MyHeroesClicker.Core.Models.Alert;
 namespace MyHeroesClicker.API.Modules.Controllers;
 
 [ApiController]
-[Route("api/alerts")]
-public sealed class AlertsController : ControllerBase
+[Route("api/alert")]
+public sealed class AlertController : ControllerBase
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
   private readonly WebAlertService _alertService;
 
-  public AlertsController(WebAlertService alertService)
+  public AlertController(WebAlertService alertService)
   {
     _alertService = alertService;
   }

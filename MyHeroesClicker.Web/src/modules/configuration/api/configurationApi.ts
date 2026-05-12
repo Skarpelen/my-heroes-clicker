@@ -67,19 +67,19 @@ async function createJson<TPayload>(
 }
 
 export async function getAccounts(): Promise<Account[]> {
-  return await readJson<Account[]>('/api/accounts', 'Не удалось загрузить аккаунты.')
+  return await readJson<Account[]>('/api/account', 'Не удалось загрузить аккаунты.')
 }
 
 export async function createAccount(account: AccountPayload): Promise<number> {
-  return await createJson('/api/accounts', account, 'Не удалось создать аккаунт.')
+  return await createJson('/api/account', account, 'Не удалось создать аккаунт.')
 }
 
 export async function updateAccount(id: number, account: AccountPayload): Promise<void> {
-  await sendJson(`/api/accounts/${id}`, 'PUT', account, 'Не удалось сохранить аккаунт.')
+  await sendJson(`/api/account/${id}`, 'PUT', account, 'Не удалось сохранить аккаунт.')
 }
 
 export async function deleteAccount(id: number): Promise<void> {
-  const response = await fetch(`/api/accounts/${id}`, {
+  const response = await fetch(`/api/account/${id}`, {
     method: 'DELETE',
   })
 
@@ -101,19 +101,19 @@ export async function setActiveAccount(accountId: number | null): Promise<void> 
 }
 
 export async function getEquipmentSets(): Promise<EquipmentSet[]> {
-  return await readJson<EquipmentSet[]>('/api/equipment-sets', 'Не удалось загрузить сеты.')
+  return await readJson<EquipmentSet[]>('/api/equipment-set', 'Не удалось загрузить сеты.')
 }
 
 export async function createEquipmentSet(set: EquipmentSetPayload): Promise<number> {
-  return await createJson('/api/equipment-sets', set, 'Не удалось создать сет.')
+  return await createJson('/api/equipment-set', set, 'Не удалось создать сет.')
 }
 
 export async function updateEquipmentSet(id: number, set: EquipmentSetPayload): Promise<void> {
-  await sendJson(`/api/equipment-sets/${id}`, 'PUT', set, 'Не удалось сохранить сет.')
+  await sendJson(`/api/equipment-set/${id}`, 'PUT', set, 'Не удалось сохранить сет.')
 }
 
 export async function getEquipmentSetSlots(id: number): Promise<EquipmentSetSlot[]> {
-  return await readJson<EquipmentSetSlot[]>(`/api/equipment-sets/${id}/slots`, 'Не удалось загрузить слоты сета.')
+  return await readJson<EquipmentSetSlot[]>(`/api/equipment-set/${id}/slots`, 'Не удалось загрузить слоты сета.')
 }
 
 export async function updateEquipmentSetSlot(
@@ -121,14 +121,14 @@ export async function updateEquipmentSetSlot(
   slotNumber: number,
   slot: Omit<EquipmentSetSlot, 'equipmentSetId' | 'slotNumber'>): Promise<void> {
   await sendJson(
-    `/api/equipment-sets/${setId}/slots/${slotNumber}`,
+    `/api/equipment-set/${setId}/slots/${slotNumber}`,
     'PUT',
     slot,
     'Не удалось сохранить слот сета.')
 }
 
 export async function readCurrentEquipmentSetSlots(setId: number): Promise<EquipmentSetSlot[]> {
-  const response = await fetch(`/api/equipment-sets/${setId}/slots/read-current`, {
+  const response = await fetch(`/api/equipment-set/${setId}/slots/read-current`, {
     method: 'POST',
   })
 
@@ -140,19 +140,19 @@ export async function readCurrentEquipmentSetSlots(setId: number): Promise<Equip
 }
 
 export async function getTechniquePresets(): Promise<TechniquePreset[]> {
-  return await readJson<TechniquePreset[]>('/api/technique-presets', 'Не удалось загрузить пресеты приемов.')
+  return await readJson<TechniquePreset[]>('/api/technique-preset', 'Не удалось загрузить пресеты приемов.')
 }
 
 export async function createTechniquePreset(preset: TechniquePresetPayload): Promise<number> {
-  return await createJson('/api/technique-presets', preset, 'Не удалось создать пресет приемов.')
+  return await createJson('/api/technique-preset', preset, 'Не удалось создать пресет приемов.')
 }
 
 export async function updateTechniquePreset(id: number, preset: TechniquePresetPayload): Promise<void> {
-  await sendJson(`/api/technique-presets/${id}`, 'PUT', preset, 'Не удалось сохранить пресет приемов.')
+  await sendJson(`/api/technique-preset/${id}`, 'PUT', preset, 'Не удалось сохранить пресет приемов.')
 }
 
 export async function getTechniquePresetSlots(id: number): Promise<TechniquePresetSlot[]> {
-  return await readJson<TechniquePresetSlot[]>(`/api/technique-presets/${id}/slots`, 'Не удалось загрузить приемы.')
+  return await readJson<TechniquePresetSlot[]>(`/api/technique-preset/${id}/slots`, 'Не удалось загрузить приемы.')
 }
 
 export async function updateTechniquePresetSlot(
@@ -160,7 +160,7 @@ export async function updateTechniquePresetSlot(
   techniqueNumber: number,
   slot: Omit<TechniquePresetSlot, 'techniquePresetId' | 'techniqueNumber'>): Promise<void> {
   await sendJson(
-    `/api/technique-presets/${presetId}/slots/${techniqueNumber}`,
+    `/api/technique-preset/${presetId}/slots/${techniqueNumber}`,
     'PUT',
     slot,
     'Не удалось сохранить прием.')

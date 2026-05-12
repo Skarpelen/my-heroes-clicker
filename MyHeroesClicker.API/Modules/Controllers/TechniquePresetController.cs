@@ -6,13 +6,13 @@ using NLog;
 namespace MyHeroesClicker.API.Modules.Controllers;
 
 [ApiController]
-[Route("api/technique-presets")]
-public sealed class TechniquePresetsController : ControllerBase
+[Route("api/technique-preset")]
+public sealed class TechniquePresetController : ControllerBase
 {
   private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly ITechniquePresetRepository _techniquePresets;
 
-  public TechniquePresetsController(ITechniquePresetRepository techniquePresets)
+  public TechniquePresetController(ITechniquePresetRepository techniquePresets)
   {
     _techniquePresets = techniquePresets;
   }

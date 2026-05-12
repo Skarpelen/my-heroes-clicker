@@ -6,13 +6,13 @@ using NLog;
 namespace MyHeroesClicker.API.Modules.Controllers;
 
 [ApiController]
-[Route("api/accounts")]
-public sealed class AccountsController : ControllerBase
+[Route("api/account")]
+public sealed class AccountController : ControllerBase
 {
   private readonly Logger _log = LogManager.GetCurrentClassLogger();
   private readonly IAccountRepository _accounts;
 
-  public AccountsController(IAccountRepository accounts)
+  public AccountController(IAccountRepository accounts)
   {
     _accounts = accounts;
   }
