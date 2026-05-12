@@ -65,7 +65,7 @@ Start-Process powershell.exe -ArgumentList @(
   "-File", $backendScript
 ) -WorkingDirectory $root -WindowStyle Normal
 
-$backendReadyUrl = "$($env:MYHEROES_API_HTTP_URL)/api/scenarios/status"
+$backendReadyUrl = "$($env:MYHEROES_API_HTTP_URL)/api/scenario/status"
 $deadline = (Get-Date).AddSeconds(60)
 
 do {

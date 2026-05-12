@@ -10,10 +10,14 @@ internal sealed class ScenarioRunState
     ScenarioContext context,
     CancellationTokenSource cancellation)
   {
+    RunId = Guid.NewGuid();
     Entry = entry;
     Context = context;
     Cancellation = cancellation;
+    StartedAt = DateTimeOffset.UtcNow;
   }
+
+  public Guid RunId { get; }
 
   public ScenarioCatalogEntry Entry { get; }
 
@@ -21,5 +25,17 @@ internal sealed class ScenarioRunState
 
   public CancellationTokenSource Cancellation { get; }
 
+  public DateTimeOffset StartedAt { get; }
+
+  public DateTimeOffset? StopRequestedAt { get; private set; }
+
+  public string? LastError { get; set; }
+
   public Task Task { get; set; } = Task.CompletedTask;
+
+  public void RequestStop()
+  {
+    StopRequestedAt ??= DateTimeOffset.UtcNow;
+    Cancellation.Cancel();
+  }
 }

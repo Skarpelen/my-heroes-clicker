@@ -9,7 +9,7 @@ import type { Account, AppSettings } from '../modules/configuration/model/types'
 import { FarmScenarioPanel } from '../modules/scenarios/components/FarmScenarioPanel'
 import { ScenarioStatusBar } from '../modules/scenarios/components/ScenarioStatusBar'
 import { WarScenarioPanel } from '../modules/scenarios/components/WarScenarioPanel'
-import { getScenarioStatus, stopScenario } from '../modules/scenarios/api/scenariosApi'
+import { getScenarioStatus, stopScenario, stopScenarioByKey } from '../modules/scenarios/api/scenariosApi'
 import type { ScenarioStatus } from '../modules/scenarios/model/types'
 import '../styles/app.css'
 
@@ -43,6 +43,15 @@ export function App() {
       await refreshStatus()
     } catch (exception) {
       setStatusError(exception instanceof Error ? exception.message : 'Не удалось остановить сценарии.')
+    }
+  }, [refreshStatus])
+
+  const stopSingleScenario = useCallback(async (scenarioKey: string) => {
+    try {
+      await stopScenarioByKey(scenarioKey)
+      await refreshStatus()
+    } catch (exception) {
+      setStatusError(exception instanceof Error ? exception.message : 'Не удалось остановить сценарий.')
     }
   }, [refreshStatus])
 
@@ -122,7 +131,11 @@ export function App() {
         <>
           {statusError && <p className="global-error">{statusError}</p>}
 
-          <ScenarioStatusBar status={status} onStopAll={() => void stopAllScenarios()} />
+          <ScenarioStatusBar
+            status={status}
+            onStopAll={() => void stopAllScenarios()}
+            onStopScenario={(scenarioKey) => void stopSingleScenario(scenarioKey)}
+          />
           <AlertSoundPanel
             settings={alertSoundSettings}
             lastAlert={lastAlert}

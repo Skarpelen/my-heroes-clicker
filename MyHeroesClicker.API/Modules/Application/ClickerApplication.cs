@@ -10,6 +10,7 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
   private readonly ClickerRuntime _runtime;
   private readonly ScenarioDispatcher _dispatcher = new();
   private readonly Dictionary<ScenarioBrowserTabKind, ScenarioRunState> _runningScenarios = new();
+  private readonly List<ScenarioRunState> _recentScenarioRuns = new();
   private readonly object _sync = new();
   private ScenarioContext _lastContext;
 
@@ -54,6 +55,21 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
     }
   }
 
+  public IReadOnlyCollection<ScenarioRunStatusResponse> ScenarioRuns
+  {
+    get
+    {
+      lock (_sync)
+      {
+        return _runningScenarios.Values
+          .Where(run => !run.Task.IsCompleted)
+          .Concat(_recentScenarioRuns)
+          .Select(CreateRunStatus)
+          .ToArray();
+      }
+    }
+  }
+
   public string? WarState => GetRunningContext(ScenarioBrowserTabKind.ClanWar)?.StatusMessage;
 
   public DateTimeOffset? WarNextCheckAt => GetRunningContext(ScenarioBrowserTabKind.ClanWar)?.NextCheckAt;
@@ -80,7 +96,7 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
     {
       foreach (var run in _runningScenarios.Values)
       {
-        run.Cancellation.Cancel();
+        run.RequestStop();
       }
     }
   }
@@ -95,7 +111,7 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
 
       foreach (var run in runs)
       {
-        run.Cancellation.Cancel();
+        run.RequestStop();
       }
 
       return runs.Length > 0;
@@ -165,7 +181,7 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
 
       foreach (var run in runs)
       {
-        run.Cancellation.Cancel();
+        run.RequestStop();
       }
     }
 
@@ -200,6 +216,13 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
     catch (Exception exception)
     {
       LastError = exception.Message;
+      var state = GetRunningState(entry.BrowserTabKind);
+
+      if (state is not null)
+      {
+        state.LastError = exception.Message;
+      }
+
       context.Logger.Error(exception.Message);
       throw;
     }
@@ -209,6 +232,7 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
       {
         if (_runningScenarios.Remove(entry.BrowserTabKind, out var state))
         {
+          AddRecentScenarioRun(state);
           state.Cancellation.Dispose();
         }
 
@@ -243,6 +267,85 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
         ? run.Context
         : null;
     }
+  }
+
+  private ScenarioRunState? GetRunningState(ScenarioBrowserTabKind tabKind)
+  {
+    lock (_sync)
+    {
+      return _runningScenarios.TryGetValue(tabKind, out var run) && !run.Task.IsCompleted
+        ? run
+        : null;
+    }
+  }
+
+  private static ScenarioRunStatusResponse CreateRunStatus(ScenarioRunState run)
+  {
+    var iterationLimit = run.Context.RunOptions.IterationLimit;
+    var completedIterations = run.Context.CompletedIterations;
+
+    return new ScenarioRunStatusResponse
+    {
+      RunId = run.RunId.ToString("N"),
+      ScenarioKey = run.Entry.Key,
+      ScenarioName = run.Entry.Scenario.Name,
+      BrowserTabKind = run.Entry.BrowserTabKind.ToString(),
+      BrowserTabName = run.Entry.BrowserTabName,
+      State = GetRunState(run),
+      StartedAt = run.StartedAt,
+      StopRequestedAt = run.StopRequestedAt,
+      IterationLimit = iterationLimit,
+      CompletedIterations = completedIterations,
+      ProgressPercent = CalculateProgressPercent(completedIterations, iterationLimit),
+      StatusMessage = run.Context.StatusMessage,
+      NextCheckAt = run.Context.NextCheckAt,
+      LastError = run.LastError
+    };
+  }
+
+  private static string GetRunState(ScenarioRunState run)
+  {
+    if (run.Task.IsFaulted)
+    {
+      return "failed";
+    }
+
+    if (run.Task.IsCompleted)
+    {
+      return "stopped";
+    }
+
+    if (run.StopRequestedAt is not null)
+    {
+      return "stopping";
+    }
+
+    if (run.Context.PauseService.IsPauseRequested)
+    {
+      return "paused";
+    }
+
+    return "running";
+  }
+
+  private void AddRecentScenarioRun(ScenarioRunState run)
+  {
+    _recentScenarioRuns.Insert(0, run);
+
+    if (_recentScenarioRuns.Count > 10)
+    {
+      _recentScenarioRuns.RemoveRange(10, _recentScenarioRuns.Count - 10);
+    }
+  }
+
+  private static int? CalculateProgressPercent(int completedIterations, int? iterationLimit)
+  {
+    if (iterationLimit is null or <= 0)
+    {
+      return null;
+    }
+
+    return Math.Min(100, (int)Math.Round((double)completedIterations / iterationLimit.Value * 100));
   }
 
   private static string FormatExecutionMode(ScenarioExecutionMode mode)

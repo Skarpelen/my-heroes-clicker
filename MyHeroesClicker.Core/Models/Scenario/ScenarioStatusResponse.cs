@@ -41,6 +41,11 @@ public sealed class ScenarioStatusResponse
   public IReadOnlyCollection<string> RunningScenarioKeys { get; init; } = [];
 
   /// <summary>
+  /// Статусы активных и последних завершенных запусков сценариев.
+  /// </summary>
+  public IReadOnlyCollection<ScenarioRunStatusResponse> ScenarioRuns { get; init; } = [];
+
+  /// <summary>
   /// Причину паузы.
   /// </summary>
   public string? PauseReason { get; init; }

@@ -23,12 +23,13 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
 
   const [isPreparing, setIsPreparing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const isRunning = status?.isRunning ?? false
   const runningScenarioKeys = status?.runningScenarioKeys ?? []
   const activeFarmScenarioKey = runningScenarioKeys.find((key) => key === 'farmCycle' || key === 'adventureFarmCycle' || key === 'farmBattle') ?? null
+  const activePreparationScenarioKey = runningScenarioKeys.find((key) => key === 'farmPreparation' || key === 'combatPreparation') ?? null
   const isFarmRunning = activeFarmScenarioKey !== null
   const isPaused = status?.isPaused ?? false
   const canStart = !isFarmRunning
+  const canPrepareMode = activePreparationScenarioKey === null && !isFarmRunning
 
   async function prepareMode(mode: 'farm' | 'combat') {
     setError(null)
@@ -122,12 +123,12 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
       </div>
 
       <div className="actions actions-secondary">
-        <Button variant="ghost" disabled={isPreparing || isRunning} onClick={() => void prepareMode('farm')}>
+        <Button variant="ghost" disabled={isPreparing || !canPrepareMode} onClick={() => void prepareMode('farm')}>
           <Sprout size={18} />
           Фарм сет
         </Button>
 
-        <Button variant="ghost" disabled={isPreparing || isRunning} onClick={() => void prepareMode('combat')}>
+        <Button variant="ghost" disabled={isPreparing || !canPrepareMode} onClick={() => void prepareMode('combat')}>
           <Shield size={18} />
           Боевой сет
         </Button>
