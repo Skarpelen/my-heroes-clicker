@@ -84,6 +84,16 @@ export async function resumeScenario(): Promise<void> {
   }
 }
 
+export async function resumeScenarioByKey(scenarioKey: string): Promise<void> {
+  const response = await fetch(`/api/scenario/${scenarioKey}/resume`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error(await readError(response, 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРЅСЏС‚СЊ РїР°СѓР·Сѓ.'))
+  }
+}
+
 async function startFarmScenario(
   url: string,
   options: FarmScenarioOptions,

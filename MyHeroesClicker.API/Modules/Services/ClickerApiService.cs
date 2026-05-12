@@ -62,14 +62,14 @@ public sealed class ClickerApiService : IAsyncDisposable
     {
       IsInitialized = true,
       IsRunning = _application.IsRunning,
-      IsPaused = _pauseService.IsPauseRequested,
+      IsPaused = _application.IsPaused,
       ActiveScenarioKey = _application.ActiveScenarioKey,
       ActiveScenarioName = _application.ActiveScenarioName,
       BrowserTabName = _application.BrowserTabName,
       RunningScenarioKeys = _application.RunningScenarioKeys,
       ScenarioRuns = _application.ScenarioRuns,
-      PauseReason = _pauseService.PauseReason,
-      PauseRequestedAt = _pauseService.PauseRequestedAt,
+      PauseReason = _application.PauseReason,
+      PauseRequestedAt = _application.PauseRequestedAt,
       LastUserEvent = _lastUserEvent,
       LastUserEventAt = _lastUserEventAt,
       IterationLimit = _application.IterationLimit,
@@ -122,7 +122,14 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   public void ResetPause()
   {
-    _pauseService.Reset();
+    if (_application is null)
+    {
+      _pauseService.Reset();
+
+      return;
+    }
+
+    _application.ResetPause();
   }
 
   public void Stop()
@@ -144,10 +151,22 @@ public sealed class ClickerApiService : IAsyncDisposable
     return stopped;
   }
 
+  public bool ResumeScenario(string scenarioKey)
+  {
+    var resumed = _application?.ResumeScenario(scenarioKey) ?? false;
+
+    if (resumed)
+    {
+      SetLastUserEvent($"Продолжение сценария: {scenarioKey}");
+    }
+
+    return resumed;
+  }
+
   public void Resume()
   {
     SetLastUserEvent("Продолжение после паузы");
-    _pauseService.Reset();
+    ResetPause();
   }
 
   public void SetLastUserEvent(string eventName)

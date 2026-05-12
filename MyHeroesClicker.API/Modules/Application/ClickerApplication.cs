@@ -35,6 +35,21 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
 
   public int CompletedIterations => GetStatusContext().CompletedIterations;
 
+  public bool IsPaused
+  {
+    get
+    {
+      lock (_sync)
+      {
+        return _runningScenarios.Values.Any(run => !run.Task.IsCompleted && run.Context.PauseService.IsPauseRequested);
+      }
+    }
+  }
+
+  public string? PauseReason => GetPausedRun()?.Context.PauseService.PauseReason;
+
+  public DateTimeOffset? PauseRequestedAt => GetPausedRun()?.Context.PauseService.PauseRequestedAt;
+
   public string? ActiveScenarioKey => GetActiveRun()?.Entry.Key;
 
   public string? ActiveScenarioName => GetActiveRun()?.Entry.Scenario.Name;
@@ -98,6 +113,34 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
       {
         run.RequestStop();
       }
+    }
+  }
+
+  public void ResetPause()
+  {
+    lock (_sync)
+    {
+      foreach (var run in _runningScenarios.Values.Where(run => !run.Task.IsCompleted))
+      {
+        run.Context.PauseService.Reset();
+      }
+    }
+  }
+
+  public bool ResumeScenario(string scenarioKey)
+  {
+    lock (_sync)
+    {
+      var runs = _runningScenarios.Values
+        .Where(run => run.Entry.Key == scenarioKey && !run.Task.IsCompleted && run.Context.PauseService.IsPauseRequested)
+        .ToArray();
+
+      foreach (var run in runs)
+      {
+        run.Context.PauseService.Reset();
+      }
+
+      return runs.Length > 0;
     }
   }
 
@@ -256,6 +299,14 @@ public sealed class ClickerApplication : IScenarioCoordinator, IDisposable
     lock (_sync)
     {
       return _runningScenarios.Values.FirstOrDefault(run => !run.Task.IsCompleted);
+    }
+  }
+
+  private ScenarioRunState? GetPausedRun()
+  {
+    lock (_sync)
+    {
+      return _runningScenarios.Values.FirstOrDefault(run => !run.Task.IsCompleted && run.Context.PauseService.IsPauseRequested);
     }
   }
 

@@ -193,6 +193,14 @@ public sealed class ScenarioController : ControllerBase
     return AcceptedAtAction(nameof(GetStatus));
   }
 
+  [HttpPost("{scenarioKey}/resume")]
+  public IActionResult ResumeScenario(string scenarioKey)
+  {
+    var resumed = _clicker.ResumeScenario(scenarioKey);
+
+    return resumed ? AcceptedAtAction(nameof(GetStatus)) : NotFound(new { error = "Сценарий не ожидает продолжения." });
+  }
+
   private async Task<IActionResult> StartScenarioAsync(
     Func<ClickerApplication, ScenarioCatalogEntry> selectScenario,
     string userEvent,

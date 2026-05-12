@@ -13,7 +13,7 @@ export function ScenarioStatusBar({ status, onStopAll, onStopScenario }: Scenari
   const completedIterations = status?.completedIterations ?? 0
   const pauseRequestedAt = formatDateTime(status?.pauseRequestedAt ?? null)
   const lastUserEventAt = formatDateTime(status?.lastUserEventAt ?? null)
-  const scenarioRuns = status?.scenarioRuns ?? []
+  const activeScenarioRuns = (status?.scenarioRuns ?? []).filter(isActiveRun)
   const progress = iterationLimit > 0
     ? Math.min(100, Math.round((completedIterations / iterationLimit) * 100))
     : 0
@@ -74,11 +74,11 @@ export function ScenarioStatusBar({ status, onStopAll, onStopScenario }: Scenari
       </dl>
 
       <div className="active-runs">
-        <h3>Запуски сценариев</h3>
+        <h3>Активные сценарии</h3>
 
-        {scenarioRuns.length === 0 && <p className="muted-line">Нет запусков сценариев.</p>}
+        {activeScenarioRuns.length === 0 && <p className="muted-line">Нет активных сценариев.</p>}
 
-        {scenarioRuns.map((run) => {
+        {activeScenarioRuns.map((run) => {
           const runProgress = run.progressPercent ?? 0
           const startedAt = formatDateTime(run.startedAt)
           const nextCheckAt = formatDateTime(run.nextCheckAt)
@@ -157,6 +157,10 @@ function formatDateTime(value: string | null) {
     month: '2-digit',
     second: '2-digit',
   }).format(new Date(value))
+}
+
+function isActiveRun(run: ScenarioStatus['scenarioRuns'][number]) {
+  return run.state === 'running' || run.state === 'paused' || run.state === 'stopping'
 }
 
 function formatRunState(state: string) {

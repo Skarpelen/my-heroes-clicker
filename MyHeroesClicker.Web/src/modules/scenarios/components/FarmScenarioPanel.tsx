@@ -4,7 +4,7 @@ import { Button } from '../../../shared/ui/Button'
 import {
   prepareCombatMode,
   prepareFarmMode,
-  resumeScenario,
+  resumeScenarioByKey,
   startAdventureFarmScenario,
   startBattleFarmScenario,
   stopScenarioByKey,
@@ -26,8 +26,9 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
   const runningScenarioKeys = status?.runningScenarioKeys ?? []
   const activeFarmScenarioKey = runningScenarioKeys.find((key) => key === 'farmCycle' || key === 'adventureFarmCycle' || key === 'farmBattle') ?? null
   const activePreparationScenarioKey = runningScenarioKeys.find((key) => key === 'farmPreparation' || key === 'combatPreparation') ?? null
+  const activeFarmRun = status?.scenarioRuns.find((run) => run.scenarioKey === activeFarmScenarioKey) ?? null
   const isFarmRunning = activeFarmScenarioKey !== null
-  const isPaused = status?.isPaused ?? false
+  const isPaused = activeFarmRun?.state === 'paused'
   const canStart = !isFarmRunning
   const canPrepareMode = activePreparationScenarioKey === null && !isFarmRunning
 
@@ -85,7 +86,11 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
     setError(null)
 
     try {
-      await resumeScenario()
+      if (activeFarmScenarioKey === null) {
+        return
+      }
+
+      await resumeScenarioByKey(activeFarmScenarioKey)
       await onRefreshStatus()
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Не удалось снять паузу.')

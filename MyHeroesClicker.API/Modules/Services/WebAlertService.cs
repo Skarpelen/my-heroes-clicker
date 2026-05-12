@@ -6,9 +6,15 @@ namespace MyHeroesClicker.API.Modules.Services;
 
 public sealed class WebAlertService : IAlertService
 {
+  private readonly AlertSoundService _soundService;
   private readonly object _sync = new();
   private readonly List<Channel<AlertEvent>> _subscribers = [];
   private long _lastEventId;
+
+  public WebAlertService(AlertSoundService soundService)
+  {
+    _soundService = soundService;
+  }
 
   public Task PublishAsync(
     AlertEventKind kind,
@@ -22,6 +28,8 @@ public sealed class WebAlertService : IAlertService
       Message = message,
       CreatedAt = DateTimeOffset.UtcNow
     };
+
+    _soundService.Play(kind);
 
     Channel<AlertEvent>[] subscribers;
 

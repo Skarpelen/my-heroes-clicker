@@ -32,6 +32,7 @@ public class Program
     });
 
     builder.Services.AddSingleton<IRunLogger, ScenarioRunLogger>();
+    builder.Services.AddSingleton<AlertSoundService>();
     builder.Services.AddSingleton<WebAlertService>();
     builder.Services.AddSingleton<IAlertService>(serviceProvider => serviceProvider.GetRequiredService<WebAlertService>());
     builder.Services.AddSingleton<IPauseService, WebPauseService>();

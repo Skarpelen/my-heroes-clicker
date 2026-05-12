@@ -89,7 +89,7 @@ public sealed class ClickerRuntime : IAsyncDisposable
       _humanDelay,
       logger,
       AlertService,
-      _pauseService,
+      new WebPauseService(),
       coordinator,
       _options,
       runOptions,

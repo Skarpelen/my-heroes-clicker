@@ -131,19 +131,26 @@ export function App() {
         <>
           {statusError && <p className="global-error">{statusError}</p>}
 
-          <ScenarioStatusBar
-            status={status}
-            onStopAll={() => void stopAllScenarios()}
-            onStopScenario={(scenarioKey) => void stopSingleScenario(scenarioKey)}
-          />
-          <AlertSoundPanel
-            settings={alertSoundSettings}
-            lastAlert={lastAlert}
-            onSettingsChange={setAlertSoundSettings}
-            onTest={testAlertSound}
-          />
-          <FarmScenarioPanel status={status} onRefreshStatus={refreshStatus} />
-          <WarScenarioPanel status={status} onRefreshStatus={refreshStatus} />
+          <div className="scenario-page-layout">
+            <div className="scenario-page-main">
+              <AlertSoundPanel
+                settings={alertSoundSettings}
+                lastAlert={lastAlert}
+                onSettingsChange={setAlertSoundSettings}
+                onTest={testAlertSound}
+              />
+              <FarmScenarioPanel status={status} onRefreshStatus={refreshStatus} />
+              <WarScenarioPanel status={status} onRefreshStatus={refreshStatus} />
+            </div>
+
+            <aside className="scenario-page-sidebar" aria-label="Статусы сценариев">
+              <ScenarioStatusBar
+                status={status}
+                onStopAll={() => void stopAllScenarios()}
+                onStopScenario={(scenarioKey) => void stopSingleScenario(scenarioKey)}
+              />
+            </aside>
+          </div>
         </>
       )}
 
