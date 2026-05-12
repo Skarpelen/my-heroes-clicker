@@ -7,6 +7,7 @@ using MyHeroesClicker.API.Modules.Middlewares;
 using MyHeroesClicker.API.Modules.Services;
 using MyHeroesClicker.Core.Confs;
 using Microsoft.AspNetCore.DataProtection;
+using System.Text;
 
 namespace MyHeroesClicker.API;
 
@@ -14,6 +15,9 @@ public class Program
 {
   public static void Main(string[] args)
   {
+    Console.OutputEncoding = Encoding.UTF8;
+    Console.InputEncoding = Encoding.UTF8;
+
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Logging.ClearProviders();
@@ -61,7 +65,11 @@ public class Program
 
     app.UseMiddleware<ApiExceptionMiddleware>();
 
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+
     app.MapControllers();
+    app.MapFallbackToFile("index.html");
 
     app.Run();
   }

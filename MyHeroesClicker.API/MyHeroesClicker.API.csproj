@@ -22,4 +22,12 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\MyHeroesClicker.Web\dist\**\*">
+      <Link>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
