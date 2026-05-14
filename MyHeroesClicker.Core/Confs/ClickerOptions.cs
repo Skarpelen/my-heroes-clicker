@@ -2,29 +2,29 @@
 
 public sealed class ClickerOptions
 {
-  public string BaseUrl { get; set; } = "https://myheroes.ru/";
+  public string BaseUrl { get; set; } = string.Empty;
 
-  public string BrowserKind { get; set; } = "chrome";
+  public string BrowserKind { get; set; } = string.Empty;
 
   public bool Headless { get; set; }
 
-  public int MinDelayMs { get; set; } = 100;
+  public int MinDelayMs { get; set; }
 
-  public int MaxDelayMs { get; set; } = 250;
+  public int MaxDelayMs { get; set; }
 
-  public int DefaultTimeoutMs { get; set; } = 10000;
+  public int DefaultTimeoutMs { get; set; }
 
-  public int HpRecoveryDelayMultiplier { get; set; } = 20;
+  public int HpRecoveryDelayMultiplier { get; set; }
 
-  public double MinAttackHealthPercent { get; set; } = 0.25;
+  public double MinAttackHealthPercent { get; set; }
 
-  public double MaxAttackHealthPercent { get; set; } = 0.30;
+  public double MaxAttackHealthPercent { get; set; }
 
-  public int MaxStepRetryCount { get; set; } = 10;
+  public int MaxStepRetryCount { get; set; }
 
-  public int RetryDelayMs { get; set; } = 1000;
+  public int RetryDelayMs { get; set; }
 
-  public int AuthenticationRetryDelayMs { get; set; } = 60000;
+  public int AuthenticationRetryDelayMs { get; set; }
 
   public string UserDataDir { get; set; } = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),

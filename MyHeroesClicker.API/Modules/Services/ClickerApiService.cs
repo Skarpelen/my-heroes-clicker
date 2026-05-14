@@ -99,11 +99,14 @@ public sealed class ClickerApiService : IAsyncDisposable
         return _application;
       }
 
-      var activeAccount = await ApplyStoredSettingsAsync(cancellationToken);
-      var scenarioConfiguration = await LoadScenarioConfigurationAsync(activeAccount.Id, cancellationToken);
+      var storedSettings = await ApplyStoredSettingsAsync(cancellationToken);
+      var scenarioConfiguration = await LoadScenarioConfigurationAsync(
+        storedSettings.Account.Id,
+        storedSettings.Settings,
+        cancellationToken);
       _runtime = await ClickerRuntime.StartAsync(
         _options,
-        activeAccount,
+        storedSettings.Account,
         scenarioConfiguration,
         _logger,
         _alertService,
@@ -209,12 +212,12 @@ public sealed class ClickerApiService : IAsyncDisposable
     }
     else
     {
-      var activeAccount = await ApplyStoredSettingsAsync(cancellationToken);
+      var storedSettings = await ApplyStoredSettingsAsync(cancellationToken);
 
       await using var runtime = await ClickerRuntime.StartAsync(
         _options,
-        activeAccount,
-        CreateEmptyScenarioConfiguration(),
+        storedSettings.Account,
+        CreateEmptyScenarioConfiguration(storedSettings.Settings),
         _logger,
         _alertService,
         _pauseService,
@@ -244,7 +247,7 @@ public sealed class ClickerApiService : IAsyncDisposable
     return await equipmentSets.GetSlotsAsync(equipmentSetId, cancellationToken);
   }
 
-  private static ScenarioConfiguration CreateEmptyScenarioConfiguration()
+  private static ScenarioConfiguration CreateEmptyScenarioConfiguration(AppSettingsResponse settings)
   {
     return new ScenarioConfiguration
     {
@@ -260,8 +263,8 @@ public sealed class ClickerApiService : IAsyncDisposable
       },
       War = new WarModeConfiguration
       {
-        CheckIntervalMinutes = 15,
-        CombatPreparationSecondsBeforeRegistrationEnd = 60
+        CheckIntervalMinutes = settings.WarCheckIntervalMinutes,
+        CombatPreparationSecondsBeforeRegistrationEnd = settings.WarCombatPreparationSecondsBeforeRegistrationEnd
       }
     };
   }
@@ -278,7 +281,7 @@ public sealed class ClickerApiService : IAsyncDisposable
     _initializationSync.Dispose();
   }
 
-  private async Task<AccountCredentialsResponse> ApplyStoredSettingsAsync(CancellationToken cancellationToken)
+  private async Task<StoredSettings> ApplyStoredSettingsAsync(CancellationToken cancellationToken)
   {
     using var scope = _scopeFactory.CreateScope();
     var settingsRepository = scope.ServiceProvider.GetRequiredService<IAppSettingsRepository>();
@@ -314,7 +317,7 @@ public sealed class ClickerApiService : IAsyncDisposable
       throw new InvalidOperationException("У активного аккаунта не заполнен пароль.");
     }
 
-    return account;
+    return new StoredSettings(settings, account);
   }
 
   private void ApplySettings(AppSettingsResponse settings)
@@ -341,18 +344,12 @@ public sealed class ClickerApiService : IAsyncDisposable
 
   private async Task<ScenarioConfiguration> LoadScenarioConfigurationAsync(
     long accountId,
+    AppSettingsResponse settings,
     CancellationToken cancellationToken)
   {
     using var scope = _scopeFactory.CreateScope();
-    var settingsRepository = scope.ServiceProvider.GetRequiredService<IAppSettingsRepository>();
     var equipmentSets = scope.ServiceProvider.GetRequiredService<IEquipmentSetRepository>();
     var techniquePresets = scope.ServiceProvider.GetRequiredService<ITechniquePresetRepository>();
-    var settings = await settingsRepository.GetAsync(cancellationToken);
-
-    if (settings is null)
-    {
-      throw new InvalidOperationException("Настройки приложения не найдены. Запустите миграции БД.");
-    }
 
     return new ScenarioConfiguration
     {
@@ -460,4 +457,8 @@ public sealed class ClickerApiService : IAsyncDisposable
       .Where(configuration => getAccountId(configuration) is null)
       .FirstOrDefault();
   }
+
+  private sealed record StoredSettings(
+    AppSettingsResponse Settings,
+    AccountCredentialsResponse Account);
 }

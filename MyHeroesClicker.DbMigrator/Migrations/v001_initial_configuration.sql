@@ -11,7 +11,7 @@ CREATE TABLE app_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   active_account_id INTEGER NULL REFERENCES accounts(id) ON DELETE SET NULL,
   base_url TEXT NOT NULL,
-  browser_kind TEXT NOT NULL DEFAULT 'chrome' CHECK (browser_kind IN ('chromium', 'chrome', 'edge', 'firefox', 'webkit')),
+  browser_kind TEXT NOT NULL CHECK (browser_kind IN ('chromium', 'chrome', 'edge', 'firefox', 'webkit')),
   headless INTEGER NOT NULL,
   user_data_dir TEXT NULL,
   min_delay_ms INTEGER NOT NULL,
@@ -104,13 +104,13 @@ VALUES (
   'chrome',
   0,
   NULL,
-  100,
   250,
+  650,
   10000,
   20,
   0.25,
   0.30,
   10,
-  1000,
-  60000
+  2500,
+  150000
 );

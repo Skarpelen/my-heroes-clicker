@@ -23,19 +23,10 @@ public sealed class BrowserSession : IAsyncDisposable
 
     Directory.CreateDirectory(userDataDir);
 
-    var browserType = GetBrowserType(playwright, options.BrowserKind, out var channel);
-    var context = await browserType.LaunchPersistentContextAsync(userDataDir, new()
-    {
-      Channel = channel,
-      Headless = options.Headless,
-      SlowMo = 50,
-      Locale = "ru-RU",
-      ViewportSize = new()
-      {
-        Width = 1280,
-        Height = 900
-      }
-    });
+    var browserKind = options.BrowserKind.Trim().ToLowerInvariant();
+    var browserType = GetBrowserType(playwright, browserKind, out var channel);
+    var launchOptions = CreateLaunchOptions(options, browserKind, channel);
+    var context = await browserType.LaunchPersistentContextAsync(userDataDir, launchOptions);
 
     context.SetDefaultTimeout(options.DefaultTimeoutMs);
     context.SetDefaultNavigationTimeout(options.DefaultTimeoutMs);
@@ -52,11 +43,38 @@ public sealed class BrowserSession : IAsyncDisposable
     await _context.DisposeAsync();
   }
 
+  private static BrowserTypeLaunchPersistentContextOptions CreateLaunchOptions(
+    ClickerOptions options,
+    string browserKind,
+    string? channel)
+  {
+    var launchOptions = new BrowserTypeLaunchPersistentContextOptions
+    {
+      Channel = channel,
+      Headless = options.Headless,
+      SlowMo = 50,
+      Locale = "ru-RU",
+      ViewportSize = new()
+      {
+        Width = 1280,
+        Height = 900
+      }
+    };
+
+    if (IsChromiumBrowser(browserKind))
+    {
+      launchOptions.Args = ["--disable-blink-features=AutomationControlled"];
+      launchOptions.IgnoreDefaultArgs = ["--enable-automation"];
+    }
+
+    return launchOptions;
+  }
+
   private static IBrowserType GetBrowserType(IPlaywright playwright, string browserKind, out string? channel)
   {
     channel = null;
 
-    return browserKind.Trim().ToLowerInvariant() switch
+    return browserKind switch
     {
       "chromium" => playwright.Chromium,
       "chrome" => GetChromiumChannel(playwright, "chrome", out channel),
@@ -65,6 +83,11 @@ public sealed class BrowserSession : IAsyncDisposable
       "webkit" => playwright.Webkit,
       _ => throw new InvalidOperationException($"Неподдерживаемый браузер: {browserKind}.")
     };
+  }
+
+  private static bool IsChromiumBrowser(string browserKind)
+  {
+    return browserKind is "chromium" or "chrome" or "edge";
   }
 
   private static IBrowserType GetChromiumChannel(IPlaywright playwright, string channelName, out string channel)

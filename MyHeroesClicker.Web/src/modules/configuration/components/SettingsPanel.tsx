@@ -40,24 +40,6 @@ const emptyAccount: AccountPayload = {
   isEnabled: true,
 }
 
-const defaultSettings: UpdateAppSettingsRequest = {
-  baseUrl: 'https://myheroes.ru/',
-  browserKind: 'chrome',
-  headless: false,
-  userDataDir: '',
-  minDelayMs: 100,
-  maxDelayMs: 250,
-  defaultTimeoutMs: 10000,
-  hpRecoveryDelayMultiplier: 20,
-  minAttackHealthPercent: 0.25,
-  maxAttackHealthPercent: 0.3,
-  maxStepRetryCount: 10,
-  retryDelayMs: 1000,
-  authenticationRetryDelayMs: 60000,
-  warCheckIntervalMinutes: 15,
-  warCombatPreparationSecondsBeforeRegistrationEnd: 60,
-}
-
 const techniqueNames = [
   'Подножка',
   'Отдышка',
@@ -82,7 +64,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   const [tab, setTab] = useState<SettingsTab>('accounts')
   const [accounts, setAccounts] = useState<Account[]>([])
   const [settings, setSettings] = useState<AppSettings | null>(null)
-  const [settingsForm, setSettingsForm] = useState<UpdateAppSettingsRequest>(defaultSettings)
+  const [settingsForm, setSettingsForm] = useState<UpdateAppSettingsRequest | null>(null)
   const [equipmentSets, setEquipmentSets] = useState<EquipmentSet[]>([])
   const [techniquePresets, setTechniquePresets] = useState<TechniquePreset[]>([])
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null)
@@ -216,6 +198,11 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
   }
 
   async function saveSettings() {
+    if (settingsForm === null) {
+      setError('Настройки еще не загружены.')
+      return
+    }
+
     await saveAsync(async () => {
       await updateAppSettings(settingsForm)
       await refreshConfiguration()
@@ -310,6 +297,10 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
 
     setSelectedAccountId(accountId)
     setAccountForm(account ? accountToForm(account) : emptyAccount)
+  }
+
+  function updateSettingsForm(update: Partial<UpdateAppSettingsRequest>) {
+    setSettingsForm((current) => current === null ? current : { ...current, ...update })
   }
 
   return (
@@ -462,7 +453,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
         </div>
       )}
 
-      {tab === 'advanced' && (
+      {tab === 'advanced' && settingsForm !== null && (
         <div className="settings-form">
           <div className="danger-note">
             <AlertTriangle size={22} />
@@ -477,7 +468,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               Base URL
               <input
                 value={settingsForm.baseUrl}
-                onChange={(event) => setSettingsForm((current) => ({ ...current, baseUrl: event.target.value }))}
+                onChange={(event) => updateSettingsForm({ baseUrl: event.target.value })}
               />
               <small>
                 Адрес игры, к которому будут относиться переходы и прямые HTTP-запросы. Менять стоит только при переезде домена.
@@ -488,7 +479,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               Браузер
               <select
                 value={settingsForm.browserKind}
-                onChange={(event) => setSettingsForm((current) => ({ ...current, browserKind: event.target.value }))}>
+                onChange={(event) => updateSettingsForm({ browserKind: event.target.value })}>
                 <option value="chrome">Google Chrome</option>
                 <option value="edge">Microsoft Edge</option>
                 <option value="chromium">Chromium Playwright</option>
@@ -505,7 +496,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               Профиль браузера
               <input
                 value={settingsForm.userDataDir ?? ''}
-                onChange={(event) => setSettingsForm((current) => ({ ...current, userDataDir: event.target.value }))}
+                onChange={(event) => updateSettingsForm({ userDataDir: event.target.value })}
               />
               <small>
                 Путь к папке профиля выбранного браузера, где приложение хранит cookies, сессию и локальные данные.
@@ -517,69 +508,69 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
               label="Мин. задержка, мс"
               description="Нижняя граница случайной паузы между действиями. Ноль и очень маленькие значения делают поведение резким."
               value={settingsForm.minDelayMs}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, minDelayMs: value }))}
+              onChange={(value) => updateSettingsForm({ minDelayMs: value })}
             />
             <NumberField
               label="Макс. задержка, мс"
               description="Верхняя граница случайной паузы между действиями. Должна быть не меньше минимальной задержки."
               value={settingsForm.maxDelayMs}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, maxDelayMs: value }))}
+              onChange={(value) => updateSettingsForm({ maxDelayMs: value })}
             />
             <NumberField
               label="Таймаут, мс"
               description="Сколько ждать элементы страницы и загрузку навигации перед ошибкой Playwright."
               value={settingsForm.defaultTimeoutMs}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, defaultTimeoutMs: value }))}
+              onChange={(value) => updateSettingsForm({ defaultTimeoutMs: value })}
             />
             <NumberField
               label="Множитель восстановления HP"
               description="Коэффициент ожидания восстановления здоровья после боя. Больше значение - дольше пауза."
               value={settingsForm.hpRecoveryDelayMultiplier}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, hpRecoveryDelayMultiplier: value }))}
+              onChange={(value) => updateSettingsForm({ hpRecoveryDelayMultiplier: value })}
             />
             <NumberField
               label="Мин. HP для атаки"
               description="Нижний порог здоровья для продолжения атак. Значение задается долей: 0.25 означает 25%."
               step={0.01}
               value={settingsForm.minAttackHealthPercent}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, minAttackHealthPercent: value }))}
+              onChange={(value) => updateSettingsForm({ minAttackHealthPercent: value })}
             />
             <NumberField
               label="Макс. HP для атаки"
               description="Верхний порог случайного выбора здоровья для атаки. Значение задается долей: 0.30 означает 30%."
               step={0.01}
               value={settingsForm.maxAttackHealthPercent}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, maxAttackHealthPercent: value }))}
+              onChange={(value) => updateSettingsForm({ maxAttackHealthPercent: value })}
             />
             <NumberField
               label="Повторов шага"
               description="Сколько раз повторять шаг сценария при таймауте или временной ошибке перед остановкой."
               value={settingsForm.maxStepRetryCount}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, maxStepRetryCount: value }))}
+              onChange={(value) => updateSettingsForm({ maxStepRetryCount: value })}
             />
             <NumberField
               label="Retry delay, мс"
               description="Пауза между повторными попытками после временной ошибки."
               value={settingsForm.retryDelayMs}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, retryDelayMs: value }))}
+              onChange={(value) => updateSettingsForm({ retryDelayMs: value })}
             />
             <NumberField
               label="Повтор авторизации, мс"
               description="Пауза перед повторной попыткой авторизации, если сессия потеряна."
               value={settingsForm.authenticationRetryDelayMs}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, authenticationRetryDelayMs: value }))}
+              onChange={(value) => updateSettingsForm({ authenticationRetryDelayMs: value })}
             />
             <NumberField
               label="Проверка войны, мин"
               description="Как часто проверять страницу войны после окончания войны, при доступной атаке или неизвестном состоянии. Во время кулдауна используется известный таймер до следующей битвы."
               value={settingsForm.warCheckIntervalMinutes}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, warCheckIntervalMinutes: value }))}
+              onChange={(value) => updateSettingsForm({ warCheckIntervalMinutes: value })}
             />
             <NumberField
               label="Подготовка к войне, сек"
               description="За сколько секунд до начала боя остановить активный фарм и надеть боевой сет."
               value={settingsForm.warCombatPreparationSecondsBeforeRegistrationEnd}
-              onChange={(value) => setSettingsForm((current) => ({ ...current, warCombatPreparationSecondsBeforeRegistrationEnd: value }))}
+              onChange={(value) => updateSettingsForm({ warCombatPreparationSecondsBeforeRegistrationEnd: value })}
             />
           </div>
 
@@ -587,7 +578,7 @@ export function SettingsPanel({ onConfigurationChanged }: SettingsPanelProps) {
             title="Headless-режим"
             description="Запускать браузер без видимого окна."
             checked={settingsForm.headless}
-            onChange={(checked) => setSettingsForm((current) => ({ ...current, headless: checked }))}
+            onChange={(checked) => updateSettingsForm({ headless: checked })}
           />
 
           <div className="actions">
