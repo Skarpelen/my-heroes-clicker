@@ -40,11 +40,32 @@
           </StackPanel>
           <TextBlock x:Name="StatusTextBlock"
                      Visibility="Collapsed" />
+          <TextBlock x:Name="UpdateStatusTextBlock"
+                     Margin="0,4,0,0"
+                     FontSize="13"
+                     Foreground="#3d5872"
+                     TextWrapping="Wrap" />
           <TextBlock x:Name="ErrorTextBlock"
                      Margin="0,4,0,0"
                      FontSize="13"
                      Foreground="#b3261e"
                      TextWrapping="Wrap" />
+          <Expander x:Name="ChangelogExpander"
+                    Margin="0,6,0,0"
+                    Header="Что нового"
+                    IsExpanded="False"
+                    Visibility="Collapsed">
+            <TextBox x:Name="ChangelogTextBox"
+                     MaxHeight="160"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     Foreground="#243242"
+                     Background="#f7f9fb"
+                     BorderBrush="#d7dde5"
+                     IsReadOnly="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto" />
+          </Expander>
           <Expander x:Name="DiagnosticsExpander"
                     Margin="0,6,0,0"
                     Header="Диагностика"
@@ -80,9 +101,17 @@
                   IsEnabled="False" />
           <Button x:Name="CheckUpdatesButton"
                   Width="155"
+                  Margin="0,0,8,0"
                   Padding="10,6"
                   Click="CheckUpdatesButton_OnClick"
                   Content="Проверить обновления" />
+          <Button x:Name="InstallUpdateButton"
+                  Width="145"
+                  Padding="10,6"
+                  Click="InstallUpdateButton_OnClick"
+                  Content="Обновить"
+                  IsEnabled="False"
+                  Visibility="Collapsed" />
         </StackPanel>
       </Grid>
     </Border>

@@ -1,0 +1,134 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - "dev/**"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: windows-latest
+    if: ${{ startsWith(github.ref_name, 'dev/') }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        run: |
+          $branch = "${{ github.ref_name }}"
+
+          if ($branch -notmatch '^dev/(?<major>\d+)\.(?<minor>\d+)$') {
+            "release_enabled=false" >> $env:GITHUB_OUTPUT
+            Write-Host "Branch '$branch' does not match dev/x.y. Release skipped."
+            exit 0
+          }
+
+          $major = [int]$Matches.major
+          $minor = [int]$Matches.minor
+          $maxBuild = 0
+
+          git tag --list 'v*.*.*' | ForEach-Object {
+            if ($_ -match '^v\d+\.\d+\.(?<build>\d+)$') {
+              $maxBuild = [Math]::Max($maxBuild, [int]$Matches.build)
+            }
+          }
+
+          $build = $maxBuild + 1
+          $version = "$major.$minor.$build"
+          $tag = "v$version"
+
+          "release_enabled=true" >> $env:GITHUB_OUTPUT
+          "major=$major" >> $env:GITHUB_OUTPUT
+          "minor=$minor" >> $env:GITHUB_OUTPUT
+          "build=$build" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "prerelease=$(($major -eq 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET
+        if: steps.version.outputs.release_enabled == 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        if: steps.version.outputs.release_enabled == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: MyHeroesClicker.Web/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.version.outputs.release_enabled == 'true'
+        run: npm ci
+        working-directory: MyHeroesClicker.Web
+
+      - name: Build frontend
+        if: steps.version.outputs.release_enabled == 'true'
+        run: npm run build
+        working-directory: MyHeroesClicker.Web
+
+      - name: Restore .NET
+        if: steps.version.outputs.release_enabled == 'true'
+        run: dotnet restore MyHeroesClicker.slnx
+
+      - name: Build .NET
+        if: steps.version.outputs.release_enabled == 'true'
+        run: dotnet build MyHeroesClicker.slnx --configuration Release --no-restore /p:Version=${{ steps.version.outputs.version }} /p:FileVersion=${{ steps.version.outputs.version }} /p:AssemblyVersion=${{ steps.version.outputs.version }}
+
+      - name: Publish application
+        if: steps.version.outputs.release_enabled == 'true'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $packageRoot = Join-Path $env:RUNNER_TEMP "my-heroes-clicker"
+
+          New-Item -ItemType Directory -Force $packageRoot | Out-Null
+
+          dotnet publish MyHeroesClicker.Launcher/MyHeroesClicker.Launcher.csproj --configuration Release --runtime win-x64 --self-contained false --output $packageRoot /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          dotnet publish MyHeroesClicker.API/MyHeroesClicker.API.csproj --configuration Release --runtime win-x64 --self-contained false --output (Join-Path $packageRoot "MyHeroesClicker.API") /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          dotnet publish MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator.csproj --configuration Release --runtime win-x64 --self-contained false --output (Join-Path $packageRoot "MyHeroesClicker.DbMigrator") /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          New-Item -ItemType Directory -Force $artifactDir | Out-Null
+          Compress-Archive -Path (Join-Path $packageRoot "*") -DestinationPath (Join-Path $artifactDir "my-heroes-clicker-win-x64.zip") -Force
+
+      - name: Build changelog
+        if: steps.version.outputs.release_enabled == 'true'
+        id: changelog
+        shell: pwsh
+        run: |
+          $previousTag = git tag --list 'v*.*.*' --sort=-v:refname | Select-Object -First 1
+          $range = if ([string]::IsNullOrWhiteSpace($previousTag)) { "HEAD" } else { "$previousTag..HEAD" }
+          $commits = git log $range --pretty=format:'- %s (%h)'
+          $body = if ([string]::IsNullOrWhiteSpace($commits)) {
+            "- Technical release."
+          } else {
+            $commits -join [Environment]::NewLine
+          }
+
+          $bodyPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
+          "# My Heroes Clicker ${{ steps.version.outputs.version }}" | Set-Content $bodyPath -Encoding utf8
+          "" | Add-Content $bodyPath -Encoding utf8
+          $body | Add-Content $bodyPath -Encoding utf8
+          "body_path=$bodyPath" >> $env:GITHUB_OUTPUT
+
+      - name: Create GitHub release
+        if: steps.version.outputs.release_enabled == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.version }}
+          body_path: ${{ steps.changelog.outputs.body_path }}
+          files: artifacts/my-heroes-clicker-win-x64.zip
+          prerelease: ${{ steps.version.outputs.prerelease }}

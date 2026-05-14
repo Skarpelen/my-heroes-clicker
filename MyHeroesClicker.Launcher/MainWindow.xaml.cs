@@ -3,10 +3,10 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 using System.Windows;
 using Microsoft.Web.WebView2.Core;
+using MyHeroesClicker.Launcher.Updates;
 
 namespace MyHeroesClicker.Launcher;
 
@@ -17,9 +17,18 @@ public partial class MainWindow : Window
     Timeout = TimeSpan.FromSeconds(2)
   };
 
+  private readonly HttpClient _updateHttpClient = new()
+  {
+    Timeout = TimeSpan.FromMinutes(5)
+  };
+
+  private readonly ReleaseUpdateService _releaseUpdateService;
   private Process? _backendProcess;
   private Uri? _applicationUri;
+  private ReleaseUpdate? _availableUpdate;
   private bool _isStarting;
+  private bool _isCheckingUpdates;
+  private bool _isInstallingUpdate;
   private readonly string _logFilePath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "MyHeroesClicker",
@@ -30,10 +39,21 @@ public partial class MainWindow : Window
   {
     InitializeComponent();
 
-    var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
-    VersionTextBlock.Text = $"Версия {version}";
+    _releaseUpdateService = new ReleaseUpdateService(_updateHttpClient);
+
+    var version = ReleaseUpdateService.GetCurrentVersion();
+    VersionTextBlock.Text = version.Major == 0
+      ? $"Версия {version} beta"
+      : $"Версия {version}";
     SetStatus("Лаунчер готов к запуску.");
     AppendDiagnostic($"Лог лаунчера: {_logFilePath}");
+
+    Loaded += MainWindow_OnLoaded;
+  }
+
+  private async void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
+  {
+    await CheckUpdatesAsync(showUpToDateMessage: false);
   }
 
   private async void StartButton_OnClick(object sender, RoutedEventArgs e)
@@ -256,9 +276,38 @@ public partial class MainWindow : Window
     OpenExternalUri(_applicationUri);
   }
 
-  private void CheckUpdatesButton_OnClick(object sender, RoutedEventArgs e)
+  private async void CheckUpdatesButton_OnClick(object sender, RoutedEventArgs e)
   {
-    SetStatus("Проверка обновлений будет добавлена на этапе упаковки и релизов.");
+    await CheckUpdatesAsync(showUpToDateMessage: true);
+  }
+
+  private async void InstallUpdateButton_OnClick(object sender, RoutedEventArgs e)
+  {
+    if (_availableUpdate is null || _isInstallingUpdate)
+    {
+      return;
+    }
+
+    _isInstallingUpdate = true;
+    CheckUpdatesButton.IsEnabled = false;
+    InstallUpdateButton.IsEnabled = false;
+    UpdateStatusTextBlock.Text = $"Скачивание версии {_availableUpdate.LatestVersion}...";
+
+    try
+    {
+      await _releaseUpdateService.ApplyAsync(_availableUpdate, CancellationToken.None);
+      UpdateStatusTextBlock.Text = "Обновление скачано. Лаунчер перезапустится.";
+      StopBackend();
+      Application.Current.Shutdown();
+    }
+    catch (Exception exception)
+    {
+      ErrorTextBlock.Text = $"Не удалось установить обновление. {exception.Message}";
+      AppendDiagnostic(ErrorTextBlock.Text);
+      CheckUpdatesButton.IsEnabled = true;
+      InstallUpdateButton.IsEnabled = true;
+      _isInstallingUpdate = false;
+    }
   }
 
   private void Browser_OnNavigationStarting(object? sender, CoreWebView2NavigationStartingEventArgs e)
@@ -283,6 +332,78 @@ public partial class MainWindow : Window
   {
     StopBackend();
     _httpClient.Dispose();
+    _updateHttpClient.Dispose();
+  }
+
+  private async Task CheckUpdatesAsync(bool showUpToDateMessage)
+  {
+    if (_isCheckingUpdates)
+    {
+      return;
+    }
+
+    _isCheckingUpdates = true;
+    CheckUpdatesButton.IsEnabled = false;
+    UpdateStatusTextBlock.Text = "Проверяю обновления...";
+
+    try
+    {
+      var update = await _releaseUpdateService.CheckAsync(CancellationToken.None);
+      _availableUpdate = update is { IsUpdateAvailable: true } ? update : null;
+      RenderUpdateState(update, showUpToDateMessage);
+    }
+    catch (Exception exception)
+    {
+      UpdateStatusTextBlock.Text = "Не удалось проверить обновления.";
+      AppendDiagnostic($"Проверка обновлений завершилась с ошибкой: {exception.Message}");
+    }
+    finally
+    {
+      CheckUpdatesButton.IsEnabled = true;
+      _isCheckingUpdates = false;
+    }
+  }
+
+  private void RenderUpdateState(ReleaseUpdate? update, bool showUpToDateMessage)
+  {
+    InstallUpdateButton.Visibility = Visibility.Collapsed;
+    InstallUpdateButton.IsEnabled = false;
+    ChangelogExpander.Visibility = Visibility.Collapsed;
+    ChangelogTextBox.Text = string.Empty;
+
+    if (update is null)
+    {
+      UpdateStatusTextBlock.Text = showUpToDateMessage
+        ? "Опубликованных релизов пока не найдено."
+        : string.Empty;
+
+      return;
+    }
+
+    if (!update.IsUpdateAvailable)
+    {
+      UpdateStatusTextBlock.Text = showUpToDateMessage
+        ? $"Установлена актуальная версия {update.CurrentVersion}."
+        : string.Empty;
+
+      return;
+    }
+
+    var versionLineMessage = update.IsNewVersionLine
+      ? " Доступна новая ветка версии, обновление рекомендуется."
+      : " Доступно патч-обновление.";
+
+    UpdateStatusTextBlock.Text = $"Доступна версия {update.LatestVersion}.{versionLineMessage}";
+    InstallUpdateButton.Visibility = Visibility.Visible;
+    InstallUpdateButton.IsEnabled = true;
+
+    if (string.IsNullOrWhiteSpace(update.Changelog))
+    {
+      return;
+    }
+
+    ChangelogTextBox.Text = update.Changelog.Trim();
+    ChangelogExpander.Visibility = Visibility.Visible;
   }
 
   private void StopBackend()
