@@ -1,7 +1,4 @@
 using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
-using System.Net.Http;
 using System.Net.Http.Json;
 using System.Reflection;
 using System.Text;
@@ -11,7 +8,7 @@ namespace MyHeroesClicker.Launcher.Updates;
 public sealed class ReleaseUpdateService
 {
   private const string ReleasesUrl = "https://api.github.com/repos/Skarpelen/my-heroes-clicker/releases?per_page=30";
-  private const string AssetName = "my-heroes-clicker-win-x64.zip";
+  private const string WindowsSetupAssetName = "MyHeroesClickerSetup-win-x64.exe";
 
   private readonly HttpClient _httpClient;
 
@@ -34,6 +31,13 @@ public sealed class ReleaseUpdateService
 
   public async Task<ReleaseUpdate?> CheckAsync(CancellationToken cancellationToken)
   {
+    var assetName = GetUpdateAssetName();
+
+    if (assetName is null)
+    {
+      return null;
+    }
+
     using var request = new HttpRequestMessage(HttpMethod.Get, ReleasesUrl);
     request.Headers.UserAgent.ParseAdd("MyHeroesClicker.Launcher");
     request.Headers.Accept.ParseAdd("application/vnd.github+json");
@@ -53,7 +57,7 @@ public sealed class ReleaseUpdateService
       {
         Release = item,
         Version = ReleaseVersion.TryParse(item.TagName, out var version) ? version : null,
-        Asset = item.Assets.FirstOrDefault(asset => string.Equals(asset.Name, AssetName, StringComparison.OrdinalIgnoreCase))
+        Asset = item.Assets.FirstOrDefault(asset => string.Equals(asset.Name, assetName, StringComparison.OrdinalIgnoreCase))
       })
       .Where(item => item.Version is not null && item.Asset is not null && !string.IsNullOrWhiteSpace(item.Asset.BrowserDownloadUrl))
       .OrderByDescending(item => item.Version)
@@ -75,9 +79,13 @@ public sealed class ReleaseUpdateService
 
   public async Task ApplyAsync(ReleaseUpdate update, CancellationToken cancellationToken)
   {
+    if (!OperatingSystem.IsWindows())
+    {
+      throw new PlatformNotSupportedException("Автообновление через установщик пока поддерживается только на Windows.");
+    }
+
     var updateRoot = Path.Combine(Path.GetTempPath(), "MyHeroesClicker", "updates", update.LatestVersion.ToString());
-    var archivePath = Path.Combine(updateRoot, update.AssetName);
-    var extractPath = Path.Combine(updateRoot, "package");
+    var setupPath = Path.Combine(updateRoot, update.AssetName);
 
     if (Directory.Exists(updateRoot))
     {
@@ -86,33 +94,31 @@ public sealed class ReleaseUpdateService
 
     Directory.CreateDirectory(updateRoot);
 
-    await using (var archiveStream = await _httpClient.GetStreamAsync(update.AssetDownloadUrl, cancellationToken))
-    await using (var fileStream = File.Create(archivePath))
+    await using (var setupStream = await _httpClient.GetStreamAsync(update.AssetDownloadUrl, cancellationToken))
+    await using (var fileStream = File.Create(setupPath))
     {
-      await archiveStream.CopyToAsync(fileStream, cancellationToken);
+      await setupStream.CopyToAsync(fileStream, cancellationToken);
     }
 
-    ZipFile.ExtractToDirectory(archivePath, extractPath);
-
-    StartUpdateScript(extractPath);
+    StartUpdateScript(setupPath);
   }
 
-  private static void StartUpdateScript(string sourceDirectory)
+  private static void StartUpdateScript(string setupPath)
   {
-    var targetDirectory = AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-    var launcherPath = Environment.ProcessPath ?? Path.Combine(targetDirectory, "MyHeroesClicker.Launcher.exe");
+    var launcherPath = Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "My Heroes Clicker.exe");
     var scriptPath = Path.Combine(Path.GetTempPath(), "MyHeroesClicker", "updates", $"apply-{Guid.NewGuid():N}.ps1");
     var currentProcessId = Environment.ProcessId;
     var script = $$"""
       $ErrorActionPreference = 'Stop'
       $processId = {{currentProcessId}}
-      $source = '{{EscapePowerShellSingleQuotedString(sourceDirectory)}}'
-      $target = '{{EscapePowerShellSingleQuotedString(targetDirectory)}}'
+      $setup = '{{EscapePowerShellSingleQuotedString(setupPath)}}'
       $launcher = '{{EscapePowerShellSingleQuotedString(launcherPath)}}'
 
       Wait-Process -Id $processId -ErrorAction SilentlyContinue
-      Get-ChildItem -LiteralPath $source -Force | Copy-Item -Destination $target -Recurse -Force
-      Start-Process -FilePath $launcher -WorkingDirectory $target
+      Start-Process -FilePath $setup -ArgumentList '/SP- /SILENT /NORESTART' -Wait
+      if (Test-Path -LiteralPath $launcher) {
+        Start-Process -FilePath $launcher
+      }
       """;
 
     Directory.CreateDirectory(Path.GetDirectoryName(scriptPath)!);
@@ -129,5 +135,12 @@ public sealed class ReleaseUpdateService
   private static string EscapePowerShellSingleQuotedString(string value)
   {
     return value.Replace("'", "''", StringComparison.Ordinal);
+  }
+
+  private static string? GetUpdateAssetName()
+  {
+    return OperatingSystem.IsWindows()
+      ? WindowsSetupAssetName
+      : null;
   }
 }

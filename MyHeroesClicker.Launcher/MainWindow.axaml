@@ -1,0 +1,180 @@
+<Window x:Class="MyHeroesClicker.Launcher.MainWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="My Heroes Clicker"
+        Width="1180"
+        Height="760"
+        MinWidth="920"
+        MinHeight="620"
+        WindowStartupLocation="CenterScreen">
+  <Grid Background="#f4f6f8"
+        RowDefinitions="Auto,*">
+    <Border Grid.Row="0"
+            Padding="16"
+            Background="#ffffff"
+            BorderBrush="#d7dde5"
+            BorderThickness="0,0,0,1">
+      <Grid RowDefinitions="Auto,Auto,Auto"
+            ColumnDefinitions="*,Auto">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal"
+                      VerticalAlignment="Center">
+            <TextBlock Text="My Heroes Clicker"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Foreground="#17202a" />
+            <Border x:Name="BetaBadge"
+                    Margin="8,1,0,0"
+                    Padding="5,1"
+                    Background="#e6f4ea"
+                    BorderBrush="#34a853"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    IsVisible="False">
+              <TextBlock Text="beta"
+                         FontSize="11"
+                         FontWeight="SemiBold"
+                         Foreground="#137333" />
+            </Border>
+            <TextBlock x:Name="VersionTextBlock"
+                       Margin="10,5,0,0"
+                       FontSize="12"
+                       Foreground="#617080" />
+            <Button x:Name="UpdateAlertButton"
+                    Width="24"
+                    Height="24"
+                    Margin="8,0,0,0"
+                    Padding="0"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Click="UpdateAlertButton_OnClick"
+                    Content="!"
+                    FontWeight="Bold"
+                    Foreground="#ffffff"
+                    Background="#d93025"
+                    CornerRadius="12"
+                    IsVisible="False" />
+          </StackPanel>
+          <TextBlock x:Name="ErrorTextBlock"
+                     Margin="0,4,0,0"
+                     FontSize="13"
+                     Foreground="#b3261e"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Top">
+          <Button x:Name="StartButton"
+                  MinWidth="120"
+                  Margin="0,0,8,0"
+                  Padding="10,6"
+                  HorizontalAlignment="Stretch"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  Click="StartButton_OnClick"
+                  Content="Запустить" />
+          <Button x:Name="OpenBrowserButton"
+                  MinWidth="155"
+                  Margin="0,0,8,0"
+                  Padding="10,6"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  Click="OpenBrowserButton_OnClick"
+                  Content="Открыть в браузере"
+                  IsEnabled="False" />
+          <Button x:Name="CheckUpdatesButton"
+                  MinWidth="195"
+                  Margin="0,0,8,0"
+                  Padding="10,6"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  Click="CheckUpdatesButton_OnClick"
+                  Content="Проверить обновления" />
+          <Button x:Name="DiagnosticsButton"
+                  MinWidth="70"
+                  Margin="0,0,8,0"
+                  Padding="10,6"
+                  HorizontalContentAlignment="Center"
+                  VerticalContentAlignment="Center"
+                  Click="DiagnosticsButton_OnClick"
+                  Content="Логи" />
+        </StackPanel>
+
+        <Border x:Name="UpdateDetailsPanel"
+                Grid.Row="1"
+                Grid.ColumnSpan="2"
+                Margin="0,8,0,0"
+                Padding="10"
+                Background="#fff8e1"
+                BorderBrush="#fbbc04"
+                BorderThickness="1"
+                IsVisible="False">
+          <Grid RowDefinitions="Auto,*"
+                ColumnDefinitions="*,Auto">
+            <TextBlock x:Name="UpdateDetailsTextBlock"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       Foreground="#3c4043"
+                       VerticalAlignment="Center" />
+            <Button x:Name="InstallUpdateButton"
+                    Grid.Column="1"
+                    MinWidth="120"
+                    Padding="10,6"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Click="InstallUpdateButton_OnClick"
+                    Content="Обновить"
+                    IsEnabled="False" />
+            <TextBox x:Name="ChangelogTextBox"
+                     Grid.Row="1"
+                     Grid.ColumnSpan="2"
+                     Margin="0,8,0,0"
+                     MaxHeight="130"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     Foreground="#243242"
+                     Background="#ffffff"
+                     BorderBrush="#d7dde5"
+                     IsReadOnly="True"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" />
+          </Grid>
+        </Border>
+
+        <Border x:Name="DiagnosticsPanel"
+                Grid.Row="2"
+                Grid.ColumnSpan="2"
+                Margin="0,8,0,0"
+                Padding="8"
+                Background="#f7f9fb"
+                BorderBrush="#d7dde5"
+                BorderThickness="1"
+                IsVisible="False">
+          <TextBox x:Name="DiagnosticsTextBox"
+                   MaxHeight="130"
+                   FontFamily="Consolas"
+                   FontSize="12"
+                   Foreground="#243242"
+                   Background="Transparent"
+                   BorderThickness="0"
+                   IsReadOnly="True"
+                   TextWrapping="Wrap"
+                   AcceptsReturn="True"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto" />
+        </Border>
+      </Grid>
+    </Border>
+
+    <Border Grid.Row="1"
+            Margin="16"
+            Background="#ffffff"
+            BorderBrush="#d7dde5"
+            BorderThickness="1">
+      <NativeWebView x:Name="Browser"
+                     NavigationStarted="Browser_OnNavigationStarted"
+                     NewWindowRequested="Browser_OnNewWindowRequested" />
+    </Border>
+  </Grid>
+</Window>

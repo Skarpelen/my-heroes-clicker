@@ -9,10 +9,15 @@ permissions:
   contents: write
 
 jobs:
-  release:
-    name: Build and release
-    runs-on: windows-latest
+  version:
+    name: Resolve release version
+    runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref_name, 'dev/') }}
+    outputs:
+      release_enabled: ${{ steps.version.outputs.release_enabled }}
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
 
     steps:
       - name: Checkout
@@ -47,21 +52,45 @@ jobs:
           $tag = "v$version"
 
           "release_enabled=true" >> $env:GITHUB_OUTPUT
-          "major=$major" >> $env:GITHUB_OUTPUT
-          "minor=$minor" >> $env:GITHUB_OUTPUT
-          "build=$build" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "prerelease=$(($major -eq 0).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
 
+  build:
+    name: Build ${{ matrix.rid }}
+    needs: version
+    if: needs.version.outputs.release_enabled == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            archive_name: my-heroes-clicker-win-x64.zip
+            launcher_output: MyHeroesClicker.Launcher.exe
+            launcher_name: My Heroes Clicker.exe
+          - os: ubuntu-latest
+            rid: linux-x64
+            archive_name: my-heroes-clicker-linux-x64.tar.gz
+            launcher_output: MyHeroesClicker.Launcher
+            launcher_name: my-heroes-clicker
+          - os: macos-13
+            rid: osx-x64
+            archive_name: my-heroes-clicker-osx-x64.tar.gz
+            launcher_output: MyHeroesClicker.Launcher
+            launcher_name: my-heroes-clicker
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Setup .NET
-        if: steps.version.outputs.release_enabled == 'true'
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
       - name: Setup Node
-        if: steps.version.outputs.release_enabled == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -69,42 +98,102 @@ jobs:
           cache-dependency-path: MyHeroesClicker.Web/package-lock.json
 
       - name: Install frontend dependencies
-        if: steps.version.outputs.release_enabled == 'true'
         run: npm ci
         working-directory: MyHeroesClicker.Web
 
       - name: Build frontend
-        if: steps.version.outputs.release_enabled == 'true'
         run: npm run build
         working-directory: MyHeroesClicker.Web
 
       - name: Restore .NET
-        if: steps.version.outputs.release_enabled == 'true'
         run: dotnet restore MyHeroesClicker.slnx
 
       - name: Build .NET
-        if: steps.version.outputs.release_enabled == 'true'
-        run: dotnet build MyHeroesClicker.slnx --configuration Release --no-restore /p:Version=${{ steps.version.outputs.version }} /p:FileVersion=${{ steps.version.outputs.version }} /p:AssemblyVersion=${{ steps.version.outputs.version }}
+        run: dotnet build MyHeroesClicker.slnx --configuration Release --no-restore /p:Version=${{ needs.version.outputs.version }} /p:FileVersion=${{ needs.version.outputs.version }} /p:AssemblyVersion=${{ needs.version.outputs.version }}
 
       - name: Publish application
-        if: steps.version.outputs.release_enabled == 'true'
         shell: pwsh
         run: |
-          $version = "${{ steps.version.outputs.version }}"
-          $packageRoot = Join-Path $env:RUNNER_TEMP "my-heroes-clicker"
+          $version = "${{ needs.version.outputs.version }}"
+          $rid = "${{ matrix.rid }}"
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/$rid"
+          $launcherPublishRoot = Join-Path $env:RUNNER_TEMP "my-heroes-clicker-launcher"
 
           New-Item -ItemType Directory -Force $packageRoot | Out-Null
+          New-Item -ItemType Directory -Force $launcherPublishRoot | Out-Null
 
-          dotnet publish MyHeroesClicker.Launcher/MyHeroesClicker.Launcher.csproj --configuration Release --runtime win-x64 --self-contained false --output $packageRoot /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
-          dotnet publish MyHeroesClicker.API/MyHeroesClicker.API.csproj --configuration Release --runtime win-x64 --self-contained false --output (Join-Path $packageRoot "MyHeroesClicker.API") /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
-          dotnet publish MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator.csproj --configuration Release --runtime win-x64 --self-contained false --output (Join-Path $packageRoot "MyHeroesClicker.DbMigrator") /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          dotnet publish MyHeroesClicker.Launcher/MyHeroesClicker.Launcher.csproj --configuration Release --runtime $rid --self-contained true --output $launcherPublishRoot /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          Copy-Item -LiteralPath (Join-Path $launcherPublishRoot "${{ matrix.launcher_output }}") -Destination (Join-Path $packageRoot "${{ matrix.launcher_name }}") -Force
 
-          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          dotnet publish MyHeroesClicker.API/MyHeroesClicker.API.csproj --configuration Release --runtime $rid --self-contained true --output (Join-Path $packageRoot "MyHeroesClicker.API") /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          dotnet publish MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator.csproj --configuration Release --runtime $rid --self-contained true --output (Join-Path $packageRoot "MyHeroesClicker.DbMigrator") /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+
+      - name: Pack Windows portable archive
+        if: matrix.rid == 'win-x64'
+        shell: pwsh
+        run: |
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/${{ matrix.rid }}"
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "release-assets"
           New-Item -ItemType Directory -Force $artifactDir | Out-Null
-          Compress-Archive -Path (Join-Path $packageRoot "*") -DestinationPath (Join-Path $artifactDir "my-heroes-clicker-win-x64.zip") -Force
+          Compress-Archive -Path (Join-Path $packageRoot "*") -DestinationPath (Join-Path $artifactDir "${{ matrix.archive_name }}") -Force
+
+      - name: Pack Unix portable archive
+        if: matrix.rid != 'win-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="$GITHUB_WORKSPACE/artifacts/package/${{ matrix.rid }}"
+          artifact_dir="$GITHUB_WORKSPACE/release-assets"
+          mkdir -p "$artifact_dir"
+          chmod +x "$package_root/${{ matrix.launcher_name }}"
+          chmod +x "$package_root/MyHeroesClicker.API/MyHeroesClicker.API"
+          chmod +x "$package_root/MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator"
+          tar -czf "$artifact_dir/${{ matrix.archive_name }}" -C "$package_root" .
+
+      - name: Install Inno Setup
+        if: matrix.rid == 'win-x64'
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Windows installer
+        if: matrix.rid == 'win-x64'
+        shell: pwsh
+        run: |
+          $version = "${{ needs.version.outputs.version }}"
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/win-x64"
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "release-assets"
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6/ISCC.exe"
+
+          & $iscc installer/MyHeroesClicker.iss /DAppVersion=$version /DPackageRoot="$packageRoot" /DOutputDir="$artifactDir"
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ matrix.rid }}
+          path: release-assets/*
+          if-no-files-found: error
+
+  release:
+    name: Create GitHub release
+    needs:
+      - version
+      - build
+    if: needs.version.outputs.release_enabled == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
 
       - name: Build changelog
-        if: steps.version.outputs.release_enabled == 'true'
         id: changelog
         shell: pwsh
         run: |
@@ -118,17 +207,16 @@ jobs:
           }
 
           $bodyPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
-          "# My Heroes Clicker ${{ steps.version.outputs.version }}" | Set-Content $bodyPath -Encoding utf8
+          "# My Heroes Clicker ${{ needs.version.outputs.version }}" | Set-Content $bodyPath -Encoding utf8
           "" | Add-Content $bodyPath -Encoding utf8
           $body | Add-Content $bodyPath -Encoding utf8
           "body_path=$bodyPath" >> $env:GITHUB_OUTPUT
 
       - name: Create GitHub release
-        if: steps.version.outputs.release_enabled == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.version }}
           body_path: ${{ steps.changelog.outputs.body_path }}
-          files: artifacts/my-heroes-clicker-win-x64.zip
-          prerelease: ${{ steps.version.outputs.prerelease }}
+          files: release-assets/*
+          prerelease: ${{ needs.version.outputs.prerelease }}
