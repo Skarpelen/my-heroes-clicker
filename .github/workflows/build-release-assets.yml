@@ -1,0 +1,119 @@
+name: Build release assets
+
+on:
+  workflow_call:
+    inputs:
+      os:
+        required: true
+        type: string
+      rid:
+        required: true
+        type: string
+      archive_name:
+        required: true
+        type: string
+      launcher_output:
+        required: true
+        type: string
+      launcher_name:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build ${{ inputs.rid }}
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: MyHeroesClicker.Web/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: MyHeroesClicker.Web
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: MyHeroesClicker.Web
+
+      - name: Restore .NET
+        run: dotnet restore MyHeroesClicker.slnx
+
+      - name: Build .NET
+        run: dotnet build MyHeroesClicker.slnx --configuration Release --no-restore /p:Version=${{ inputs.version }} /p:FileVersion=${{ inputs.version }} /p:AssemblyVersion=${{ inputs.version }}
+
+      - name: Publish application
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $rid = "${{ inputs.rid }}"
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/$rid"
+          $launcherPublishRoot = Join-Path $env:RUNNER_TEMP "my-heroes-clicker-launcher"
+
+          New-Item -ItemType Directory -Force $packageRoot | Out-Null
+          New-Item -ItemType Directory -Force $launcherPublishRoot | Out-Null
+
+          dotnet publish MyHeroesClicker.Launcher/MyHeroesClicker.Launcher.csproj --configuration Release --runtime $rid --self-contained true --output $launcherPublishRoot /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          Copy-Item -LiteralPath (Join-Path $launcherPublishRoot "${{ inputs.launcher_output }}") -Destination (Join-Path $packageRoot "${{ inputs.launcher_name }}") -Force
+
+          dotnet publish MyHeroesClicker.API/MyHeroesClicker.API.csproj --configuration Release --runtime $rid --self-contained true --output (Join-Path $packageRoot "MyHeroesClicker.API") /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+          dotnet publish MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator.csproj --configuration Release --runtime $rid --self-contained true --output (Join-Path $packageRoot "MyHeroesClicker.DbMigrator") /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true /p:DebugType=None /p:Version=$version /p:FileVersion=$version /p:AssemblyVersion=$version
+
+      - name: Pack Windows portable archive
+        if: inputs.rid == 'win-x64'
+        shell: pwsh
+        run: |
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/${{ inputs.rid }}"
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "release-assets"
+          New-Item -ItemType Directory -Force $artifactDir | Out-Null
+          Compress-Archive -Path (Join-Path $packageRoot "*") -DestinationPath (Join-Path $artifactDir "${{ inputs.archive_name }}") -Force
+
+      - name: Pack Unix portable archive
+        if: inputs.rid != 'win-x64'
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_root="$GITHUB_WORKSPACE/artifacts/package/${{ inputs.rid }}"
+          artifact_dir="$GITHUB_WORKSPACE/release-assets"
+          mkdir -p "$artifact_dir"
+          chmod +x "$package_root/${{ inputs.launcher_name }}"
+          chmod +x "$package_root/MyHeroesClicker.API/MyHeroesClicker.API"
+          chmod +x "$package_root/MyHeroesClicker.DbMigrator/MyHeroesClicker.DbMigrator"
+          tar -czf "$artifact_dir/${{ inputs.archive_name }}" -C "$package_root" .
+
+      - name: Install Inno Setup
+        if: inputs.rid == 'win-x64'
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Windows installer
+        if: inputs.rid == 'win-x64'
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $packageRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts/package/win-x64"
+          $artifactDir = Join-Path $env:GITHUB_WORKSPACE "release-assets"
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6/ISCC.exe"
+
+          & $iscc installer/MyHeroesClicker.iss /DAppVersion=$version /DPackageRoot="$packageRoot" /DOutputDir="$artifactDir"
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ inputs.rid }}
+          path: release-assets/*
+          if-no-files-found: error
