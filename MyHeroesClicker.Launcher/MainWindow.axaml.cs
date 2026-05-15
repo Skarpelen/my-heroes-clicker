@@ -25,6 +25,7 @@ public partial class MainWindow : Window
   private readonly TextBlock _versionTextBlock;
   private readonly Border _betaBadge;
   private readonly Button _updateAlertButton;
+  private readonly Button _updateNewVersionButton;
   private readonly Border _updateDetailsPanel;
   private readonly TextBlock _updateDetailsTextBlock;
   private readonly TextBlock _errorTextBlock;
@@ -33,10 +34,10 @@ public partial class MainWindow : Window
   private readonly TextBox _diagnosticsTextBox;
   private readonly Button _startButton;
   private readonly Button _openBrowserButton;
-  private readonly Button _checkUpdatesButton;
   private readonly Button _installUpdateButton;
   private readonly NativeWebView _browser;
   private readonly ReleaseUpdateService _releaseUpdateService;
+  private readonly CancellationTokenSource _updateCheckCancellation = new();
   private readonly string _logFilePath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "MyHeroesClicker",
@@ -57,6 +58,7 @@ public partial class MainWindow : Window
     _versionTextBlock = GetRequiredControl<TextBlock>("VersionTextBlock");
     _betaBadge = GetRequiredControl<Border>("BetaBadge");
     _updateAlertButton = GetRequiredControl<Button>("UpdateAlertButton");
+    _updateNewVersionButton = GetRequiredControl<Button>("UpdateNewVersionButton");
     _updateDetailsPanel = GetRequiredControl<Border>("UpdateDetailsPanel");
     _updateDetailsTextBlock = GetRequiredControl<TextBlock>("UpdateDetailsTextBlock");
     _errorTextBlock = GetRequiredControl<TextBlock>("ErrorTextBlock");
@@ -65,7 +67,6 @@ public partial class MainWindow : Window
     _diagnosticsTextBox = GetRequiredControl<TextBox>("DiagnosticsTextBox");
     _startButton = GetRequiredControl<Button>("StartButton");
     _openBrowserButton = GetRequiredControl<Button>("OpenBrowserButton");
-    _checkUpdatesButton = GetRequiredControl<Button>("CheckUpdatesButton");
     _installUpdateButton = GetRequiredControl<Button>("InstallUpdateButton");
     _browser = GetRequiredControl<NativeWebView>("Browser");
     _releaseUpdateService = new ReleaseUpdateService(_updateHttpClient);
@@ -90,6 +91,7 @@ public partial class MainWindow : Window
   private async void MainWindow_OnLoaded(object? sender, RoutedEventArgs e)
   {
     await CheckUpdatesAsync(showUpToDateMessage: false);
+    _ = CheckUpdatesPeriodicallyAsync(_updateCheckCancellation.Token);
   }
 
   private async void StartButton_OnClick(object? sender, RoutedEventArgs e)
@@ -261,11 +263,6 @@ public partial class MainWindow : Window
     OpenExternalUri(_applicationUri);
   }
 
-  private async void CheckUpdatesButton_OnClick(object? sender, RoutedEventArgs e)
-  {
-    await CheckUpdatesAsync(showUpToDateMessage: true);
-  }
-
   private void UpdateAlertButton_OnClick(object? sender, RoutedEventArgs e)
   {
     _updateDetailsPanel.IsVisible = !_updateDetailsPanel.IsVisible;
@@ -317,7 +314,6 @@ public partial class MainWindow : Window
     }
 
     _isInstallingUpdate = true;
-    _checkUpdatesButton.IsEnabled = false;
     _installUpdateButton.IsEnabled = false;
     _updateDetailsTextBlock.Text = $"Скачивание версии v{_availableUpdate.LatestVersion}...";
 
@@ -332,7 +328,6 @@ public partial class MainWindow : Window
     {
       _errorTextBlock.Text = $"Не удалось установить обновление. {exception.Message}";
       AppendDiagnostic(_errorTextBlock.Text);
-      _checkUpdatesButton.IsEnabled = true;
       _installUpdateButton.IsEnabled = true;
       _isInstallingUpdate = false;
     }
@@ -340,9 +335,27 @@ public partial class MainWindow : Window
 
   private void MainWindow_OnClosing(object? sender, WindowClosingEventArgs e)
   {
+    _updateCheckCancellation.Cancel();
+    _updateCheckCancellation.Dispose();
     StopBackend();
     _httpClient.Dispose();
     _updateHttpClient.Dispose();
+  }
+
+  private async Task CheckUpdatesPeriodicallyAsync(CancellationToken cancellationToken)
+  {
+    using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
+
+    try
+    {
+      while (await timer.WaitForNextTickAsync(cancellationToken))
+      {
+        Dispatcher.UIThread.Post(async () => await CheckUpdatesAsync(showUpToDateMessage: false));
+      }
+    }
+    catch (OperationCanceledException)
+    {
+    }
   }
 
   private async Task CheckUpdatesAsync(bool showUpToDateMessage)
@@ -353,7 +366,6 @@ public partial class MainWindow : Window
     }
 
     _isCheckingUpdates = true;
-    _checkUpdatesButton.IsEnabled = false;
     AppendDiagnostic("Проверяю обновления...");
 
     try
@@ -369,7 +381,6 @@ public partial class MainWindow : Window
     }
     finally
     {
-      _checkUpdatesButton.IsEnabled = true;
       _isCheckingUpdates = false;
     }
   }
@@ -377,6 +388,7 @@ public partial class MainWindow : Window
   private void RenderUpdateState(ReleaseUpdate? update, bool showUpToDateMessage)
   {
     _updateAlertButton.IsVisible = false;
+    _updateNewVersionButton.IsVisible = false;
     _updateDetailsPanel.IsVisible = false;
     _installUpdateButton.IsEnabled = false;
     _changelogTextBox.Text = string.Empty;
@@ -402,7 +414,15 @@ public partial class MainWindow : Window
       return;
     }
 
-    _updateAlertButton.IsVisible = true;
+    if (update.IsNewVersionLine)
+    {
+      _updateNewVersionButton.IsVisible = true;
+    }
+    else
+    {
+      _updateAlertButton.IsVisible = true;
+    }
+
     _installUpdateButton.IsEnabled = true;
     _updateDetailsTextBlock.Text = update.IsNewVersionLine
       ? $"Доступна версия v{update.LatestVersion}. Новая ветка версии, обновление рекомендуется."
