@@ -9,4 +9,6 @@ public interface IAppSettingsRepository
   Task<bool> UpdateAsync(UpdateAppSettingsRequest request, CancellationToken cancellationToken);
 
   Task<bool> SetActiveAccountAsync(long? accountId, CancellationToken cancellationToken);
+
+  Task<bool> UpdateAlertSoundSettingsAsync(UpdateAlertSoundSettingsRequest request, CancellationToken cancellationToken);
 }

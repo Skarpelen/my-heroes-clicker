@@ -59,6 +59,21 @@ public sealed class AppSettingsController : ControllerBase
     }
   }
 
+  [HttpPut("alert-sound")]
+  public async Task<IActionResult> UpdateAlertSoundSettingsAsync(
+    [FromBody] UpdateAlertSoundSettingsRequest request,
+    CancellationToken cancellationToken)
+  {
+    if (request.Volume is < 0 or > 1)
+    {
+      return BadRequest(new { error = "Громкость звука должна быть от 0 до 1." });
+    }
+
+    var updated = await _settings.UpdateAlertSoundSettingsAsync(request, cancellationToken);
+
+    return updated ? NoContent() : NotFound();
+  }
+
   private bool ValidateSettings(UpdateAppSettingsRequest request, out IActionResult validationResult)
   {
     var errors = new Dictionary<string, string[]>();

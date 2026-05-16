@@ -10,6 +10,7 @@ import type {
   TechniquePresetSlot,
   UpdateAppSettingsRequest,
 } from '../model/types'
+import type { AlertSoundSettings } from '../../alerts/model/types'
 
 async function readError(response: Response, fallback: string) {
   const error = await response.json().catch(() => null)
@@ -98,6 +99,10 @@ export async function updateAppSettings(settings: UpdateAppSettingsRequest): Pro
 
 export async function setActiveAccount(accountId: number | null): Promise<void> {
   await sendJson('/api/settings/active-account', 'PUT', { accountId }, 'Не удалось выбрать активный аккаунт.')
+}
+
+export async function updateAlertSoundSettings(settings: AlertSoundSettings): Promise<void> {
+  await sendJson('/api/settings/alert-sound', 'PUT', settings, 'Не удалось сохранить звук тревог.')
 }
 
 export async function getEquipmentSets(): Promise<EquipmentSet[]> {

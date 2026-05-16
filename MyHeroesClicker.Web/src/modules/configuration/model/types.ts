@@ -31,9 +31,11 @@ export type AppSettings = {
   authenticationRetryDelayMs: number
   warCheckIntervalMinutes: number
   warCombatPreparationSecondsBeforeRegistrationEnd: number
+  alertSoundEnabled: boolean
+  alertSoundVolume: number
 }
 
-export type UpdateAppSettingsRequest = Omit<AppSettings, 'id' | 'activeAccountId'>
+export type UpdateAppSettingsRequest = Omit<AppSettings, 'id' | 'activeAccountId' | 'alertSoundEnabled' | 'alertSoundVolume'>
 
 export type EquipmentSet = {
   id: number

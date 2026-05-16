@@ -35,7 +35,9 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
              retry_delay_ms,
              authentication_retry_delay_ms,
              war_check_interval_minutes,
-             war_combat_preparation_seconds_before_registration_end
+             war_combat_preparation_seconds_before_registration_end,
+             alert_sound_enabled,
+             alert_sound_volume
       FROM app_settings
       WHERE id = 1;
       """;
@@ -92,6 +94,22 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
     return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
   }
 
+  public async Task<bool> UpdateAlertSoundSettingsAsync(UpdateAlertSoundSettingsRequest request, CancellationToken cancellationToken)
+  {
+    await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+    await using var command = connection.CreateCommand();
+    command.CommandText = """
+      UPDATE app_settings
+      SET alert_sound_enabled = @alert_sound_enabled,
+          alert_sound_volume = @alert_sound_volume
+      WHERE id = 1;
+      """;
+    command.Parameters.AddWithValue("@alert_sound_enabled", request.Enabled);
+    command.Parameters.AddWithValue("@alert_sound_volume", request.Volume);
+
+    return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+  }
+
   private static void FillSettingsParameters(SqliteCommand command, UpdateAppSettingsRequest request)
   {
     command.Parameters.AddWithValue("@base_url", request.BaseUrl);
@@ -131,7 +149,9 @@ public sealed class AppSettingsRepository : IAppSettingsRepository
       RetryDelayMs = reader.GetInt32(reader.GetOrdinal("retry_delay_ms")),
       AuthenticationRetryDelayMs = reader.GetInt32(reader.GetOrdinal("authentication_retry_delay_ms")),
       WarCheckIntervalMinutes = reader.GetInt32(reader.GetOrdinal("war_check_interval_minutes")),
-      WarCombatPreparationSecondsBeforeRegistrationEnd = reader.GetInt32(reader.GetOrdinal("war_combat_preparation_seconds_before_registration_end"))
+      WarCombatPreparationSecondsBeforeRegistrationEnd = reader.GetInt32(reader.GetOrdinal("war_combat_preparation_seconds_before_registration_end")),
+      AlertSoundEnabled = reader.GetBoolean(reader.GetOrdinal("alert_sound_enabled")),
+      AlertSoundVolume = reader.GetDouble(reader.GetOrdinal("alert_sound_volume"))
     };
   }
 

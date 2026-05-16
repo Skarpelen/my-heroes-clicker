@@ -89,4 +89,8 @@ public sealed class AppSettingsResponse
   /// Смещение подготовки к бою до окончания регистрации на войну в секундах.
   /// </summary>
   public int WarCombatPreparationSecondsBeforeRegistrationEnd { get; init; }
+
+  public bool AlertSoundEnabled { get; init; }
+
+  public double AlertSoundVolume { get; init; }
 }
