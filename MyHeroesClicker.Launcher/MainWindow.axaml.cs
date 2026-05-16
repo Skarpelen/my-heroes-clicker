@@ -32,6 +32,7 @@ public partial class MainWindow : Window
   private readonly TextBlock _errorTextBlock;
   private readonly Border _diagnosticsPanel;
   private readonly TextBox _changelogTextBox;
+  private readonly ProgressBar _updateProgressBar;
   private readonly TextBox _diagnosticsTextBox;
   private readonly Button _startButton;
   private readonly Button _openBrowserButton;
@@ -65,6 +66,7 @@ public partial class MainWindow : Window
     _errorTextBlock = GetRequiredControl<TextBlock>("ErrorTextBlock");
     _diagnosticsPanel = GetRequiredControl<Border>("DiagnosticsPanel");
     _changelogTextBox = GetRequiredControl<TextBox>("ChangelogTextBox");
+    _updateProgressBar = GetRequiredControl<ProgressBar>("UpdateProgressBar");
     _diagnosticsTextBox = GetRequiredControl<TextBox>("DiagnosticsTextBox");
     _startButton = GetRequiredControl<Button>("StartButton");
     _openBrowserButton = GetRequiredControl<Button>("OpenBrowserButton");
@@ -333,11 +335,21 @@ public partial class MainWindow : Window
 
     _isInstallingUpdate = true;
     _installUpdateButton.IsEnabled = false;
+    _updateProgressBar.Value = 0;
+    _updateProgressBar.IsIndeterminate = true;
+    _updateProgressBar.IsVisible = true;
     _updateDetailsTextBlock.Text = $"Скачивание версии v{_availableUpdate.LatestVersion}...";
 
     try
     {
-      await _releaseUpdateService.ApplyAsync(_availableUpdate, CancellationToken.None);
+      var progress = new Progress<ReleaseUpdateProgress>(updateProgress =>
+      {
+        Dispatcher.UIThread.Post(() => RenderUpdateProgress(updateProgress));
+      });
+
+      await _releaseUpdateService.ApplyAsync(_availableUpdate, progress, CancellationToken.None);
+      _updateProgressBar.IsIndeterminate = false;
+      _updateProgressBar.Value = 100;
       _updateDetailsTextBlock.Text = "Обновление скачано. Лаунчер перезапустится.";
       StopBackend();
       ShutdownApplication();
@@ -346,9 +358,31 @@ public partial class MainWindow : Window
     {
       _errorTextBlock.Text = $"Не удалось установить обновление. {exception.Message}";
       AppendDiagnostic(_errorTextBlock.Text);
+      _updateProgressBar.IsIndeterminate = false;
       _installUpdateButton.IsEnabled = true;
       _isInstallingUpdate = false;
     }
+  }
+
+  private void RenderUpdateProgress(ReleaseUpdateProgress progress)
+  {
+    if (_availableUpdate is null)
+    {
+      return;
+    }
+
+    if (progress.TotalBytes is null || progress.TotalBytes <= 0)
+    {
+      _updateProgressBar.IsIndeterminate = true;
+      _updateDetailsTextBlock.Text = $"Скачивание версии v{_availableUpdate.LatestVersion}: {FormatByteSize(progress.BytesReceived)}";
+      return;
+    }
+
+    var percent = Math.Clamp(progress.BytesReceived * 100d / progress.TotalBytes.Value, 0d, 100d);
+
+    _updateProgressBar.IsIndeterminate = false;
+    _updateProgressBar.Value = percent;
+    _updateDetailsTextBlock.Text = $"Скачивание версии v{_availableUpdate.LatestVersion}: {percent:0}% ({FormatByteSize(progress.BytesReceived)} / {FormatByteSize(progress.TotalBytes.Value)})";
   }
 
   private void MainWindow_OnClosing(object? sender, WindowClosingEventArgs e)
@@ -411,6 +445,9 @@ public partial class MainWindow : Window
     _installUpdateButton.IsEnabled = false;
     _changelogTextBox.Text = string.Empty;
     _updateDetailsTextBlock.Text = string.Empty;
+    _updateProgressBar.IsVisible = false;
+    _updateProgressBar.IsIndeterminate = false;
+    _updateProgressBar.Value = 0;
 
     if (update is null)
     {
@@ -525,6 +562,25 @@ public partial class MainWindow : Window
     {
       listener.Stop();
     }
+  }
+
+  private static string FormatByteSize(long bytes)
+  {
+    if (bytes < 1024)
+    {
+      return $"{bytes} B";
+    }
+
+    var kib = bytes / 1024d;
+
+    if (kib < 1024)
+    {
+      return $"{kib:0.0} KB";
+    }
+
+    var mib = kib / 1024d;
+
+    return $"{mib:0.0} MB";
   }
 
   private static ExecutableCommand ResolveExecutable(string projectName)

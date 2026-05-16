@@ -77,7 +77,10 @@ public sealed class ReleaseUpdateService
       release.Release.Body ?? string.Empty);
   }
 
-  public async Task ApplyAsync(ReleaseUpdate update, CancellationToken cancellationToken)
+  public async Task ApplyAsync(
+    ReleaseUpdate update,
+    IProgress<ReleaseUpdateProgress>? progress,
+    CancellationToken cancellationToken)
   {
     if (!OperatingSystem.IsWindows())
     {
@@ -94,10 +97,35 @@ public sealed class ReleaseUpdateService
 
     Directory.CreateDirectory(updateRoot);
 
-    await using (var setupStream = await _httpClient.GetStreamAsync(update.AssetDownloadUrl, cancellationToken))
+    using var request = new HttpRequestMessage(HttpMethod.Get, update.AssetDownloadUrl);
+    request.Headers.UserAgent.ParseAdd("MyHeroesClicker.Launcher");
+
+    using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+    response.EnsureSuccessStatusCode();
+
+    var totalBytes = response.Content.Headers.ContentLength;
+    progress?.Report(new ReleaseUpdateProgress(0, totalBytes));
+
+    await using (var setupStream = await response.Content.ReadAsStreamAsync(cancellationToken))
     await using (var fileStream = File.Create(setupPath))
     {
-      await setupStream.CopyToAsync(fileStream, cancellationToken);
+      var buffer = new byte[81920];
+      var bytesReceived = 0L;
+
+      while (true)
+      {
+        var bytesRead = await setupStream.ReadAsync(buffer.AsMemory(0, buffer.Length), cancellationToken);
+
+        if (bytesRead == 0)
+        {
+          break;
+        }
+
+        await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+
+        bytesReceived += bytesRead;
+        progress?.Report(new ReleaseUpdateProgress(bytesReceived, totalBytes));
+      }
     }
 
     StartUpdateScript(setupPath);
@@ -144,3 +172,5 @@ public sealed class ReleaseUpdateService
       : null;
   }
 }
+
+public sealed record ReleaseUpdateProgress(long BytesReceived, long? TotalBytes);

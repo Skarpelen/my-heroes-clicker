@@ -130,7 +130,7 @@
                 BorderBrush="#fbbc04"
                 BorderThickness="1"
                 IsVisible="False">
-          <Grid RowDefinitions="Auto,*"
+          <Grid RowDefinitions="Auto,Auto,*"
                 ColumnDefinitions="*,Auto">
             <TextBlock x:Name="UpdateDetailsTextBlock"
                        FontSize="13"
@@ -147,7 +147,7 @@
                     Content="Обновить"
                     IsEnabled="False" />
             <TextBox x:Name="ChangelogTextBox"
-                     Grid.Row="1"
+                     Grid.Row="2"
                      Grid.ColumnSpan="2"
                      Margin="0,8,0,0"
                      MaxHeight="130"
@@ -160,6 +160,15 @@
                      TextWrapping="Wrap"
                      AcceptsReturn="True"
                      ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            <ProgressBar x:Name="UpdateProgressBar"
+                         Grid.Row="1"
+                         Grid.ColumnSpan="2"
+                         Margin="0,8,0,0"
+                         Height="8"
+                         Minimum="0"
+                         Maximum="100"
+                         Value="0"
+                         IsVisible="False" />
           </Grid>
         </Border>
 
