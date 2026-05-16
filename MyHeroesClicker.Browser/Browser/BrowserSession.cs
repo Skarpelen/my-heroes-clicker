@@ -63,8 +63,11 @@ public sealed class BrowserSession : IAsyncDisposable
 
     if (IsChromiumBrowser(browserKind))
     {
-      launchOptions.Args = ["--disable-blink-features=AutomationControlled"];
-      launchOptions.IgnoreDefaultArgs = ["--enable-automation"];
+      launchOptions.IgnoreDefaultArgs =
+      [
+        "--enable-automation",
+        "--no-sandbox"
+      ];
     }
 
     return launchOptions;
