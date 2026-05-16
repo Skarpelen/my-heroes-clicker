@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using MyHeroesClicker.Launcher.Updates;
 using System.Diagnostics;
@@ -69,6 +70,7 @@ public partial class MainWindow : Window
     _openBrowserButton = GetRequiredControl<Button>("OpenBrowserButton");
     _installUpdateButton = GetRequiredControl<Button>("InstallUpdateButton");
     _browser = GetRequiredControl<NativeWebView>("Browser");
+    _browser.EnvironmentRequested += Browser_OnEnvironmentRequested;
     _releaseUpdateService = new ReleaseUpdateService(_updateHttpClient);
 
     var version = ReleaseUpdateService.GetCurrentVersion();
@@ -79,6 +81,21 @@ public partial class MainWindow : Window
 
     Loaded += MainWindow_OnLoaded;
     Closing += MainWindow_OnClosing;
+  }
+
+  private static void Browser_OnEnvironmentRequested(object? sender, WebViewEnvironmentRequestedEventArgs args)
+  {
+    if (args is WindowsWebView2EnvironmentRequestedEventArgs webView2)
+    {
+      var userDataFolder = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "MyHeroesClicker",
+        "WebView2");
+
+      Directory.CreateDirectory(userDataFolder);
+
+      webView2.UserDataFolder = userDataFolder;
+    }
   }
 
   private T GetRequiredControl<T>(string name)
