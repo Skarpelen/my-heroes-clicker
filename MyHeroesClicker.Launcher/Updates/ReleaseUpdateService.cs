@@ -52,15 +52,17 @@ public sealed class ReleaseUpdateService
     response.EnsureSuccessStatusCode();
 
     var releases = await response.Content.ReadFromJsonAsync<IReadOnlyList<GitHubRelease>>(cancellationToken);
-    var release = releases?
-      .Select(item => new
-      {
-        Release = item,
-        Version = ReleaseVersion.TryParse(item.TagName, out var version) ? version : null,
-        Asset = item.Assets.FirstOrDefault(asset => string.Equals(asset.Name, assetName, StringComparison.OrdinalIgnoreCase))
-      })
-      .Where(item => item.Version is not null && item.Asset is not null && !string.IsNullOrWhiteSpace(item.Asset.BrowserDownloadUrl))
+    var currentVersion = GetCurrentVersion();
+    var releaseCandidates = releases?
+      .Select(item => new ReleaseCandidate(
+        item,
+        ReleaseVersion.TryParse(item.TagName, out var version) ? version : null,
+        item.Assets.FirstOrDefault(asset => string.Equals(asset.Name, assetName, StringComparison.OrdinalIgnoreCase))))
+      .Where(item => item.Version is not null)
       .OrderByDescending(item => item.Version)
+      .ToArray();
+    var release = releaseCandidates?
+      .Where(item => item.Asset is not null && !string.IsNullOrWhiteSpace(item.Asset.BrowserDownloadUrl))
       .FirstOrDefault();
 
     if (release is null || release.Version is null || release.Asset is null)
@@ -69,12 +71,12 @@ public sealed class ReleaseUpdateService
     }
 
     return new ReleaseUpdate(
-      GetCurrentVersion(),
+      currentVersion,
       release.Version,
       release.Release.HtmlUrl,
       release.Asset.Name,
       release.Asset.BrowserDownloadUrl,
-      release.Release.Body ?? string.Empty);
+      BuildChangelog(releaseCandidates ?? [], currentVersion, release.Version));
   }
 
   public async Task ApplyAsync(
@@ -171,6 +173,45 @@ public sealed class ReleaseUpdateService
       ? WindowsSetupAssetName
       : null;
   }
+
+  private static string BuildChangelog(
+    IEnumerable<ReleaseCandidate> releases,
+    ReleaseVersion currentVersion,
+    ReleaseVersion latestVersion)
+  {
+    var builder = new StringBuilder();
+    var applicableReleases = releases
+      .Where(item => item.Version is not null
+                     && item.Version.CompareTo(currentVersion) > 0
+                     && item.Version.CompareTo(latestVersion) <= 0)
+      .OrderByDescending(item => item.Version);
+
+    foreach (var release in applicableReleases)
+    {
+      if (release.Version is null)
+      {
+        continue;
+      }
+
+      if (builder.Length > 0)
+      {
+        builder.AppendLine();
+        builder.AppendLine();
+      }
+
+      builder.AppendLine($"v{release.Version}");
+      builder.AppendLine(string.IsNullOrWhiteSpace(release.Release.Body)
+        ? "Changelog не указан."
+        : release.Release.Body.Trim());
+    }
+
+    return builder.ToString();
+  }
+
+  private sealed record ReleaseCandidate(
+    GitHubRelease Release,
+    ReleaseVersion? Version,
+    GitHubReleaseAsset? Asset);
 }
 
 public sealed record ReleaseUpdateProgress(long BytesReceived, long? TotalBytes);
