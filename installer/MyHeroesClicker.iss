@@ -38,6 +38,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
+[InstallDelete]
+Type: files; Name: "{app}\My Heroes Clicker.exe"
+Type: filesandordirs; Name: "{app}\MyHeroesClicker.API"
+Type: filesandordirs; Name: "{app}\MyHeroesClicker.DbMigrator"
+
 [Files]
 Source: "{#PackageRoot}\My Heroes Clicker.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PackageRoot}\MyHeroesClicker.API\*"; DestDir: "{app}\MyHeroesClicker.API"; Flags: ignoreversion recursesubdirs createallsubdirs
