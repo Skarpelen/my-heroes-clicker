@@ -27,6 +27,8 @@ ArchitecturesInstallIn64BitMode=x64
 PrivilegesRequired=admin
 UsePreviousAppDir=no
 UninstallDisplayName={#AppName}
+UninstallDisplayIcon={app}\My Heroes Clicker.exe
+SetupIconFile=..\MyHeroesClicker.Launcher\Assets\main_image.ico
 SetupLogging=yes
 
 [Languages]
@@ -42,8 +44,8 @@ Source: "{#PackageRoot}\MyHeroesClicker.API\*"; DestDir: "{app}\MyHeroesClicker.
 Source: "{#PackageRoot}\MyHeroesClicker.DbMigrator\*"; DestDir: "{app}\MyHeroesClicker.DbMigrator"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\My Heroes Clicker.exe"; WorkingDir: "{app}"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\My Heroes Clicker.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\{#AppName}"; Filename: "{app}\My Heroes Clicker.exe"; WorkingDir: "{app}"; IconFilename: "{app}\My Heroes Clicker.exe"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\My Heroes Clicker.exe"; WorkingDir: "{app}"; IconFilename: "{app}\My Heroes Clicker.exe"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\My Heroes Clicker.exe"; Description: "{cm:LaunchProgram,{#StringChange(AppName, '&', '&&')}}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent

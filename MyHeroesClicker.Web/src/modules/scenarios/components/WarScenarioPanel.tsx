@@ -45,7 +45,7 @@ export function WarScenarioPanel({ status, onRefreshStatus }: WarScenarioPanelPr
         </div>
 
         <div className="scenario-mark scenario-mark-compact" aria-hidden="true">
-          <ShieldAlert size={34} />
+          <img className="scenario-mark-image" src="/images/war.png" alt="" />
         </div>
       </div>
 

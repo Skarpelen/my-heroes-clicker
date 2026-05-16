@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Map, Play, Shield, Square, Sprout, Swords, WandSparkles } from 'lucide-react'
+import { Map, Play, Shield, Square, Sprout, Swords } from 'lucide-react'
 import { Button } from '../../../shared/ui/Button'
 import {
   prepareCombatMode,
@@ -106,7 +106,7 @@ export function FarmScenarioPanel({ status, onRefreshStatus }: FarmScenarioPanel
         </div>
 
         <div className="scenario-mark" aria-hidden="true">
-          <WandSparkles size={42} />
+          <img className="scenario-mark-image" src="/images/fight.png" alt="" />
         </div>
       </div>
 

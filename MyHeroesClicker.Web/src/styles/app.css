@@ -32,6 +32,20 @@
   letter-spacing: -0.07em;
 }
 
+.hero-brand {
+  display: inline-flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.hero-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  object-fit: cover;
+  box-shadow: 0 14px 32px rgba(61, 38, 20, 0.2);
+}
+
 .eyebrow {
   color: var(--accent-strong);
   font-size: 12px;
@@ -263,6 +277,22 @@
 .scenario-header h2 {
   margin: 4px 0 0;
   color: var(--ink);
+}
+
+.status-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.status-heading-image {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 12px 28px rgba(61, 38, 20, 0.16);
 }
 
 .status-progress {
@@ -506,6 +536,12 @@
   width: 96px;
   height: 96px;
   border-radius: 28px;
+}
+
+.scenario-mark-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .settings-panel-header {
@@ -999,5 +1035,11 @@
   .scenario-mark {
     width: 96px;
     height: 96px;
+  }
+
+  .hero-logo,
+  .status-heading-image {
+    width: 52px;
+    height: 52px;
   }
 }

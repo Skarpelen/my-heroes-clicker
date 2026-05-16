@@ -8,7 +8,12 @@
     <AssemblyName>MyHeroesClicker.Launcher</AssemblyName>
     <RootNamespace>MyHeroesClicker.Launcher</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\main_image.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Controls.WebView" Version="12.0.1" />

@@ -108,7 +108,10 @@ export function App() {
     <main className="shell">
       <section className="hero-section">
         <div className="hero-copy">
-          <span className="eyebrow">My Heroes Clicker</span>
+          <div className="hero-brand">
+            <img className="hero-logo" src="/images/main_image.png" alt="" />
+            <span className="eyebrow">My Heroes Clicker</span>
+          </div>
           <h1>{page === 'scenarios' ? 'Сценарии' : 'Настройки'}</h1>
         </div>
 
