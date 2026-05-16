@@ -179,6 +179,7 @@ public partial class MainWindow : Window
     var executable = ResolveExecutable("MyHeroesClicker.API");
     var startInfo = CreateHiddenProcessStartInfo(executable.FileName, executable.Arguments);
 
+    startInfo.WorkingDirectory = executable.WorkingDirectory;
     startInfo.Environment["ASPNETCORE_URLS"] = $"http://127.0.0.1:{port}";
     startInfo.Environment["ASPNETCORE_ENVIRONMENT"] = "Production";
 
@@ -537,10 +538,10 @@ public partial class MainWindow : Window
 
       if (candidate.ExecutablePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
       {
-        return new ExecutableCommand("dotnet", $"\"{candidate.ExecutablePath}\"");
+        return new ExecutableCommand("dotnet", $"\"{candidate.ExecutablePath}\"", candidate.WorkingDirectory);
       }
 
-      return new ExecutableCommand(candidate.ExecutablePath, string.Empty);
+      return new ExecutableCommand(candidate.ExecutablePath, string.Empty, candidate.WorkingDirectory);
     }
 
     throw new FileNotFoundException($"Не найден исполняемый файл проекта {projectName}.");
@@ -682,8 +683,11 @@ public partial class MainWindow : Window
     }
   }
 
-  private sealed record ExecutableCandidate(string ExecutablePath);
+  private sealed record ExecutableCandidate(string ExecutablePath)
+  {
+    public string WorkingDirectory => Path.GetDirectoryName(ExecutablePath) ?? AppContext.BaseDirectory;
+  }
 
-  private sealed record ExecutableCommand(string FileName, string Arguments);
+  private sealed record ExecutableCommand(string FileName, string Arguments, string WorkingDirectory);
 
 }
